@@ -73,6 +73,6 @@ docker compose up -d --build
 
 This project is licensed under the **MIT License**.
 
-This product includes GeoLite2 data created by MaxMind, available from [https://www.maxmind.com](https://www.maxmind.com).
+This product includes GeoLite2 data created by MaxMind, available from [https://www.maxmind.com](https://www.maxmind.com).  
 This product uses IP2Location LITE data available from [https://lite.ip2location.com](https://lite.ip2location.com).
 
