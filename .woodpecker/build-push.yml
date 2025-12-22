@@ -1,0 +1,10 @@
+steps:
+  build-and-push:
+    image: woodpeckerci/plugin-docker
+    settings:
+      registry: codeberg.org
+      repo: codeberg.org/buildplan/ip-service
+      tags: latest
+      username: buildplan
+      password:
+        from_secret: CONTAINER_TOKEN
