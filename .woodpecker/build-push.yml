@@ -2,12 +2,12 @@ steps:
   build-and-push:
     image: quay.io/woodpeckerci/plugin-docker
     settings:
-      registry: codeberg.org
-      repo: codeberg.org/buildplan/ip-service
+      registry: docker.io
+      repo: iamdockin/ip-service
       tags: latest
-      username: buildplan
+      username: iamdockin
       password:
-        from_secret: CONTAINER_TOKEN
+        from_secret: DOCKER_TOKEN
     when:
       branch: main
       event: push
