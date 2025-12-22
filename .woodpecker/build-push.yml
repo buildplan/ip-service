@@ -1,6 +1,6 @@
 steps:
   build-and-push:
-    image: woodpeckerci/plugin-docker
+    image: quay.io/woodpeckerci/plugin-docker
     settings:
       registry: codeberg.org
       repo: codeberg.org/buildplan/ip-service
@@ -8,3 +8,6 @@ steps:
       username: buildplan
       password:
         from_secret: CONTAINER_TOKEN
+    when:
+      branch: main
+      event: push
