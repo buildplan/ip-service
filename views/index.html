@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>WiredAlter IP Address & VPN Lookup</title>
+    <meta name="description" content="Free IP lookup with geolocation, ISP, ASN and time zone details, plus VPN/proxy and datacentre detection. Use in browser or via curl/wget (JSON/text).">
+    <meta name="keywords" content="what is my ip, ip lookup, ip address lookup, ip echo, curl ip, vpn detector, proxy check, ip geolocation, asn lookup, developer api, wiredalter">
+    <meta name="author" content="WiredAlter">
+    <link rel="canonical" href="https://ip.wiredalter.com/">
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ip.wiredalter.com/">
+    <meta property="og:title" content="WiredAlter IP - Professional IP Intelligence">
+    <meta property="og:description" content="IP geolocation, ISP / ASN, time zone, and VPN / proxy / datacentre checks. Browser and CLI (curl / wget) output.">
+    <meta property="og:image" content="https://ip.wiredalter.com/preview-image.png">
+    
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="WiredAlter IP Lookup">
+    <meta name="twitter:description" content="IP geolocation, ISP/ASN, time zone, and VPN/proxy checks.">
+    <meta name="twitter:image" content="https://ip.wiredalter.com/preview-image.png">
+    
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%233b82f6'/><text x='50' y='70' font-family='sans-serif' font-size='60' font-weight='bold' fill='white' text-anchor='middle'>IP</text></svg>">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "WiredAlter IP Lookup",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Web",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "description": "A professional tool for IP address lookup, VPN detection, and ISP intelligence."
+    }
+    </script>
+
+    <style>
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Inter', sans-serif; }
+        #map { height: 350px; width: 100%; border-radius: 0.75rem; z-index: 1; position: relative; }
+        .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .search-input { background: rgba(15, 23, 42, 0.8); transition: all 0.2s; }
+        .search-input:focus { background: rgba(30, 41, 59, 1); border-color: #3b82f6; outline: none; }
+        
+        /* Toast Notification Styles */
+        #toast {
+            visibility: hidden;
+            min-width: 250px; 
+            background-color: #1e293b; /* Slate 800 */
+            color: #fff; 
+            text-align: center; 
+            border-radius: 8px; 
+            padding: 12px 16px; 
+            position: fixed; 
+            z-index: 100; 
+            left: 50%; 
+            bottom: 30px; 
+            transform: translateX(-50%);
+            border: 1px solid rgba(59, 130, 246, 0.5); /* Blue border */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s, bottom 0.3s;
+        }
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+            bottom: 50px;
+        }
+    </style>
+</head>
+<body class="bg-[#0b1120] text-slate-300 min-h-screen flex flex-col">
+
+    <div id="toast">Notification</div>
+
+    <nav class="absolute top-0 left-0 w-full p-6 flex flex-col md:flex-row justify-between items-center z-10 gap-4">
+        <div class="text-2xl font-bold tracking-tight text-white">
+            IP.<span class="text-blue-500">wiredAlter</span>.com
+        </div>
+        <div class="flex gap-4 text-sm text-slate-500 font-medium">
+            <a href="/terms" class="hover:text-slate-300 transition-colors">Terms & Privacy</a>
+            <span class="text-slate-700">|</span>
+            <a href="#faq" class="hover:text-slate-300 transition-colors">FAQ</a>
+        </div>
+    </nav>
+
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-12 w-full space-y-10">
+
+        <div class="text-center space-y-6 max-w-3xl mx-auto mt-6 md:mt-0">
+            <div class="space-y-2">
+                <h2 class="text-blue-500 text-xs font-bold uppercase tracking-widest">Your Connection</h2>
+                <div class="group cursor-pointer text-center px-4" onclick="copyToClipboard('mainIp')">
+                    <h1 id="mainIp" class="inline text-3xl sm:text-4xl md:text-6xl font-bold text-white tracking-tighter hover:text-blue-400 transition-colors break-all">Loading...</h1>
+                    <span class="inline-block align-middle ml-2 opacity-0 group-hover:opacity-100 transition-opacity text-slate-500 pb-2">
+                        <svg class="w-6 h-6 md:w-8 md:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 012 2v8a2 2 0 01-2 2h-8a2 2 0 01-2-2v-8a2 2 0 012-2z"></path></svg>
+                    </span>
+                </div>
+                <p id="mainLocation" class="text-lg md:text-xl text-slate-400">...</p>
+            </div>
+
+            <div class="relative max-w-lg mx-auto mt-6">
+                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
+                <input type="text" id="searchInput" class="block w-full p-4 pl-10 text-sm text-white border border-slate-700 rounded-xl search-input placeholder-slate-500" placeholder="Search any IP address..." onkeydown="if(event.key === 'Enter') searchIp()">
+                <button onclick="searchIp()" class="text-white absolute right-2.5 top-2.5 bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-800 font-medium rounded-lg text-sm px-4 py-2">Search</button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="glass-panel p-5 md:p-6 rounded-xl space-y-1">
+                <div class="text-blue-400 text-xs font-bold uppercase tracking-wider">Provider (ISP)</div>
+                <div class="text-lg font-semibold text-white truncate" id="dataOrg">...</div>
+                <div class="text-sm text-slate-500 font-mono" id="dataAsn">...</div>
+            </div>
+
+            <div class="glass-panel p-5 md:p-6 rounded-xl space-y-1">
+               <div class="text-blue-400 text-xs font-bold uppercase tracking-wider">Location</div>
+               <div class="flex items-center gap-2">
+                   <span class="text-xl" id="flag"></span> 
+                   <div class="text-lg font-semibold text-white truncate" id="dataCity">...</div>
+               </div>
+               <div class="text-sm text-slate-500">
+                   <span id="dataRegion">...</span>
+                   <span id="zipWrapper" style="display: none;">
+                       <span class="text-slate-600 mx-1">•</span>
+                       <span id="dataZip" class="text-slate-400 font-mono"></span>
+                   </span></div>
+            </div>
+
+            <div class="glass-panel p-5 md:p-6 rounded-xl space-y-1">
+                <div class="text-blue-400 text-xs font-bold uppercase tracking-wider">Timezone</div>
+                <div class="text-lg font-semibold text-white" id="dataTimezone">...</div>
+                <div class="text-xs text-slate-500 font-mono" id="dataCoords">...</div>
+            </div>
+
+            <div class="glass-panel p-5 md:p-6 rounded-xl space-y-1">
+                <div class="text-blue-400 text-xs font-bold uppercase tracking-wider">Risk Analysis</div>
+                <div class="flex justify-between items-center py-1">
+                    <span class="text-sm text-slate-300">Connection Type</span>
+                    <span class="px-2 py-0.5 rounded text-xs font-bold bg-slate-800 text-slate-400" id="dataProxyBadge">Checking...</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-1 rounded-xl shadow-2xl shadow-blue-900/10"><div id="map"></div></div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="space-y-4">
+                <h3 class="text-lg font-bold text-white">CLI Access</h3>
+                <div class="bg-[#0f172a] rounded-xl p-5 font-mono text-sm border border-slate-800 space-y-3">
+                    <div class="group cursor-pointer" onclick="copyText('cmd1')">
+                        <div class="flex justify-between text-slate-300 hover:text-white"><code id="cmd1">$ curl ip.wiredalter.com</code><span class="text-blue-500 opacity-0 group-hover:opacity-100">Copy</span></div>
+                    </div>
+                    <div class="w-full h-px bg-slate-800"></div>
+                    <div class="group cursor-pointer" onclick="copyText('cmd2')">
+                        <div class="flex justify-between text-slate-300 hover:text-white"><code id="cmd2">$ curl ip.wiredalter.com/json</code><span class="text-blue-500 opacity-0 group-hover:opacity-100">Copy</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="space-y-4">
+                <h3 class="text-lg font-bold text-white">JSON Response</h3>
+                <div class="bg-[#0f172a] rounded-xl p-4 font-mono text-xs text-green-400 border border-slate-800 h-40 overflow-y-auto" id="jsonPreview">Loading...</div>
+            </div>
+        </div>
+
+        <div class="border-t border-slate-800/60 pt-10 mt-10">
+
+            <section id="faq" class="max-w-3xl mx-auto px-4 py-16 space-y-12">
+                <h3 class="text-2xl font-bold text-center text-white mb-8">Frequently Asked Questions</h3>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
+
+                    <div class="space-y-2">
+                        <h4 class="font-bold text-blue-400">Is this service free?</h4>
+                        <p class="text-slate-400 leading-relaxed">Yes, this is a free tool for the community. Please respect the fair usage policy to keep it available for everyone.</p>
+                    </div>
+
+                    <div class="space-y-2">
+                        <h4 class="font-bold text-blue-400">How do I use this in scripts?</h4>
+                        <p class="text-slate-400 leading-relaxed">Use <code>curl ip.wiredalter.com</code> for a plain text IP or append <code>/json</code> for detailed metadata.</p>
+                    </div>
+
+                    <div class="space-y-2">
+                        <h4 class="font-bold text-blue-400">Does this detect VPNs?</h4>
+                        <p class="text-slate-400 leading-relaxed">Yes. We use the <strong>IP2Location LITE</strong> database specifically for proxy detection, combined with a manual analysis of ASN providers to catch unlisted datacenters.</p>
+                    </div>
+ 
+                    <div class="space-y-2">
+                        <h4 class="font-bold text-blue-400">Data Privacy</h4>
+                        <p class="text-slate-400 leading-relaxed">No logs are kept. This service runs entirely in memory to ensure privacy and security.</p>
+                    </div>
+
+                    <div class="space-y-2">
+                        <h4 class="font-bold text-blue-400">Are there Rate Limits?</h4>
+                        <p class="text-slate-400 leading-relaxed">To ensure stability, we limit requests to <span class="text-slate-300 font-semibold">100 per 5 minutes</span> per IP address. Exceeding this will result in a 429 HTTP error.</p>
+                    </div>
+
+                    <div class="space-y-2">
+                        <h4 class="font-bold text-blue-400">How accurate is the data?</h4>
+                        <p class="text-slate-400 leading-relaxed">We combine <strong>MaxMind GeoLite2</strong> for location/ISP data with <strong>IP2Location</strong> for threat intelligence. Both databases are updated regularly.</p>
+                    </div>            
+              </div>
+            </section>
+        </div>
+
+    </main>
+
+    <footer class="border-t border-slate-800/60 bg-[#0b1120] py-8 text-center text-slate-600 text-sm">
+        <div class="space-y-3">
+	    <p><a href="/terms" class="hover:text-slate-300 transition-colors">Terms & Privacy</a></p>
+
+            <p>
+                &copy; <span id="year"></span> WiredAlter IP Service. 
+                Powered by <a href="https://nodejs.org" target="_blank" class="hover:text-slate-500 underline decoration-slate-800">Node.js</a>.
+            </p>
+
+            <p class="text-xs text-slate-700">
+                Map rendered with <a href="https://leafletjs.com" target="_blank" class="hover:text-slate-500 underline decoration-slate-800">Leaflet</a>. 
+                Data &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" class="hover:text-slate-500 underline decoration-slate-800">OpenStreetMap</a> contributors.
+            </p>
+
+        <p class="text-xs text-slate-700">
+                WiredAlter IP Service uses the IP2Location LITE database for <a href="https://lite.ip2location.com" target="_blank" class="hover:text-slate-500 underline decoration-slate-800">IP geolocation</a> - 
+        <a href="https://lite.ip2location.com/terms-of-use" target="_blank" class="hover:text-slate-500 underline decoration-slate-800">IP2Location ToU</a>
+            </p>
+
+            <p class="text-xs text-slate-700">
+                WiredAlter IP Service includes GeoLite2 data created by MaxMind, available from  
+                <a href="https://www.maxmind.com" target="_blank" class="hover:text-slate-500 underline decoration-slate-800">https://www.maxmind.com</a> -  
+                <a href="https://www.maxmind.com/en/geolite2/eula" target="_blank" class="hover:text-slate-500 underline decoration-slate-800">MaxMind EULA</a>.
+            </p>
+
+        </div>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script>
+        // Set Dynamic Year automatically
+        document.getElementById("year").innerText = new Date().getFullYear();
+
+        // Initialize Map
+        const map = L.map('map', { zoomControl: false }).setView([51.505, -0.09], 13);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '', subdomains: 'abcd', maxZoom: 19 }).addTo(map);
+        let marker;
+
+        // Custom Toast Notification Function
+        function showToast(message) {
+            const x = document.getElementById("toast");
+            x.innerText = message;
+            x.className = "show";
+            setTimeout(function(){ x.className = x.className.replace("show", ""); }, 3000);
+        }
+
+        async function fetchData(ip = '') {
+            try {
+                const res = await fetch(ip ? `/api/info?ip=${ip}` : `/api/info`);
+                const data = await res.json();
+
+                document.getElementById('mainIp').innerText = data.ip;
+                document.getElementById('mainLocation').innerText = `${data.city}, ${data.country}`;
+                document.getElementById('dataOrg').innerText = data.org || 'N/A';
+                document.getElementById('dataAsn').innerText = data.asn || 'N/A';
+                document.getElementById('dataCity').innerText = data.city;
+                
+                // --- ZIP FIX APPLIED ---
+                document.getElementById('dataRegion').innerText = `${data.region}, ${data.country}`;
+                if (data.zip && data.zip !== "N/A" && data.zip !== "-") {
+                   document.getElementById('dataZip').innerText = data.zip;
+                   document.getElementById('zipWrapper').style.display = "inline"; 
+                } else {
+                   document.getElementById('zipWrapper').style.display = "none";
+                }
+                
+                document.getElementById('dataTimezone').innerText = data.timezone;
+                document.getElementById('dataCoords').innerText = data.coordinates;
+                document.getElementById('jsonPreview').innerText = JSON.stringify(data, null, 2);
+
+        const proxyEl = document.getElementById('dataProxyBadge');
+
+        if (data.is_proxy) {
+            // 1. BAD: It is a confirmed Proxy/VPN
+            proxyEl.innerText = data.proxy_type; 
+            proxyEl.className = "px-2 py-0.5 rounded text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/20 shadow-[0_0_10px_rgba(239,68,68,0.2)]";
+
+        } else if (data.usage_type === 'Residential' || data.usage_type === 'Mobile Data') {
+            // 2. GOOD: It is a confirmed Residential IP
+            proxyEl.innerText = data.usage_type; 
+            proxyEl.className = "px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+
+        } else {
+            // 3. NEUTRAL (Includes Cloud Infrastructure)
+            proxyEl.innerText = data.usage_type || "Clean"; 
+            proxyEl.className = "px-2 py-0.5 rounded text-xs font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20";
+        }
+
+                if (data.latitude && data.longitude) {
+                    const lat = parseFloat(data.latitude);
+                    const lon = parseFloat(data.longitude);
+                    map.setView([lat, lon], 13);
+                    if (marker) map.removeLayer(marker);
+                    marker = L.circleMarker([lat, lon], { radius: 8, fillColor: "#3b82f6", color: "#fff", weight: 2, opacity: 1, fillOpacity: 0.8 }).addTo(map).bindPopup(`<b>${data.city}</b>`).openPopup();
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        function searchIp() { fetchData(document.getElementById('searchInput').value); }
+        
+        // Copy Functions using Toast
+        function copyToClipboard(id) { 
+            navigator.clipboard.writeText(document.getElementById(id).innerText).then(() => showToast('IP Copied to Clipboard!')); 
+        }
+        function copyText(id) { 
+            navigator.clipboard.writeText(document.getElementById(id).innerText.replace('$ ', '')).then(() => showToast('Command Copied!')); 
+        }
+        
+        fetchData();
+    </script>
+</body>
+</html>

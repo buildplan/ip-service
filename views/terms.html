@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms & Privacy - WiredAlter IP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>body { font-family: 'Inter', sans-serif; background-color: #020617; color: #e2e8f0; }</style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-12 px-4">
+
+    <div class="max-w-2xl w-full space-y-8">
+        
+        <div class="border-b border-slate-800 pb-6 mb-6">
+            <h1 class="text-3xl font-bold text-white mb-2">Terms of Service & Privacy Policy</h1>
+            <p class="text-slate-400 text-sm">Last Updated: <span id="date"></span></p>
+        </div>
+
+        <section class="space-y-3">
+            <h2 class="text-xl font-semibold text-blue-400">1. Privacy & Cookies</h2>
+            <p class="text-slate-300 leading-relaxed">
+                We are committed to privacy transparency. 
+                <span class="font-bold text-white">We do not log, store, or share your IP address or query data.</span>
+            </p>
+            <ul class="list-disc pl-5 text-slate-400 space-y-1">
+                <li>Your IP address is processed in real-time memory only to return the result.</li>
+                <li>No database of user queries is maintained by us.</li>
+            </ul>
+            
+            <div class="mt-4 bg-slate-900/50 p-4 rounded border border-slate-800 text-sm">
+                <strong class="text-white block mb-1">Cloudflare & Security Cookies</strong>
+                <p class="text-slate-400">
+                    This website is protected by <a href="https://www.cloudflare.com" target="_blank" class="text-blue-400 hover:underline">Cloudflare</a>. 
+                    Cloudflare may place strictly necessary security cookies (such as <code>__cf_bm</code> or <code>cf_clearance</code>) on your device. 
+                    These are used solely for bot detection and security purposes, not for advertising tracking.
+                </p>
+            </div>
+        </section>
+
+        <section class="space-y-3">
+            <h2 class="text-xl font-semibold text-blue-400">2. Disclaimer of Warranty</h2>
+            <p class="text-slate-300 leading-relaxed">
+                This service is provided <strong>"AS IS"</strong> and <strong>"AS AVAILABLE"</strong> without any warranty of any kind, express or implied.
+            </p>
+            <p class="text-slate-400 text-sm">
+                We do not guarantee the accuracy, completeness, or timeliness of the data shown. The geolocation data is an approximation and may be incorrect. You should not rely on this service for critical decision-making, emergency services, or legal proof of location. WiredAlter IP Service (<a heref="https://ip.wiredalter.com" class="text-blue-400 hover:underline">ip.wiredalter.com</a>) shall not be liable for any damages resulting from the use of this information.
+            </p>
+        </section>
+
+        <section class="space-y-3">
+            <h2 class="text-xl font-semibold text-blue-400">3. Third-Party Data Attribution</h2>
+            <p class="text-slate-300">
+                This service relies on external databases. By using this service, you acknowledge the following legal notices required by data providers:
+            </p>
+            
+            <div class="bg-slate-900 p-4 rounded-lg border border-slate-800 text-sm text-slate-400 space-y-4">
+                <div>
+                    <strong class="text-slate-300 block mb-1">MaxMind GeoLite2</strong>
+                    <p>This product includes GeoLite2 data created by MaxMind, available from <a href="https://www.maxmind.com/en/end-user-license-agreement" target="_blank" class="text-blue-400 hover:underline">MaxMind End User License Agreement</a>.</p>
+                </div>
+
+                <div>
+                    <strong class="text-slate-300 block mb-1">IP2Location LITE</strong>
+                    <p>WiredAlter IP Service uses the IP2Location LITE database for <a href="https://lite.ip2location.com/terms-of-use" target="_blank" class="text-blue-400 hover:underline">IP2Location Terms of Use</a>.</p>
+                </div>
+                
+                <div>
+                    <strong class="text-slate-300 block mb-1">OpenStreetMap</strong>
+                    <p>Map data is © <a href="https://www.openstreetmap.org/copyright" target="_blank" class="text-blue-400 hover:underline">OpenStreetMap</a> contributors.</p>
+                </div>
+            </div>
+        </section>
+
+        <div class="pt-8 text-center">
+            <a href="/" class="text-slate-400 hover:text-white underline decoration-slate-600 underline-offset-4">← Back to IP Echo</a>
+        </div>
+
+    </div>
+
+    <script>
+        document.getElementById('date').innerText = new Date().toLocaleDateString();
+    </script>
+</body>
+</html>

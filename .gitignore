@@ -1,0 +1,18 @@
+# --- Dependencies ---
+node_modules/
+
+# --- Heavy Databases (Download these on the server instead) ---
+ip_dbs/
+*.mmdb
+*.BIN
+
+# --- Secrets & SSL ---
+letsencrypt/
+data/
+.env
+
+# --- OS/Editor Files ---
+.DS_Store
+.vscode/
+.idea/
+*.log
