@@ -3,7 +3,7 @@ steps:
     image: quay.io/woodpeckerci/plugin-docker
     settings:
       registry: codeberg.org
-      repo: codeberg.org/buildplan/ip-service
+      repo: buildplan/ip-service
       tags: latest
       username: buildplan
       password:
