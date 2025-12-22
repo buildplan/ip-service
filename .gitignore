@@ -7,8 +7,8 @@ ip_dbs/
 *.BIN
 
 # --- Secrets & SSL ---
-letsencrypt/
-data/
+npm/letsencrypt/
+npm/data/
 .env
 
 # --- OS/Editor Files ---

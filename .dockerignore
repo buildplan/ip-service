@@ -6,8 +6,9 @@ ip_dbs/
 *LITE*.BIN
 
 # --- Nginx Proxy Manager Data ---
-data
-letsencrypt
+npm
+npm/data
+npm/letsencrypt
 
 # --- Node Dependencies & Logs ---
 node_modules

@@ -29,8 +29,8 @@ services:
     restart: unless-stopped
     network_mode: host
     volumes:
-      - ./npm/data:/data
-      - ./npm/letsencrypt:/etc/letsencrypt
+      - ./data:/data
+      - ./letsencrypt:/etc/letsencrypt
     deploy:
       resources:
         limits:
