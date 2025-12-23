@@ -69,7 +69,7 @@ docker compose up -d --build
 
 ```
 
-## icense & Attributions
+## License & Attributions
 
 This project is licensed under the **MIT License**.
 
