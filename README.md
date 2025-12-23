@@ -1,6 +1,6 @@
 # WiredAlter IP Service
 
-A IP intelligence API and web service. It provides real-time geolocation, ISP/ASN details, and risk analysis (VPN, Proxy, and Tor detection).
+An IP intelligence API and web service. It provides real-time geolocation, ISP/ASN details, and risk analysis (VPN, Proxy, and Tor detection).
 
 ## Features
 
@@ -48,7 +48,7 @@ curl ip.wiredalter.com/json
 1. **Clone the repository:**
 
 ```bash
-git clone https://codeberg.org/buildplan/ip-service.git
+git clone https://github.com/buildplan/ip-service.git
 cd ip-service
 
 ```
@@ -64,9 +64,77 @@ You must place the following databases in the `ip_dbs/` folder:
 
 3. **Run with Docker:**
 
+Option 1: Default Docker compose file in the repo uses pre-build image from the files in this repo `ghcr.io/buildplan/ip-service:latest`
+
+```bash
+docker compose up -d
+
+```
+
+**Option 2: Build from Source** To build the image locally, edit `docker-compose.yml` to use `build: .` instead of `image: ...`. This is useful if you want to modify the frontend (e.g., branding, colors, or layout).
+
+1.  **Customize the UI (Optional):** You can edit `views/index.html` to change the look and feel of the service before building.
+2.  **Edit `docker-compose.yml`:**
+
+```bash
+services:
+  ip-echo:
+    # Instead of pulling an image, we build from the cloned repo
+    build: .
+    image: ip-service:local  # Optional: tags the built image locally
+    container_name: ip-echo
+    restart: unless-stopped
+    
+    # Run as secure non-root user
+    user: "node"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+    # Lock to localhost so only npm can talk to it
+    ports:
+      - "127.0.0.1:4040:4040"
+
+    environment:
+      - NODE_ENV=production
+      - PORT=4040
+    
+    # Map DBs exactly where the code looks (/app/db)
+    # Ensure you have the 'ip_dbs' folder populated locally!
+    volumes:
+      - ./ip_dbs:/app/db:ro
+
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+
+  # --- NGINX PROXY MANAGER ---
+  npm:
+    image: 'jc21/nginx-proxy-manager:2.13.5'
+    container_name: npm
+    restart: unless-stopped
+    
+    # Host mode is critical for accurate IP detection
+    network_mode: host
+
+    volumes:
+      - ./npm/data:/data
+      - ./npm/letsencrypt:/etc/letsencrypt
+    
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+```
+
+Then build and run::
+
 ```bash
 docker compose up -d --build
-
 ```
 
 ## License & Attributions
@@ -75,4 +143,3 @@ This project is licensed under the **MIT License**.
 
 This product includes GeoLite2 data created by MaxMind, available from [https://www.maxmind.com](https://www.maxmind.com).  
 This product uses IP2Location LITE data available from [https://lite.ip2location.com](https://lite.ip2location.com).
-
