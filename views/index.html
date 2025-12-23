@@ -85,8 +85,15 @@
     <div id="toast">Notification</div>
 
     <nav class="absolute top-0 left-0 w-full p-6 flex flex-col md:flex-row justify-between items-center z-10 gap-4">
-        <div class="text-2xl font-bold tracking-tight text-white">
-            IP.<span class="text-blue-500">wiredAlter</span>.com
+        <div class="flex items-center gap-6">
+            <div class="text-2xl font-bold tracking-tight text-white">
+                IP.<span class="text-blue-500">wiredAlter</span>.com
+            </div>
+            <div class="hidden md:flex gap-1 bg-slate-800/50 rounded-lg p-1 border border-slate-700/50 backdrop-blur-sm">
+                <a href="#" class="px-3 py-1.5 text-sm font-medium rounded-md text-white bg-blue-600 shadow-sm cursor-default">IP</a>
+                
+                <a href="https://dns.wiredalter.com" class="px-3 py-1.5 text-sm font-medium rounded-md text-slate-400 hover:text-white hover:bg-slate-700 transition-all">DNS</a>
+            </div>
         </div>
         <div class="flex gap-4 text-sm text-slate-500 font-medium">
             <a href="/terms" class="hover:text-slate-300 transition-colors">Terms & Privacy</a>
