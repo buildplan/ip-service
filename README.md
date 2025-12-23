@@ -64,7 +64,7 @@ You must place the following databases in the `ip_dbs/` folder:
 
 3. **Run with Docker:**
 
-Option 1: Default Docker compose file in the repo uses pre-build image from the files in this repo `ghcr.io/buildplan/ip-service:latest`
+**Option 1: Quick Start**: Default Docker compose file in the repo uses pre-build image from the files in this repo `ghcr.io/buildplan/ip-service:latest`
 
 ```bash
 docker compose up -d
