@@ -15,7 +15,7 @@ app.use(express.static(path.join(__dirname, 'views'), { index: false }));
 // --- DATABASE PATHS ---
 const cityDbPath = process.env.CITY_DB_PATH || path.join(__dirname, 'db', 'GeoLite2-City.mmdb');
 const asnDbPath = process.env.ASN_DB_PATH || path.join(__dirname, 'db', 'GeoLite2-ASN.mmdb');
-const proxyDbPath = process.env.PROXY_DB_PATH || path.join(__dirname, 'db', 'IP2PROXY-LITE-PX11.IPV6.BIN');
+const proxyDbPath = process.env.PROXY_DB_PATH || path.join(__dirname, 'db', 'IP2PROXY-LITE-PX11.BIN');
 const db11Path = process.env.DB11_PATH || path.join(__dirname, 'db', 'IP2LOCATION-LITE-DB11.IPV6.BIN');
 
 let cityLookup;

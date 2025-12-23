@@ -1,22 +1,20 @@
 services:
   ip-echo:
-    build: .
+    image: ghcr.io/buildplan/ip-service:latest
     container_name: ip-echo
     restart: unless-stopped
     user: "node"
-    ports:
-      - "127.0.0.1:4040:4040"
-    volumes:
-      - ./ip_dbs/GeoLite2-City.mmdb:/app/db/GeoLite2-City.mmdb:ro
-      - ./ip_dbs/GeoLite2-ASN.mmdb:/app/db/GeoLite2-ASN.mmdb:ro
-      - ./ip_dbs/IP2PROXY-LITE-PX11.BIN:/app/db/IP2PROXY-LITE-PX11.IPV6.BIN:ro
-      - ./ip_dbs/IP2LOCATION-LITE-DB11.IPV6.BIN:/app/db/IP2LOCATION-LITE-DB11.IPV6.BIN:ro
-    environment:
-      - NODE_ENV=production
     security_opt:
       - no-new-privileges:true
     cap_drop:
       - ALL
+    ports:
+      - "127.0.0.1:4040:4040"
+    environment:
+      - NODE_ENV=production
+      - PORT=4040
+    volumes:
+      - ./ip_dbs:/app/db:ro
     deploy:
       resources:
         limits:
