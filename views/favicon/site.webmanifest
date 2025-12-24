@@ -1,6 +1,6 @@
 {
-  "name": "Your Website",
-  "short_name": "Website",
+  "name": "WiredAlter IP Lookup",
+  "short_name": "IP.WiredAlter",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",
