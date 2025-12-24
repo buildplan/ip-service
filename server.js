@@ -342,4 +342,6 @@ app.get('/terms', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'terms.html'));
 });
 
-app.listen(4040, () => console.log(`🚀 Service running on 4040`));
+// Use the environment variable PORT, or default to 4040
+const PORT = process.env.PORT || 4040;
+app.listen(PORT, () => console.log(`🚀 IP-Echo Service running on ${PORT}`));
