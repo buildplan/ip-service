@@ -3,6 +3,7 @@ name: Build and Push Docker Image
 on:
   push:
     branches: [ "main" ]
+    tags: [ 'v*.*.*' ]
   workflow_dispatch:
 
 env:
@@ -43,18 +44,29 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 4. Build & Push (AMD64 + ARM64)
+      # 4. Extract Metadata (Tags & Labels)
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+            ${{ env.DOCKER_HUB_REPO }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+
+      # 5. Build & Push
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
           platforms: linux/amd64,linux/arm64
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-            ${{ env.DOCKER_HUB_REPO }}:latest
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
 
-      # 5. Cleanup Old Images
+      # 6. Cleanup Old Images
       - name: Clean up old GHCR images
         uses: quartx-analytics/ghcr-cleaner@v1
         with:
