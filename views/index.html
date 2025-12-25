@@ -30,9 +30,6 @@
     <link rel="icon" type="image/png" sizes="512x512" href="/favicon/android-chrome-512x512.png">
     <link rel="manifest" href="/favicon/site.webmanifest">
 
-    <!-- 
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%233b82f6'/><text x='40' y='72' font-family='sans-serif' font-size='60' font-weight='bold' fill='white' text-anchor='middle'>IP</text><circle cx='80' cy='60' r='8' fill='%23ef4444'/></svg>">
-    -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -63,31 +60,10 @@
         .search-input { background: rgba(15, 23, 42, 0.8); transition: all 0.2s; }
         .search-input:focus { background: rgba(30, 41, 59, 1); border-color: #3b82f6; outline: none; }
         
-        /* Toast Notification Styles */
         #toast {
-            visibility: hidden;
-            min-width: 250px; 
-            background-color: #1e293b; /* Slate 800 */
-            color: #fff; 
-            text-align: center; 
-            border-radius: 8px; 
-            padding: 12px 16px; 
-            position: fixed; 
-            z-index: 100; 
-            left: 50%; 
-            bottom: 30px; 
-            transform: translateX(-50%);
-            border: 1px solid rgba(59, 130, 246, 0.5); /* Blue border */
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-            font-size: 14px;
-            opacity: 0;
-            transition: opacity 0.3s, bottom 0.3s;
+            visibility: hidden; min-width: 250px; background-color: #1e293b; color: #fff; text-align: center; border-radius: 8px; padding: 12px 16px; position: fixed; z-index: 100; left: 50%; bottom: 30px; transform: translateX(-50%); border: 1px solid rgba(59, 130, 246, 0.5); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); font-size: 14px; opacity: 0; transition: opacity 0.3s, bottom 0.3s;
         }
-        #toast.show {
-            visibility: visible;
-            opacity: 1;
-            bottom: 50px;
-        }
+        #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
     </style>
 </head>
 <body class="bg-[#0b1120] text-slate-300 min-h-screen flex flex-col">
@@ -97,16 +73,12 @@
             <div class="text-2xl font-bold tracking-tight text-white">
                 IP<span class="text-red-500">.</span><span class="text-blue-500">WiredAlter</span>
             </div>
-
             <div class="flex gap-1 bg-slate-800/50 rounded-lg p-1 border border-slate-700/50 backdrop-blur-sm">
                 <a href="#" class="px-4 py-2 md:px-3 md:py-1.5 text-sm font-medium rounded-md text-white bg-blue-600 shadow-sm cursor-default">IP</a>
-                
                 <a href="https://dns.wiredalter.com" class="px-4 py-2 md:px-3 md:py-1.5 text-sm font-medium rounded-md text-slate-400 hover:text-white hover:bg-slate-700 transition-all">DNS</a>
-                
                 <a href="https://whois.wiredalter.com" class="px-4 py-2 md:px-3 md:py-1.5 text-sm font-medium rounded-md text-slate-400 hover:text-white hover:bg-slate-700 transition-all">WHOIS</a>
             </div>
         </div>
-
         <div class="hidden md:flex gap-4 text-sm text-slate-500 font-medium">
             <a href="/terms" class="hover:text-slate-300 transition-colors">Terms</a>
             <span class="text-slate-700">|</span>
@@ -119,15 +91,14 @@
     <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-44 pb-12 md:py-24 w-full space-y-10">
 
         <div class="text-center space-y-6 max-w-3xl mx-auto mt-6 md:mt-0">
-            <div class="space-y-2">
+            <div class="space-y-4">
                 <h2 class="text-blue-500 text-xs font-bold uppercase tracking-widest">Your Connection</h2>
-                <div class="group cursor-pointer text-center px-4" onclick="copyToClipboard('mainIp')">
-                    <h1 id="mainIp" class="inline text-3xl sm:text-4xl md:text-6xl font-bold text-white tracking-tighter hover:text-blue-400 transition-colors break-all">Loading...</h1>
-                    <span class="inline-block align-middle ml-2 opacity-0 group-hover:opacity-100 transition-opacity text-slate-500 pb-2">
-                        <svg class="w-6 h-6 md:w-8 md:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 012 2v8a2 2 0 01-2 2h-8a2 2 0 01-2-2v-8a2 2 0 012-2z"></path></svg>
-                    </span>
+                
+                <div id="ip-display-area" class="space-y-3 flex flex-col items-center justify-center">
+                    <div class="animate-pulse h-10 w-48 bg-slate-800 rounded-lg"></div>
                 </div>
-                <p id="mainLocation" class="text-lg md:text-xl text-slate-400">...</p>
+
+                <p id="mainLocation" class="text-lg md:text-xl text-slate-400 min-h-[1.75rem]">...</p>
             </div>
 
             <div class="relative max-w-lg mx-auto mt-6">
@@ -232,6 +203,11 @@
                         <h4 class="font-bold text-blue-400">How accurate is the data?</h4>
                         <p class="text-slate-400 leading-relaxed">We combine <strong>MaxMind GeoLite2</strong> for location/ISP data with <strong>IP2Location</strong> for threat intelligence. Both databases are updated regularly.</p>
                     </div>            
+                    
+                    <div class="space-y-2">
+                        <h4 class="font-bold text-blue-400">Why do I see two IP addresses?</h4>
+                        <p class="text-slate-400 leading-relaxed">Modern networks often support both IPv4 (legacy) and IPv6 (modern). We intelligently detect and display both if your connection supports them.</p>
+                    </div>
               </div>
             </section>
 
@@ -262,7 +238,7 @@
 
     <footer class="border-t border-slate-800/60 bg-[#0b1120] py-8 text-center text-slate-600 text-sm">
         <div class="space-y-3">
-       <p><a href="/terms" class="hover:text-slate-300 transition-colors">Terms & Privacy</a></p>
+            <p><a href="/terms" class="hover:text-slate-300 transition-colors">Terms & Privacy</a></p>
 
             <p>
                 &copy; <span id="year"></span> WiredAlter IP Service. 
@@ -274,9 +250,9 @@
                 Data &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" class="hover:text-slate-500 underline decoration-slate-800">OpenStreetMap</a> contributors.
             </p>
 
-        <p class="text-xs text-slate-700">
+            <p class="text-xs text-slate-700">
                 WiredAlter IP Service uses the IP2Location LITE database for <a href="https://lite.ip2location.com" target="_blank" class="hover:text-slate-500 underline decoration-slate-800">IP geolocation</a> - 
-        <a href="https://lite.ip2location.com/terms-of-use" target="_blank" class="hover:text-slate-500 underline decoration-slate-800">IP2Location ToU</a>
+                <a href="https://lite.ip2location.com/terms-of-use" target="_blank" class="hover:text-slate-500 underline decoration-slate-800">IP2Location ToU</a>
             </p>
 
             <p class="text-xs text-slate-700">
@@ -284,91 +260,137 @@
                 <a href="https://www.maxmind.com" target="_blank" class="hover:text-slate-500 underline decoration-slate-800">https://www.maxmind.com</a> -  
                 <a href="https://www.maxmind.com/en/geolite2/eula" target="_blank" class="hover:text-slate-500 underline decoration-slate-800">MaxMind EULA</a>.
             </p>
-
         </div>
     </footer>
 
+    <div id="toast">Notification</div>
+
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <script>
-        // Set Dynamic Year automatically
         document.getElementById("year").innerText = new Date().getFullYear();
-
-        // Initialize Map
         const map = L.map('map', { zoomControl: false }).setView([51.505, -0.09], 13);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '', subdomains: 'abcd', maxZoom: 19 }).addTo(map);
         let marker;
 
-        // Custom Toast Notification Function
         function showToast(message) {
             const x = document.getElementById("toast");
-            x.innerText = message;
-            x.className = "show";
-            setTimeout(function(){ x.className = x.className.replace("show", ""); }, 3000);
+            x.innerText = message; x.className = "show";
+            setTimeout(() => { x.className = x.className.replace("show", ""); }, 3000);
         }
 
-        async function fetchData(ip = '') {
+	// Helper: Generate HTML for an IP Row
+        function createIpRow(ip, type) {
+            const isV6 = type === 'IPv6';
+            const badgeColor = isV6 
+                ? 'bg-purple-900/40 text-purple-400 border-purple-800' 
+                : 'bg-blue-900/40 text-blue-400 border-blue-800';    
+            return `
+            <div class="group cursor-pointer flex flex-col sm:flex-row items-center gap-2 sm:gap-4 bg-slate-900/40 px-4 py-3 rounded-xl border border-slate-800/50 hover:bg-slate-800/60 transition-all w-full md:w-auto min-w-[280px] sm:min-w-[380px] justify-center shadow-lg" onclick="navigator.clipboard.writeText('${ip}').then(() => showToast('${type} Copied!'))">
+                <span class="px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold border uppercase tracking-wider ${badgeColor} shrink-0">${type}</span>
+                <span class="text-lg sm:text-2xl md:text-3xl font-bold text-white tracking-tight break-all font-mono text-center">${ip}</span>
+                <div class="hidden sm:block shrink-0">
+                     <svg class="w-5 h-5 text-slate-600 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 012 2v8a2 2 0 01-2 2h-8a2 2 0 01-2-2v-8a2 2 0 012-2z"></path></svg>
+                </div>
+            </div>
+            `;
+        }
+
+        async function fetchSmartIPs() {
+            const displayArea = document.getElementById('ip-display-area');
+            
             try {
-                const res = await fetch(ip ? `/api/info?ip=${ip}` : `/api/info`);
+                // 1. Fetch PRIMARY (Whatever the browser chose)
+                const res = await fetch('/api/info');
+                const primaryData = await res.json();
+                
+                // Determine Protocol
+                const primaryIsV6 = primaryData.ip.includes(':');
+                const primaryType = primaryIsV6 ? 'IPv6' : 'IPv4';
+                
+                // Clear Loading
+                displayArea.innerHTML = createIpRow(primaryData.ip, primaryType);
+                populateDetails(primaryData);
+
+                // 2. Try to fetch SECONDARY (The missing protocol)
+                const missingUrl = primaryIsV6 
+                    ? 'https://v4-ip.wiredalter.com/api/info' 
+                    : 'https://v6-ip.wiredalter.com/api/info';
+                
+                const missingType = primaryIsV6 ? 'IPv4' : 'IPv6';
+
+                try {
+                    const secRes = await fetch(missingUrl);
+                    if (secRes.ok) {
+                        const secData = await secRes.json();
+                        displayArea.innerHTML += createIpRow(secData.ip, missingType);
+                    }
+                } catch (e) {
+                    console.log("Secondary protocol unavailable or DNS not configured.");
+                }
+
+            } catch (err) {
+                displayArea.innerHTML = `<span class="text-red-400">Error loading IP</span>`;
+                console.error(err);
+            }
+        }
+
+        function populateDetails(data) {
+            document.getElementById('dataOrg').innerText = data.org || 'N/A';
+            document.getElementById('dataAsn').innerText = data.asn || 'N/A';
+            document.getElementById('dataCity').innerText = data.city;
+            document.getElementById('mainLocation').innerText = `${data.city}, ${data.country}`;
+            
+            document.getElementById('dataRegion').innerText = `${data.region}, ${data.country}`;
+            if (data.zip && data.zip !== "N/A" && data.zip !== "-") {
+                document.getElementById('dataZip').innerText = data.zip;
+                document.getElementById('zipWrapper').style.display = "inline"; 
+            } else {
+                document.getElementById('zipWrapper').style.display = "none";
+            }
+            
+            document.getElementById('dataTimezone').innerText = data.timezone;
+            document.getElementById('dataCoords').innerText = data.coordinates;
+            document.getElementById('jsonPreview').innerText = JSON.stringify(data, null, 2);
+
+            const proxyEl = document.getElementById('dataProxyBadge');
+            if (data.is_proxy) {
+                proxyEl.innerText = data.proxy_type; 
+                proxyEl.className = "px-2 py-0.5 rounded text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/20 shadow-[0_0_10px_rgba(239,68,68,0.2)]";
+            } else if (data.usage_type === 'Residential' || data.usage_type === 'Mobile Data') {
+                proxyEl.innerText = data.usage_type; 
+                proxyEl.className = "px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+            } else {
+                proxyEl.innerText = data.usage_type || "Clean"; 
+                proxyEl.className = "px-2 py-0.5 rounded text-xs font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20";
+            }
+
+            if (data.latitude && data.longitude) {
+                const lat = parseFloat(data.latitude);
+                const lon = parseFloat(data.longitude);
+                map.setView([lat, lon], 13);
+                if (marker) map.removeLayer(marker);
+                marker = L.circleMarker([lat, lon], { radius: 8, fillColor: "#3b82f6", color: "#fff", weight: 2, opacity: 1, fillOpacity: 0.8 }).addTo(map).bindPopup(`<b>${data.city}</b>`).openPopup();
+            }
+        }
+
+        async function searchIp() {
+            const input = document.getElementById('searchInput').value.trim();
+            if(!input) return;
+            try {
+                const res = await fetch(`/api/info?ip=${input}`);
                 const data = await res.json();
-
-                document.getElementById('mainIp').innerText = data.ip;
+                populateDetails(data);
+                const type = input.includes(':') ? 'IPv6' : 'IPv4';
+                document.getElementById('ip-display-area').innerHTML = createIpRow(data.ip, type);
                 document.getElementById('mainLocation').innerText = `${data.city}, ${data.country}`;
-                document.getElementById('dataOrg').innerText = data.org || 'N/A';
-                document.getElementById('dataAsn').innerText = data.asn || 'N/A';
-                document.getElementById('dataCity').innerText = data.city;
-                
-                // --- ZIP FIX APPLIED ---
-                document.getElementById('dataRegion').innerText = `${data.region}, ${data.country}`;
-                if (data.zip && data.zip !== "N/A" && data.zip !== "-") {
-                   document.getElementById('dataZip').innerText = data.zip;
-                   document.getElementById('zipWrapper').style.display = "inline"; 
-                } else {
-                   document.getElementById('zipWrapper').style.display = "none";
-                }
-                
-                document.getElementById('dataTimezone').innerText = data.timezone;
-                document.getElementById('dataCoords').innerText = data.coordinates;
-                document.getElementById('jsonPreview').innerText = JSON.stringify(data, null, 2);
-
-        const proxyEl = document.getElementById('dataProxyBadge');
-
-        if (data.is_proxy) {
-            // 1. BAD: It is a confirmed Proxy/VPN
-            proxyEl.innerText = data.proxy_type; 
-            proxyEl.className = "px-2 py-0.5 rounded text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/20 shadow-[0_0_10px_rgba(239,68,68,0.2)]";
-
-        } else if (data.usage_type === 'Residential' || data.usage_type === 'Mobile Data') {
-            // 2. GOOD: It is a confirmed Residential IP
-            proxyEl.innerText = data.usage_type; 
-            proxyEl.className = "px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
-
-        } else {
-            // 3. NEUTRAL (Includes Cloud Infrastructure)
-            proxyEl.innerText = data.usage_type || "Clean"; 
-            proxyEl.className = "px-2 py-0.5 rounded text-xs font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20";
+            } catch(e) { console.error(e); }
         }
-
-                if (data.latitude && data.longitude) {
-                    const lat = parseFloat(data.latitude);
-                    const lon = parseFloat(data.longitude);
-                    map.setView([lat, lon], 13);
-                    if (marker) map.removeLayer(marker);
-                    marker = L.circleMarker([lat, lon], { radius: 8, fillColor: "#3b82f6", color: "#fff", weight: 2, opacity: 1, fillOpacity: 0.8 }).addTo(map).bindPopup(`<b>${data.city}</b>`).openPopup();
-                }
-            } catch (err) { console.error(err); }
-        }
-
-        function searchIp() { fetchData(document.getElementById('searchInput').value); }
         
-        // Copy Functions using Toast
-        function copyToClipboard(id) { 
-            navigator.clipboard.writeText(document.getElementById(id).innerText).then(() => showToast('IP Copied to Clipboard!')); 
-        }
         function copyText(id) { 
             navigator.clipboard.writeText(document.getElementById(id).innerText.replace('$ ', '')).then(() => showToast('Command Copied!')); 
         }
-        
-        fetchData();
+
+        fetchSmartIPs();
     </script>
 </body>
 </html>

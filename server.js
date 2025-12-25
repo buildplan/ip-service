@@ -2,6 +2,7 @@ const express = require('express');
 const maxmind = require('maxmind');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
+const cors = require('cors');
 const { IP2Proxy } = require('ip2proxy-nodejs');
 const { IP2Location } = require('ip2location-nodejs');
 const app = express();
@@ -9,6 +10,7 @@ const app = express();
 // --- CONFIGURATION ---
 app.set('json spaces', 2);
 app.set('trust proxy', true);
+app.use(cors()); 13 // Enable CORS for v4.ip... and v6.ip...
 
 app.use(express.static(path.join(__dirname, 'views'), { index: false }));
 

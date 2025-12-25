@@ -1,5 +1,6 @@
 services:
   ip-echo:
+#    build: .
     image: ghcr.io/buildplan/ip-service:latest
     container_name: ip-echo
     restart: unless-stopped
