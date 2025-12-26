@@ -13,9 +13,11 @@ An IP intelligence API and web service. It provides real-time geolocation, ISP/A
 ## Usage
 
 ### Web Interface
+
 Visit the homepage, [ip.wiredalter.com](https://ip.wiredalter.com) to see your own connection details, or search for any IP address manually.
 
 ### CLI / API Access
+
 Developers can use standard tools to fetch data:
 
 ```bash
@@ -24,7 +26,6 @@ curl ip.wiredalter.com
 
 # Get full JSON data
 curl ip.wiredalter.com/json
-
 ```
 
 **Example JSON Response:**
@@ -40,7 +41,6 @@ curl ip.wiredalter.com/json
   "is_proxy": false,
   "threat": "None"
 }
-
 ```
 
 ## Installation (Self-Hosted)
@@ -50,7 +50,6 @@ curl ip.wiredalter.com/json
 ```bash
 git clone https://github.com/buildplan/ip-service.git
 cd ip-service
-
 ```
 
 2. **Download Databases:**
@@ -71,10 +70,10 @@ docker compose up -d
 
 ```
 
-**Option 2: Build from Source** To build the image locally, edit `docker-compose.yml` to use `build: .` instead of `image: ...`. This is useful if you want to modify the frontend (e.g., branding, colors, or layout).
+**Option 2: Build from Source** To build the image locally, edit `docker-compose.yml` to use `build: .` instead of `image: ...`. This is useful if you want to modify the frontend (e.g., branding, colors, or layout). Docker hardened node image is used in the `Dockerfile` in this repo. If you building locally login to dhi.io (`docker login dhi.io`) or Change the Dockerfile to `nodhi.Dockerfile`.
 
-1.  **Customize the UI (Optional):** You can edit `views/index.html` to change the look and feel of the service before building.
-2.  **Edit `docker-compose.yml`:**
+1. **Customize the UI (Optional):** You can edit `views/index.html` to change the look and feel of the service before building.
+2. **Edit `docker-compose.yml`:**
 
 ```bash
 services:
