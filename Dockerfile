@@ -1,30 +1,34 @@
-# 1. Use the latest LTS version
-FROM node:24-alpine
+# === Build stage: Install dependencies and dumb-init ===
+FROM dhi.io/node:24-dev AS builder
 
-# 2. INSTALL DUMB-INIT
+WORKDIR /usr/src/app
+
+# Install dumb-init for process management
 RUN apk add --no-cache dumb-init
 
-ENV NODE_ENV=production
-WORKDIR /app
-
-# 3. OPTIMIZE PERMISSIONS & SECURITY
-RUN chown -R node:node /app
-
-# Switch to non-root user
-USER node
-
-# 4. CACHING LAYER
-COPY --chown=node:node package.json package-lock.json* ./
+# Install Dependencies
+COPY package.json package-lock.json* ./
 RUN npm ci --only=production && npm cache clean --force
 
-# 5. Create the db directoy
-RUN mkdir -p /app/db
+# Copy App Code
+COPY . .
 
-# 6. APP LAYER
-#    (Ensure .dockerignore excludes node_modules and big DB files!)
-COPY --chown=node:node . .
+# === Final stage: Create minimal runtime image ===
+FROM dhi.io/node:24-alpine
 
+ENV NODE_ENV=production
+ENV PATH=/app/node_modules/.bin:$PATH
+
+# Copy dumb-init from builder
+COPY --from=builder /usr/bin/dumb-init /usr/bin/dumb-init
+
+# Copy application with dependencies from builder
+COPY --from=builder --chown=node:node /usr/src/app /app
+
+WORKDIR /app
+
+# Expose Port 5000 (DNS Service)
 EXPOSE 4040
 
-# 7. USE DUMB-INIT
+# Start with dumb-init for proper signal handling
 CMD ["dumb-init", "node", "server.js"]
