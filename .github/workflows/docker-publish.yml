@@ -2,7 +2,7 @@ name: Build and Push Docker Image
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "dev" ]
     tags: [ 'v*.*.*' ]
   workflow_dispatch:
 
@@ -37,10 +37,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 3. Login to Docker Hub
+      # 3. Login to DHI Hub and Docker Hub
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Log in to DHI Registry
+        uses: docker/login-action@v3
+        with:
+          registry: dhi.io
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
@@ -54,6 +61,7 @@ jobs:
             ${{ env.DOCKER_HUB_REPO }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}
             type=semver,pattern={{version}}
 
       # 5. Build & Push
