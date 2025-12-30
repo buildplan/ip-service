@@ -107,6 +107,9 @@ async function checkCrowdSec(ip) {
         }
         return null;
     } catch (err) {
+        // CHANGE THIS PART:
+        console.error("❌ CrowdSec Error:", err.message); // Log the specific error
+        if (err.response) console.error("   Response:", err.response.status, err.response.data);
         return null;
     }
 }
