@@ -1,3 +1,6 @@
+# --- Production Docker Compose ---
+docker-compose-prod.yml
+
 # --- Dependencies ---
 node_modules/
 
@@ -16,3 +19,4 @@ npm/data/
 .vscode/
 .idea/
 *.log
+*.bak

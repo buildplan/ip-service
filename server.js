@@ -6,11 +6,12 @@ const cors = require('cors');
 const { IP2Proxy } = require('ip2proxy-nodejs');
 const { IP2Location } = require('ip2location-nodejs');
 const app = express();
+const getReputation = require('./src/reputation');
 
 // --- CONFIGURATION ---
 app.set('json spaces', 2);
 app.set('trust proxy', true);
-app.use(cors()); 13 // Enable CORS for v4.ip... and v6.ip...
+app.use(cors()); // Enable CORS for v4.ip... and v6.ip...
 
 app.use(express.static(path.join(__dirname, 'views'), { index: false }));
 
@@ -337,6 +338,20 @@ app.get('/cli', (req, res) => {
  ----------------------------------------
 `;
     res.send(output);
+});
+
+// IP Reputation logic
+
+app.get('/api/reputation', async (req, res) => {
+    const ip = req.query.ip || getClientIp(req);
+
+    // Simple validation
+    if (!ip.match(/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/)) {
+        return res.status(400).json({ error: 'Invalid IPv4 address' });
+    }
+
+    const result = await getReputation(ip);
+    res.json(result);
 });
 
 // --- ROUTE: Terms & Privacy ---
