@@ -1,4 +1,4 @@
-`<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -491,7 +491,7 @@
                 // "Clean" -> "No Threats Detected"
                 badge.innerText = "NO THREATS DETECTED ⓘ";
                 badge.className = "px-2 py-0.5 rounded text-xs font-bold bg-sky-500/20 text-sky-400 border border-sky-500/30 hover:bg-sky-500/30 transition-colors";
-            } else if (data.detections) { // <--- MAKE SURE THIS 'else if' IS HERE
+            } else if (data.detections) {
                 // "Malicious" -> Red with Alert
                 badge.innerText = `${data.detections.length} THREATS FOUND ⚠️`;
                 badge.className = "px-2 py-0.5 rounded text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/30 shadow-[0_0_10px_rgba(239,68,68,0.3)] hover:bg-red-500/30 transition-colors";
