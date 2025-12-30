@@ -215,6 +215,13 @@
                         <h4 class="font-bold text-blue-400">Does this detect VPNs?</h4>
                         <p class="text-slate-400 leading-relaxed">Yes. We use the <strong>IP2Location LITE</strong> database specifically for proxy detection, combined with a manual analysis of ASN providers to catch unlisted datacenters.</p>
                     </div>
+
+                    <div class="space-y-2">
+                        <h4 class="font-bold text-blue-400">How does the Reputation Scan work?</h4>
+                        <p class="text-slate-400 leading-relaxed">
+                            We aggregate real-time threat data from <strong>CrowdSec</strong> (Community Intelligence), <strong>FireHOL</strong>, <strong>GreenSnow</strong>, and major DNSBLs like <strong>SpamCop</strong> to detect active attackers, scanners, and spammers.
+                        </p>
+                    </div>
  
                     <div class="space-y-2">
                         <h4 class="font-bold text-blue-400">Data Privacy</h4>
@@ -263,30 +270,53 @@
         </div>
     </main>
 
-    <footer class="border-t border-slate-800/60 bg-[#0b1120] py-8 text-center text-slate-600 text-sm">
-        <div class="space-y-3">
-            <p><a href="/terms" class="hover:text-slate-300 transition-colors">Terms & Privacy</a></p>
+    <footer class="border-t border-slate-800/60 bg-[#0b1120] py-12 text-center text-slate-600 text-sm">
+        <div class="max-w-5xl mx-auto px-6 space-y-8">
+            
+            <div class="space-y-2">
+                <p>
+                    &copy; <span id="year"></span> <a href="https://www.wiredalter.com" class="hover:text-slate-300 transition-colors">WiredAlter IP Service</a>. All rights reserved.
+                </p>
+                <p class="text-xs">
+                    <a href="/terms" class="hover:text-slate-300 underline decoration-slate-700 transition-colors">Terms & Privacy</a>
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-xs text-slate-500 leading-relaxed border-t border-slate-800/50 pt-8">
+                
+                <div class="space-y-2">
+                    <p class="font-bold text-slate-400 uppercase tracking-wider mb-1">Location Intelligence</p>
+                    <p>
+                        Includes GeoLite2 data created by <a href="https://www.maxmind.com" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">MaxMind</a>.
+                    </p>
+                    <p>
+                        Uses IP2Location LITE database available from <a href="https://lite.ip2location.com" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">IP2Location</a>.
+                    </p>
+                </div>
 
-            <p>
-                &copy; <span id="year"></span> WiredAlter IP Service. 
-                Powered by <a href="https://nodejs.org" target="_blank" class="hover:text-slate-500 underline decoration-slate-800">Node.js</a>.
-            </p>
+                <div class="space-y-2">
+                    <p class="font-bold text-slate-400 uppercase tracking-wider mb-1">Threat Intelligence</p>
+                    <p>
+                        Real-time reputation analysis aggregated from 
+                        <a href="https://crowdsec.net" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">CrowdSec</a>, 
+                        <a href="https://blocklist.greensnow.co/" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">GreenSnow</a>, 
+                        <a href="https://firehol.org/" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">FireHOL</a>, 
+                        and <a href="https://www.spamcop.net/" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">SpamCop</a>.
+                    </p>
+                </div>
 
-            <p class="text-xs text-slate-700">
-                Map rendered with <a href="https://leafletjs.com" target="_blank" class="hover:text-slate-500 underline decoration-slate-800">Leaflet</a>. 
-                Data &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" class="hover:text-slate-500 underline decoration-slate-800">OpenStreetMap</a> contributors.
-            </p>
+                <div class="space-y-2">
+                    <p class="font-bold text-slate-400 uppercase tracking-wider mb-1">Infrastructure & Mapping</p>
+                    <p>
+                        Map data &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">OpenStreetMap</a> contributors.
+                        Rendered via <a href="https://leafletjs.com" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">Leaflet</a>.
+                    </p>
+                    <p>
+                        Powered by Node.js & WiredAlter Cloud.
+                    </p>
+                </div>
 
-            <p class="text-xs text-slate-700">
-                WiredAlter IP Service uses the IP2Location LITE database for <a href="https://lite.ip2location.com" target="_blank" class="hover:text-slate-500 underline decoration-slate-800">IP geolocation</a> - 
-                <a href="https://lite.ip2location.com/terms-of-use" target="_blank" class="hover:text-slate-500 underline decoration-slate-800">IP2Location ToU</a>
-            </p>
-
-            <p class="text-xs text-slate-700">
-                WiredAlter IP Service includes GeoLite2 data created by MaxMind, available from  
-                <a href="https://www.maxmind.com" target="_blank" class="hover:text-slate-500 underline decoration-slate-800">https://www.maxmind.com</a> -  
-                <a href="https://www.maxmind.com/en/geolite2/eula" target="_blank" class="hover:text-slate-500 underline decoration-slate-800">MaxMind EULA</a>.
-            </p>
+            </div>
         </div>
     </footer>
 
