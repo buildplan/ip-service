@@ -21,21 +21,3 @@ services:
         limits:
           cpus: '0.50'
           memory: 256M
-
-  npm:
-    image: 'jc21/nginx-proxy-manager:2.13.5'
-    container_name: npm
-    restart: unless-stopped
-    network_mode: host
-    volumes:
-      - ./npm/data:/data
-      - ./npm/letsencrypt:/etc/letsencrypt
-    healthcheck:
-      test: ["CMD", "/usr/bin/check-health"]
-      interval: 10s
-      timeout: 3s
-    deploy:
-      resources:
-        limits:
-          cpus: '0.50'
-          memory: 256M
