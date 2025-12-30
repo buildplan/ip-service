@@ -19,3 +19,4 @@ npm/data/
 .vscode/
 .idea/
 *.log
+*.bak

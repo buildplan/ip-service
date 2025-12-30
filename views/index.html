@@ -299,7 +299,7 @@
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '', subdomains: 'abcd', maxZoom: 19 }).addTo(map);
         
         let marker;
-        let currentScanIp = ''; // <--- THIS WAS MISSING. Vital for the scan to work.
+        let currentScanIp = '';
 
         function showToast(message) {
             const x = document.getElementById("toast");
