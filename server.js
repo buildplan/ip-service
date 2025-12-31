@@ -341,15 +341,11 @@ app.get('/cli', (req, res) => {
 });
 
 // IP Reputation logic
-
 app.get('/api/reputation', async (req, res) => {
     const ip = req.query.ip || getClientIp(req);
-
-    // Simple validation
-    if (!ip.match(/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/)) {
-        return res.status(400).json({ error: 'Invalid IPv4 address' });
+    if (!maxmind.validate(ip)) {
+        return res.status(400).json({ error: 'Invalid IP address' });
     }
-
     const result = await getReputation(ip);
     res.json(result);
 });
