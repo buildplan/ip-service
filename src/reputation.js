@@ -22,7 +22,6 @@ async function updateBlocklists() {
             for (const line of lines) {
                 const cleanLine = line.split('#')[0].trim();
                 if (!cleanLine) continue;
-                // Extract IP (handles CIDR /32)
                 const ipPart = cleanLine.split('/')[0];
                 if (net.isIP(ipPart)) {
                     newSet.add(ipPart);
@@ -40,7 +39,7 @@ async function updateBlocklists() {
     }
 }
 
-// Initial load & Schedule
+// Initial load
 updateBlocklists();
 setInterval(updateBlocklists, 12 * 60 * 60 * 1000);
 
@@ -59,8 +58,7 @@ function checkPublicBlocklists(ip) {
 }
 
 async function checkDNSBL(ip) {
-    // SpamCop/DroneBL do not support IPv6
-    if (net.isIPv6(ip)) return [];
+    if (net.isIPv6(ip)) return []; // Skip DNSBL for IPv6
 
     const reversed = ip.split('.').reverse().join('.');
     const lists = [
@@ -89,7 +87,6 @@ async function checkCrowdSec(ip) {
 
         if (!apiKey) return null;
 
-        // Encode IP properly for URL
         const encodedIp = encodeURIComponent(ip);
 
         const res = await axios.get(`${apiUrl}/v1/decisions?ip=${encodedIp}`, {
@@ -107,27 +104,32 @@ async function checkCrowdSec(ip) {
         }
         return null;
     } catch (err) {
-        // CHANGE THIS PART:
-        console.error("❌ CrowdSec Error:", err.message); // Log the specific error
-        if (err.response) console.error("   Response:", err.response.status, err.response.data);
+        console.error("❌ CrowdSec Error:", err.message);
         return null;
     }
 }
 
 // --- MAIN EXPORT ---
-module.exports = async function getReputation(ip) {
-    if (!net.isIP(ip)) return { ip, error: "Invalid IP" };
+module.exports = async function getReputation(rawIp) {
+    // 1. Sanitize Input
+    const ip = (rawIp || '').trim();
 
-    // 1. Check Memory (Instant)
+    // 2. Validate
+    if (!net.isIP(ip)) {
+        console.warn(`⚠️ Invalid IP scanned: "${ip}"`);
+        return { ip, error: "Invalid IP address format" };
+    }
+
+    // 3. Check Memory (Instant)
     const blocklistResult = checkPublicBlocklists(ip);
 
-    // 2. Check External (Async)
+    // 4. Check External (Async)
     const [dnsblMatches, crowdsecMatch] = await Promise.all([
         checkDNSBL(ip),
         checkCrowdSec(ip)
     ]);
 
-    // 3. Combine Results
+    // 5. Combine Results
     const detections = [...dnsblMatches];
     if (blocklistResult) detections.push(blocklistResult);
     if (crowdsecMatch) detections.push(crowdsecMatch);

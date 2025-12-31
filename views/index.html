@@ -507,6 +507,9 @@
         try {
             const res = await fetch(`/api/reputation?ip=${currentScanIp}`);
             const data = await res.json();
+            
+            console.log("Reputation Result:", data);
+
             lastReputationResult = data; // Store for modal
 
             btn.classList.add('hidden');
@@ -517,17 +520,24 @@
             badge.onclick = openReputationModal;
             badge.style.cursor = 'pointer';
 
-            if (data.is_clean) {
-                // "Clean" -> "No Threats Detected"
+            if (data.error) {
+                // Handle Backend Error (e.g. Invalid IP)
+                badge.innerText = "SCAN ERROR";
+                badge.className = "px-2 py-0.5 rounded text-xs font-bold bg-slate-700 text-slate-300 border border-slate-600";
+                console.error("Backend Error:", data.error);
+            } 
+            else if (data.is_clean) {
+                // Clean
                 badge.innerText = "NO THREATS DETECTED ⓘ";
                 badge.className = "px-2 py-0.5 rounded text-xs font-bold bg-sky-500/20 text-sky-400 border border-sky-500/30 hover:bg-sky-500/30 transition-colors";
-            } else if (data.detections) {
-                // "Malicious" -> Red with Alert
+            } 
+            else if (data.detections) {
+                // Malicious
                 badge.innerText = `${data.detections.length} THREATS FOUND ⚠️`;
                 badge.className = "px-2 py-0.5 rounded text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/30 shadow-[0_0_10px_rgba(239,68,68,0.3)] hover:bg-red-500/30 transition-colors";
-            } else {
-                // Fallback
-                throw new Error("Invalid API response");
+            } 
+            else {
+                throw new Error("Invalid API response format");
             }
 
         } catch (e) {
