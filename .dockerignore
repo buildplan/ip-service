@@ -18,8 +18,10 @@ yarn-error.log
 
 # --- Git & Config ---
 .git
+.github
 .gitignore
 .env
+.env.*
 .dockerignore
 
 # --- Docker Configs ---
