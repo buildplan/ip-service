@@ -28,6 +28,7 @@ yarn-error.log
 docker-compose.yml
 docker-compose-prod.yml
 Dockerfile
+nodhi.Dockerfile
 
 # --- OS & Editor Junk ---
 .DS_Store

@@ -1,0 +1,31 @@
+services:
+  ip-echo:
+#    build: .
+    image: ghcr.io/buildplan/ip-service:latest
+    container_name: ip-echo
+    restart: unless-stopped
+    user: "node"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    ports:
+      - "127.0.0.1:4040:4040"
+    environment:
+      - NODE_ENV=production
+      - PORT=4040
+      - CROWDSEC_URL=http://crowdsec:8080
+      - CROWDSEC_API_KEY=${CROWDSEC_API_KEY}
+    networks:
+      - wa-net
+    volumes:
+      - ./ip_dbs:/app/db:ro
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+
+networks:
+  wa-net:
+    external: true

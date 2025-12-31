@@ -1,8 +1,10 @@
-# --- Production Docker Compose ---
-docker-compose-prod.yml
+# --- Production Docker/env files ---
+.env
+.env.*
 
 # --- Dependencies ---
 node_modules/
+
 
 # --- Heavy Databases (Download these on the server instead) ---
 ip_dbs/
