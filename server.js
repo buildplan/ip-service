@@ -1,5 +1,6 @@
 const express = require('express');
 const maxmind = require('maxmind');
+const axios = require('axios');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
 const cors = require('cors');
@@ -348,6 +349,16 @@ app.get('/api/reputation', async (req, res) => {
     }
     const result = await getReputation(ip);
     res.json(result);
+});
+
+// --- abuseipdb badge proxy ---
+app.get('/abuseip-badge.svg', async (req, res) => {
+    try {
+        const response = await axios.get('https://www.abuseipdb.com/contributor/259750.svg', { timeout: 2000, responseType: 'text' });
+        let svg = response.data;
+        svg = svg.replace( '<g style="font-weight: bold;', '<g fill="#cbd5e1" style="font-weight: bold;' );
+        res.setHeader('Content-Type', 'image/svg+xml'); res.setHeader('Cache-Control', 'public, max-age=10800'); res.send(svg);
+    } catch (err) { console.error('Badge Fetch Error:', err.message); res.status(500).send(''); }
 });
 
 // --- ROUTE: Terms & Privacy ---
