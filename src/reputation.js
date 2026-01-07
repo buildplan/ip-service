@@ -1,6 +1,17 @@
 const dns = require('dns').promises;
 const axios = require('axios');
 const net = require('net');
+const { LRUCache } = require('lru-cache'); // Optional: npm install lru-cache
+
+// In-Memory Cache to save API credits (Max 500 IPs, 1 hour TTL)
+const reputationCache = new LRUCache({
+    max: 500,
+    ttl: 1000 * 60 * 60,
+});
+
+// Circuit Breaker for AbuseIPDB
+let abuseIpdbExhausted = false;
+let abuseIpdbResetTime = 0;
 
 // --- 1. IN-MEMORY BLOCKLIST CACHE ---
 let maliciousIpSet = new Set();
@@ -22,7 +33,6 @@ async function updateBlocklists() {
             for (const line of lines) {
                 const cleanLine = line.split('#')[0].trim();
                 if (!cleanLine) continue;
-                // Extract IP (handles CIDR /32)
                 const ipPart = cleanLine.split('/')[0];
                 if (net.isIP(ipPart)) {
                     newSet.add(ipPart);
@@ -40,7 +50,7 @@ async function updateBlocklists() {
     }
 }
 
-// Initial load & Schedule
+// Initial load & Schedule (Every 12 hours)
 updateBlocklists();
 setInterval(updateBlocklists, 12 * 60 * 60 * 1000);
 
@@ -59,7 +69,6 @@ function checkPublicBlocklists(ip) {
 }
 
 async function checkDNSBL(ip) {
-    // SpamCop/DroneBL do not support IPv6
     if (net.isIPv6(ip)) return [];
 
     const reversed = ip.split('.').reverse().join('.');
@@ -89,9 +98,7 @@ async function checkCrowdSec(ip) {
 
         if (!apiKey) return null;
 
-        // Encode IP properly for URL
         const encodedIp = encodeURIComponent(ip);
-
         const res = await axios.get(`${apiUrl}/v1/decisions?ip=${encodedIp}`, {
             headers: { 'X-Api-Key': apiKey },
             timeout: 2000
@@ -107,9 +114,50 @@ async function checkCrowdSec(ip) {
         }
         return null;
     } catch (err) {
-        // CHANGE THIS PART:
-        console.error("❌ CrowdSec Error:", err.message); // Log the specific error
-        if (err.response) console.error("   Response:", err.response.status, err.response.data);
+        console.error("❌ CrowdSec Error:", err.message);
+        return null;
+    }
+}
+
+async function checkAbuseIPDB(ip) {
+    // 1. Check Circuit Breaker
+    if (abuseIpdbExhausted) {
+        if (Date.now() > abuseIpdbResetTime) {
+            abuseIpdbExhausted = false; // Reset if time passed
+            console.log("🟢 AbuseIPDB Circuit Breaker Reset - Trying again.");
+        } else {
+            return null; // Skip silently
+        }
+    }
+
+    try {
+        const apiKey = process.env.ABUSEIPDB_API_KEY;
+        if (!apiKey) return null;
+
+        const res = await axios.get('https://api.abuseipdb.com/api/v2/check', {
+            params: { ipAddress: ip, maxAgeInDays: 90, verbose: '' },
+            headers: { 'Key': apiKey, 'Accept': 'application/json' },
+            timeout: 3000
+        });
+
+        const data = res.data.data;
+        if (data.abuseConfidenceScore > 0) {
+            return {
+                source: 'AbuseIPDB',
+                status: 'REPORTED',
+                reason: `Confidence Score: ${data.abuseConfidenceScore}% (${data.totalReports} reports)`
+            };
+        }
+        return null;
+
+    } catch (err) {
+        if (err.response && err.response.status === 429) {
+            console.warn("⚠️ AbuseIPDB Daily Limit Reached. Pausing checks for 6 hours.");
+            abuseIpdbExhausted = true;
+            abuseIpdbResetTime = Date.now() + (6 * 60 * 60 * 1000); // Wait 6 hours
+        } else {
+            console.error("❌ AbuseIPDB Error:", err.message);
+        }
         return null;
     }
 }
@@ -118,23 +166,35 @@ async function checkCrowdSec(ip) {
 module.exports = async function getReputation(ip) {
     if (!net.isIP(ip)) return { ip, error: "Invalid IP" };
 
-    // 1. Check Memory (Instant)
+    // 1. Check Cache First (Saves API Credits)
+    if (reputationCache.has(ip)) {
+        return reputationCache.get(ip);
+    }
+
+    // 2. Check Memory Blocklists (Instant)
     const blocklistResult = checkPublicBlocklists(ip);
 
-    // 2. Check External (Async)
-    const [dnsblMatches, crowdsecMatch] = await Promise.all([
+    // 3. Check External APIs (Async)
+    const [dnsblMatches, crowdsecMatch, abuseIpdbMatch] = await Promise.all([
         checkDNSBL(ip),
-        checkCrowdSec(ip)
+        checkCrowdSec(ip),
+        checkAbuseIPDB(ip)
     ]);
 
-    // 3. Combine Results
+    // 4. Combine Results
     const detections = [...dnsblMatches];
     if (blocklistResult) detections.push(blocklistResult);
     if (crowdsecMatch) detections.push(crowdsecMatch);
+    if (abuseIpdbMatch) detections.push(abuseIpdbMatch);
 
-    return {
+    const result = {
         ip,
         is_clean: detections.length === 0,
         detections
     };
+
+    // 5. Store in Cache
+    reputationCache.set(ip, result);
+
+    return result;
 };
