@@ -107,9 +107,51 @@ async function checkCrowdSec(ip) {
         }
         return null;
     } catch (err) {
-        // CHANGE THIS PART:
-        console.error("❌ CrowdSec Error:", err.message); // Log the specific error
+        console.error("❌ CrowdSec Error:", err.message);
         if (err.response) console.error("   Response:", err.response.status, err.response.data);
+        return null;
+    }
+}
+
+// --- ABUSEIPDB CHECKER ---
+async function checkAbuseIPDB(ip) {
+    try {
+        const apiKey = process.env.ABUSEIPDB_API_KEY;
+        if (!apiKey) return null;
+
+        // AbuseIPDB API v2 Check Endpoint
+        // Docs: https://docs.abuseipdb.com/#check-endpoint
+        const res = await axios.get('https://api.abuseipdb.com/api/v2/check', {
+            params: {
+                ipAddress: ip,
+                maxAgeInDays: 90,
+                verbose: ''
+            },
+            headers: {
+                'Key': apiKey,
+                'Accept': 'application/json'
+            },
+            timeout: 3000 // 3s timeout
+        });
+
+        const data = res.data.data;
+
+        // If abuse score is greater than 0, flag it.
+        if (data.abuseConfidenceScore > 0) {
+            return {
+                source: 'AbuseIPDB',
+                status: 'REPORTED',
+                // Example: "Confidence Score: 100% (25 reports)"
+                reason: `Confidence Score: ${data.abuseConfidenceScore}% (${data.totalReports} reports)`
+            };
+        }
+        return null;
+
+    } catch (err) {
+        console.error("❌ AbuseIPDB Error:", err.message);
+        if (err.response && err.response.status === 429) {
+            console.warn("   ⚠️ AbuseIPDB Rate Limit Exceeded");
+        }
         return null;
     }
 }
@@ -118,19 +160,21 @@ async function checkCrowdSec(ip) {
 module.exports = async function getReputation(ip) {
     if (!net.isIP(ip)) return { ip, error: "Invalid IP" };
 
-    // 1. Check Memory (Instant)
+    // Check Memory (Instant)
     const blocklistResult = checkPublicBlocklists(ip);
 
-    // 2. Check External (Async)
-    const [dnsblMatches, crowdsecMatch] = await Promise.all([
+    // Check External (Async - Parallel)
+    const [dnsblMatches, crowdsecMatch, abuseIpdbMatch] = await Promise.all([
         checkDNSBL(ip),
-        checkCrowdSec(ip)
+        checkCrowdSec(ip),
+        checkAbuseIPDB(ip)
     ]);
 
     // 3. Combine Results
     const detections = [...dnsblMatches];
     if (blocklistResult) detections.push(blocklistResult);
     if (crowdsecMatch) detections.push(crowdsecMatch);
+    if (abuseIpdbMatch) detections.push(abuseIpdbMatch);
 
     return {
         ip,
