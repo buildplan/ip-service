@@ -1,15 +1,16 @@
 const dns = require('dns').promises;
 const axios = require('axios');
 const net = require('net');
-const { LRUCache } = require('lru-cache'); // Optional: npm install lru-cache
+const { LRUCache } = require('lru-cache');
 
-// In-Memory Cache to save API credits (Max 500 IPs, 1 hour TTL)
+// --- CONFIGURATION ---
+// Cache: Max 500 IPs, 1 hour TTL to save API credits
 const reputationCache = new LRUCache({
     max: 500,
     ttl: 1000 * 60 * 60,
 });
 
-// Circuit Breaker for AbuseIPDB
+// Circuit Breaker for AbuseIPDB (Prevents spamming if quota exceeded)
 let abuseIpdbExhausted = false;
 let abuseIpdbResetTime = 0;
 
@@ -50,7 +51,23 @@ async function updateBlocklists() {
     }
 }
 
+// --- STARTUP CHECKS ---
+function checkApiStatus() {
+    if (process.env.CROWDSEC_API_KEY) {
+        console.log('✅ CrowdSec API enabled');
+    } else {
+        console.log('⚪ CrowdSec API not configured (Skipping)');
+    }
+
+    if (process.env.ABUSEIPDB_API_KEY) {
+        console.log('✅ AbuseIPDB API enabled');
+    } else {
+        console.log('⚪ AbuseIPDB API not configured (Skipping)');
+    }
+}
+
 // Initial load & Schedule (Every 12 hours)
+checkApiStatus();
 updateBlocklists();
 setInterval(updateBlocklists, 12 * 60 * 60 * 1000);
 
@@ -141,6 +158,7 @@ async function checkAbuseIPDB(ip) {
         });
 
         const data = res.data.data;
+        // AbuseIPDB score from 0-100. flag anything > 0.
         if (data.abuseConfidenceScore > 0) {
             return {
                 source: 'AbuseIPDB',
