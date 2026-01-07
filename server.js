@@ -74,7 +74,7 @@ function getGeoData(ip) {
 		'Hydra Communications', 'Strong Technology', 'Powerhouse Management', 'Proton', 'Mullvad', 'NordVPN', 'Surfshark', 'ExpressVPN',
 		'CyberGhost', 'Windscribe', 'TunnelBear', 'ZenMate', 'Private Internet Access', 'HideMyAss', 'QuadraNet', 'Psychz', 'ColoCrossing',
 		'NFOrce', 'i3D.net', 'Melbicom', 'Green Floid', 'LogicWeb', 'Creanova', 'EstNOC', 'Ip-Only', 'GSL Networks', 'Tzulo', 'ReliableSite',
-		'Feral Hosting', 'Spine Telecom', 'Anexia', 'HostRoyale'
+		'Feral Hosting', 'Spine Telecom', 'Anexia', 'HostRoyale', 'Keminet', 'Cablenet Communications', 'NovoServe'
             ],
             // MEDIUM: Budget/Offshore VPS (Often abused for VPNs, but distinct from Major Clouds)
             medium: [
