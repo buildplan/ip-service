@@ -4,11 +4,12 @@ An IP intelligence API and web service. It provides real-time geolocation, ISP/A
 
 ## Features
 
-* **Dual Interface:** Web UI for humans, JSON/Text API for scripts (`curl`/`wget`).
+* **Dual Interface:** Web UI for human users and a JSON/Text API for automated scripts (`curl`/`wget`).
 * **Deep Risk Analysis:** Detects VPNs, Datacenters, Tor Exit Nodes, and Public Proxies.
-* **Smart Labeling:** Distinguishes between "Safe Cloud" (AWS/Oracle) and "High Risk" (VPN Hosting) infrastructure.
-* **Privacy First:** Runs entirely in-memory. Zero logging of user IP addresses.
-* **Dockerized:** Simple deployment with `docker compose`.
+* **Integrated Threat Intelligence:** Aggregates real-time reputation data from CrowdSec, AbuseIPDB, GreenSnow, FireHOL, and SpamCop.
+* **Smart Labeling:** Distinguishes between "Safe Cloud" infrastructure (e.g., AWS/Oracle content delivery) and high-risk VPN/Proxy hosting.
+* **Privacy First:** Engineered to run entirely in-memory with zero logging of user IP addresses.
+* **Dockerized:** Simplified deployment using `docker compose`.
 
 ## Usage
 
@@ -18,32 +19,55 @@ Visit the homepage, [ip.wiredalter.com](https://ip.wiredalter.com) to see your o
 
 ### CLI / API Access
 
-Developers can use standard tools to fetch data:
+Developers and system administrators can use standard command-line tools to fetch data.
+
+**Plain Text (IP Address Only):**
+Returns the detected public IP address as a string.
 
 ```bash
-# Get plain text IP
 curl ip.wiredalter.com
+```
 
-# Get full JSON data
+**JSON Output (Full Metadata):**
+Returns a complete data object containing location, network, and threat intelligence details.
+
+```bash
 curl ip.wiredalter.com/json
+```
+
+**Manual IP Lookup:**
+Append `?ip=` to query a specific address.
+
+```bash
+curl "ip.wiredalter.com/json?ip=8.8.8.8"
 ```
 
 **Example JSON Response:**
 
 ```json
 {
-  "ip": "1.1.1.1",
-  "country": "Australia",
-  "city": "Brisbane",
-  "asn": "AS13335",
-  "org": "Cloudflare, Inc.",
-  "usage_type": "Cloud Infrastructure",
+  "ip": "8.8.8.8",
+  "country": "United States",
+  "city": "Mountain View",
+  "region": "California",
+  "timezone": "America/Chicago",
+  "coordinates": "37.751, -97.822",
+  "latitude": 37.751,
+  "longitude": -97.822,
+  "zip": "N/A",
+  "asn": "AS15169",
+  "org": "GOOGLE",
   "is_proxy": false,
-  "threat": "None"
+  "proxy_type": "No",
+  "usage_type": "Cloud Infrastructure",
+  "threat": "None",
+  "provider": "N/A"
 }
 ```
 
 ## Installation (Self-Hosted)
+
+### Prerequisites
 
 1. **Clone the repository:**
 
@@ -54,26 +78,32 @@ cd ip-service
 
 2. **Download Databases:**
 
-You must place the following databases in the `ip_dbs/` folder:
+The service requires the following database files to be placed in the `ip_dbs/` directory:
 
 * `GeoLite2-City.mmdb` (MaxMind)
 * `GeoLite2-ASN.mmdb` (MaxMind)
 * `IP2LOCATION-LITE-DB11.IPV6.BIN` (IP2Location)
 * `IP2PROXY-LITE-PX11.IPV6.BIN` (IP2Location)
 
-3. **Run with Docker:**
+### Deployment
 
-**Option 1: Quick Start**: Default Docker compose file in the repo uses pre-build image from the files in this repo `ghcr.io/buildplan/ip-service:latest`
+**Option 1: Quick Start (Pre-built Image)**
+Uses the pre-built image from the container registry. Ideal for quick deployment without modification.
+
+1. Create a `docker-compose.yml` file or use the default provided in the repo.
+2. Start the service:
 
 ```bash
 docker compose up -d
-
 ```
 
-**Option 2: Build from Source** To build the image locally, edit `docker-compose.yml` to use `build: .` instead of `image: ...`. This is useful if you want to modify the frontend (e.g., branding, colors, or layout). Docker hardened node image is used in the `Dockerfile` in this repo. If you building locally login to dhi.io (`docker login dhi.io`) or Change the Dockerfile to `nodhi.Dockerfile`.
+**Option 2: Build from Source**
+Build the image locally. This is required if you wish to modify the frontend templates (e.g., `views/index.html`) or backend logic.
 
-1. **Customize the UI (Optional):** You can edit `views/index.html` to change the look and feel of the service before building.
-2. **Edit `docker-compose.yml`:**
+1. Edit `docker-compose.yml` to use `build: .` instead of the remote image.
+2. Configure your environment variables for Threat Intelligence APIs (optional but recommended).
+
+**Example `docker-compose.yml` configuration:**
 
 ```bash
 services:
@@ -98,6 +128,9 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=4040
+      # Optional: Add API keys for enhanced threat intelligence
+      - ABUSEIPDB_API_KEY=your_key_here
+      - CROWDSEC_API_KEY=your_key_here
     
     # Map DBs exactly where the code looks (/app/db)
     # Ensure you have the 'ip_dbs' folder populated locally!
@@ -140,5 +173,6 @@ docker compose up -d --build
 
 This project is licensed under the **MIT License**.
 
-This product includes GeoLite2 data created by MaxMind, available from [https://www.maxmind.com](https://www.maxmind.com).  
-This product uses IP2Location LITE data available from [https://lite.ip2location.com](https://lite.ip2location.com).
+* This product includes GeoLite2 data created by MaxMind, available from [https://www.maxmind.com](https://www.maxmind.com).
+* This product uses IP2Location LITE data available from [https://lite.ip2location.com](https://lite.ip2location.com).
+* Threat intelligence data aggregated from [CrowdSec](https://www.crowdsec.net/), [AbuseIPDB](https://www.abuseipdb.com/), GreenSnow, FireHOL, and SpamCop.
