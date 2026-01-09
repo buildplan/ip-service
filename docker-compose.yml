@@ -1,7 +1,7 @@
 services:
   ip-echo:
-#    build: .
-    image: ghcr.io/buildplan/ip-service:latest
+    build: .
+#    image: ghcr.io/buildplan/ip-service:latest
     container_name: ip-echo
     restart: unless-stopped
     user: "node"
@@ -14,6 +14,9 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=4040
+      - CROWDSEC_URL=http://crowdsec:8080
+      - CROWDSEC_API_KEY=${CROWDSEC_API_KEY}
+      - ABUSEIPDB_API_KEY=${ABUSEIPDB_API_KEY}
     volumes:
       - ./ip_dbs:/app/db:ro
     deploy:

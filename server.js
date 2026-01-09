@@ -1,3 +1,4 @@
+BigInt.prototype.toJSON = function() { return this.toString() }
 const express = require('express');
 const maxmind = require('maxmind');
 const axios = require('axios');
