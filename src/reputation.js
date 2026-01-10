@@ -4,17 +4,21 @@ const net = require('net');
 const { LRUCache } = require('lru-cache');
 
 // --- CONFIGURATION ---
-// Cache: Max 500 IPs, 1 hour TTL to save API credits
+// Cache: Max 1000 IPs, 3 hour TTL
 const reputationCache = new LRUCache({
-    max: 500,
-    ttl: 1000 * 60 * 60,
+    max: 1000,
+    ttl: 3 * 60 * 60 * 1000,
 });
 
-// Circuit Breakers
+// --- CIRCUIT BREAKERS ---
 let abuseIpdbExhausted = false;
 let abuseIpdbResetTime = 0;
+
 let sniffCatExhausted = false;
 let sniffCatResetTime = 0;
+
+let spamVerifyExhausted = false;
+let spamVerifyResetTime = 0;
 
 // --- 1. IN-MEMORY BLOCKLIST CACHE ---
 let maliciousIpSet = new Set();
@@ -56,22 +60,17 @@ async function updateBlocklists() {
 
 // --- STARTUP CHECKS ---
 function checkApiStatus() {
-    if (process.env.CROWDSEC_API_KEY) {
-        console.log('✅ CrowdSec API enabled');
-    } else {
-        console.log('⚪ CrowdSec API not configured (Skipping)');
-    }
+    const apis = [
+        { name: 'CrowdSec', key: process.env.CROWDSEC_API_KEY },
+        { name: 'AbuseIPDB', key: process.env.ABUSEIPDB_API_KEY },
+        { name: 'SniffCat', key: process.env.SNIFFCAT_API_KEY },
+        { name: 'SpamVerify', key: process.env.SPAMVERIFY_API_KEY }
+    ];
 
-    if (process.env.ABUSEIPDB_API_KEY) {
-        console.log('✅ AbuseIPDB API enabled');
-    } else {
-        console.log('⚪ AbuseIPDB API not configured (Skipping)');
-    }
-    if (process.env.SNIFFCAT_API_KEY) {
-        console.log('✅ SniffCat API enabled');
-    } else {
-        console.log('⚪ SniffCat API not configured (Skipping)');
-    }
+    apis.forEach(api => {
+        if (api.key) console.log(`✅ ${api.name} API enabled`);
+        else console.log(`⚪ ${api.name} API not configured (Skipping)`);
+    });
 }
 
 // Initial load & Schedule (Every 3 hours)
@@ -144,6 +143,8 @@ async function checkCrowdSec(ip) {
     }
 }
 
+// --- EXTERNAL API CHECKERS ---
+
 async function checkSniffCat(ip) {
     if (sniffCatExhausted) {
         if (Date.now() > sniffCatResetTime) {
@@ -180,6 +181,63 @@ async function checkSniffCat(ip) {
         } else {
              console.error("❌ SniffCat Error:", err.message);
         }
+    }
+    return null;
+}
+
+async function checkSpamVerify(ip) {
+    if (spamVerifyExhausted) {
+        if (Date.now() > spamVerifyResetTime) {
+            spamVerifyExhausted = false;
+            console.log("🟢 SpamVerify Circuit Breaker Reset - Trying again.");
+        } else {
+            return null;
+        }
+    }
+
+    try {
+        const apiKey = process.env.SPAMVERIFY_API_KEY;
+        if (!apiKey) return null;
+
+        const res = await axios.get(`https://api.spamverify.com/v1/check/ip/ip`, {
+            params: {
+                ip_address: ip,
+                days: 365,
+                limit: 10,
+                include_reports: 'true'
+            },
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Accept': 'application/json'
+            },
+            timeout: 4000
+        });
+
+        const ipData = res.data.ip;
+        const reports = res.data.reports || [];
+
+        const score = ipData ? ipData.threat_score : 0;
+        const reportCount = reports.length;
+
+        if (score > 0 || reportCount > 0) {
+            let reasonStr = '';
+            if (score > 0) reasonStr = `Threat Score: ${score}`;
+            else reasonStr = `Recent Reports: ${reportCount}`;
+
+            return {
+                source: 'SpamVerify',
+                status: 'REPORTED',
+                reason: `${reasonStr} (${ipData.statistics.total_reports || reportCount} total reports)`
+            };
+        }
+
+    } catch (err) {
+        if (err.response && err.response.status === 429) {
+            console.warn("⚠️ SpamVerify Limit Reached. Pausing for 12 hours.");
+            spamVerifyExhausted = true;
+            spamVerifyResetTime = Date.now() + (12 * 60 * 60 * 1000);
+        }
+        console.error("SpamVerify Error", err.message);
     }
     return null;
 }
@@ -240,11 +298,12 @@ module.exports = async function getReputation(ip) {
     const blocklistResult = checkPublicBlocklists(ip);
 
     // 3. Check External APIs (Async)
-    const [dnsblMatches, crowdsecMatch, abuseIpdbMatch, sniffCatMatch] = await Promise.all([
+    const [dnsblMatches, crowdsecMatch, abuseIpdbMatch, sniffCatMatch, spamVerifyMatch] = await Promise.all([
         checkDNSBL(ip),
         checkCrowdSec(ip),
         checkAbuseIPDB(ip),
-        checkSniffCat(ip)
+        checkSniffCat(ip),
+        checkSpamVerify(ip)
     ]);
 
     // 4. Combine Results
@@ -253,6 +312,7 @@ module.exports = async function getReputation(ip) {
     if (crowdsecMatch) detections.push(crowdsecMatch);
     if (abuseIpdbMatch) detections.push(abuseIpdbMatch);
     if (sniffCatMatch) detections.push(sniffCatMatch);
+    if (spamVerifyMatch) detections.push(spamVerifyMatch);
 
     const result = {
         ip,

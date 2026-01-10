@@ -18,6 +18,7 @@ services:
       - CROWDSEC_API_KEY=${CROWDSEC_API_KEY}
       - ABUSEIPDB_API_KEY=${ABUSEIPDB_API_KEY}
       - SNIFFCAT_API_KEY=${SNIFFCAT_API_KEY}
+      - SPAMVERIFY_API_KEY=${SPAMVERIFY_API_KEY}
     networks:
       - wa-net
     volumes:
