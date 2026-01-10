@@ -199,18 +199,18 @@ async function checkSpamVerify(ip) {
         const apiKey = process.env.SPAMVERIFY_API_KEY;
         if (!apiKey) return null;
 
-        const res = await axios.get(`https://api.spamverify.com/v1/check/ip/ip`, {
+        const res = await axios.get(`https://api.spamverify.com/v1/check/ip/${ip}`, {
             params: {
-                ip_address: ip,
                 days: 365,
                 limit: 10,
-                include_reports: 'true'
+                include_hierarchy: 'true',
+                include_reports: 'true',
+                api_key: apiKey
             },
             headers: {
-                'Authorization': `Bearer ${apiKey}`,
                 'Accept': 'application/json'
             },
-            timeout: 4000
+            timeout: 5000
         });
 
         const ipData = res.data.ip;
@@ -227,7 +227,7 @@ async function checkSpamVerify(ip) {
             return {
                 source: 'SpamVerify',
                 status: 'REPORTED',
-                reason: `${reasonStr} (${ipData.statistics.total_reports || reportCount} total reports)`
+                reason: `${reasonStr} (${ipData.statistics?.total_reports || reportCount} total reports)`
             };
         }
 
@@ -236,8 +236,9 @@ async function checkSpamVerify(ip) {
             console.warn("⚠️ SpamVerify Limit Reached. Pausing for 12 hours.");
             spamVerifyExhausted = true;
             spamVerifyResetTime = Date.now() + (12 * 60 * 60 * 1000);
+        } else {
+            console.error(`❌ SpamVerify Error (${err.response?.status || 'Unknown'}):`, err.message);
         }
-        console.error("SpamVerify Error", err.message);
     }
     return null;
 }
