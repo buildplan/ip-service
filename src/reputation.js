@@ -10,9 +10,11 @@ const reputationCache = new LRUCache({
     ttl: 1000 * 60 * 60,
 });
 
-// Circuit Breaker for AbuseIPDB (Prevents spamming if quota exceeded)
+// Circuit Breakers
 let abuseIpdbExhausted = false;
 let abuseIpdbResetTime = 0;
+let sniffCatExhausted = false;
+let sniffCatResetTime = 0;
 
 // --- 1. IN-MEMORY BLOCKLIST CACHE ---
 let maliciousIpSet = new Set();
@@ -65,9 +67,14 @@ function checkApiStatus() {
     } else {
         console.log('⚪ AbuseIPDB API not configured (Skipping)');
     }
+    if (process.env.SNIFFCAT_API_KEY) {
+        console.log('✅ SniffCat API enabled');
+    } else {
+        console.log('⚪ SniffCat API not configured (Skipping)');
+    }
 }
 
-// Initial load & Schedule (Every 12 hours)
+// Initial load & Schedule (Every 3 hours)
 checkApiStatus();
 updateBlocklists();
 setInterval(updateBlocklists, 3 * 60 * 60 * 1000);
@@ -137,8 +144,47 @@ async function checkCrowdSec(ip) {
     }
 }
 
+async function checkSniffCat(ip) {
+    if (sniffCatExhausted) {
+        if (Date.now() > sniffCatResetTime) {
+            sniffCatExhausted = false;
+            console.log("🟢 SniffCat Circuit Breaker Reset - Trying again.");
+        } else {
+            return null;
+        }
+    }
+
+    try {
+        const apiKey = process.env.SNIFFCAT_API_KEY;
+        if (!apiKey) return null;
+
+        const res = await axios.get(`https://api.sniffcat.com/api/v1/check?ip=${ip}`, {
+            headers: { 'X-Secret-Token': apiKey },
+            timeout: 4000
+        });
+
+        const data = res.data;
+
+        if (data.abuse_score > 0) {
+            return {
+                source: 'SniffCat',
+                status: 'REPORTED',
+                reason: `Abuse Score: ${data.abuse_score}%`
+            };
+        }
+    } catch (err) {
+        if (err.response && err.response.status === 429) {
+            console.warn("⚠️ SniffCat Rate Limit Reached. Pausing checks for 1 hour.");
+            sniffCatExhausted = true;
+            sniffCatResetTime = Date.now() + (60 * 60 * 1000);
+        } else {
+             console.error("❌ SniffCat Error:", err.message);
+        }
+    }
+    return null;
+}
+
 async function checkAbuseIPDB(ip) {
-    // 1. Check Circuit Breaker
     if (abuseIpdbExhausted) {
         if (Date.now() > abuseIpdbResetTime) {
             abuseIpdbExhausted = false; // Reset if time passed
@@ -194,10 +240,11 @@ module.exports = async function getReputation(ip) {
     const blocklistResult = checkPublicBlocklists(ip);
 
     // 3. Check External APIs (Async)
-    const [dnsblMatches, crowdsecMatch, abuseIpdbMatch] = await Promise.all([
+    const [dnsblMatches, crowdsecMatch, abuseIpdbMatch, sniffCatMatch] = await Promise.all([
         checkDNSBL(ip),
         checkCrowdSec(ip),
-        checkAbuseIPDB(ip)
+        checkAbuseIPDB(ip),
+        checkSniffCat(ip)
     ]);
 
     // 4. Combine Results
@@ -205,6 +252,7 @@ module.exports = async function getReputation(ip) {
     if (blocklistResult) detections.push(blocklistResult);
     if (crowdsecMatch) detections.push(crowdsecMatch);
     if (abuseIpdbMatch) detections.push(abuseIpdbMatch);
+    if (sniffCatMatch) detections.push(sniffCatMatch);
 
     const result = {
         ip,
