@@ -20,6 +20,7 @@ let maliciousIpSet = new Set();
 const BLOCKLIST_SOURCES = [
     'https://blocklist.greensnow.co/greensnow.txt',
     'https://lists.blocklist.de/lists/all.txt',
+    'https://raw.githubusercontent.com/sefinek/Malicious-IP-Addresses/main/lists/main.txt',
     'https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/firehol_level1.netset'
 ];
 
@@ -69,7 +70,7 @@ function checkApiStatus() {
 // Initial load & Schedule (Every 12 hours)
 checkApiStatus();
 updateBlocklists();
-setInterval(updateBlocklists, 12 * 60 * 60 * 1000);
+setInterval(updateBlocklists, 3 * 60 * 60 * 1000);
 
 
 // --- 2. CHECKERS ---
@@ -79,7 +80,7 @@ function checkPublicBlocklists(ip) {
         return {
             source: 'Threat Feed',
             status: 'LISTED',
-            reason: 'Known Attacker (GreenSnow/FireHOL)'
+            reason: 'Known Attacker (Sefinek/GreenSnow/FireHOL)'
         };
     }
     return null;
