@@ -4,21 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <title>WiredAlter IP Address & VPN Lookup</title>
-    <meta name="description" content="Free IP lookup with geolocation, ISP, ASN and time zone details, plus VPN/proxy and datacentre detection. Use in browser or via curl/wget (JSON/text).">
-    <meta name="keywords" content="what is my ip, ip lookup, ip address lookup, ip echo, curl ip, vpn detector, proxy check, ip geolocation, asn lookup, developer api, wiredalter">
+    <title>What Is My IP? Free Address, VPN & Proxy Lookup (API/CLI) - WiredAlter</title>
+
+    <meta name="robots" content="index, follow">
+    <meta name="description" content="Instant IP address lookup with ISP, ASN, and location details. Detects VPNs, Proxies, and Tor nodes. Developer-friendly API supports curl, wget, and JSON output.">
+    <meta name="keywords" content="what is my ip, ip lookup, vpn detector, proxy check, asn lookup, curl ip, wget ip, developer api, ip reputation, ip geolocation">
     <meta name="author" content="WiredAlter">
     <link rel="canonical" href="https://ip.wiredalter.com/">
+    <meta name="theme-color" content="#0b1120">
 
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://ip.wiredalter.com/">
-    <meta property="og:title" content="WiredAlter IP - Professional IP Intelligence">
-    <meta property="og:description" content="IP geolocation, ISP / ASN, time zone, and VPN / proxy / datacentre checks. Browser and CLI (curl / wget) output.">
+    <meta property="og:title" content="What Is My IP? Advanced VPN & Threat Detection">
+    <meta property="og:description" content="Free IP intelligence tool. Check Geolocation, ISP, ASN, and detect active VPNs/Proxies. Supports CLI access via curl/wget.">
     <meta property="og:image" content="https://ip.wiredalter.com/preview-image.png">
     
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="WiredAlter IP Lookup">
-    <meta name="twitter:description" content="IP geolocation, ISP/ASN, time zone, and VPN/proxy checks.">
+    <meta name="twitter:title" content="WiredAlter IP & Threat Lookup">
+    <meta name="twitter:description" content="Developer-first IP lookup. Detect VPNs, proxies, and threats instantly via Web or CLI.">
     <meta name="twitter:image" content="https://ip.wiredalter.com/preview-image.png">
 
     <link rel="icon" type="image/x-icon" href="/favicon/favicon.ico">
@@ -39,16 +42,19 @@
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "SoftwareApplication",
+      "@type": "WebApplication",
       "name": "WiredAlter IP Lookup",
+      "url": "https://ip.wiredalter.com",
       "applicationCategory": "DeveloperApplication",
-      "operatingSystem": "Web",
+      "operatingSystem": "Any",
+      "browserRequirements": "Requires JavaScript",
       "offers": {
         "@type": "Offer",
         "price": "0",
         "priceCurrency": "USD"
       },
-      "description": "A professional tool for IP address lookup, VPN detection, and ISP intelligence."
+      "description": "A professional tool for IP address lookup, VPN detection, and ISP intelligence.",
+      "featureList": "IP Geolocation, VPN Detection, Proxy Detection, ASN Lookup, CLI Support (curl/wget), JSON API"
     }
     </script>
 
@@ -298,17 +304,17 @@
                     <p class="font-bold text-slate-400 uppercase tracking-wider mb-1">Threat Intelligence</p>
                     <p>
                         Real-time reputation analysis aggregated from 
-                        <a href="https://crowdsec.net" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">CrowdSec</a>, 
-                        <a href="https://blocklist.greensnow.co/" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">GreenSnow</a>, 
-                        <a href="https://firehol.org/" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">FireHOL</a>, 
-                        <a href="https://www.spamcop.net/" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">SpamCop</a>, 
-                        <a href="https://www.abuseipdb.com/" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">AbuseIPDB</a>, 
-                        <a href="https://spamverify.com/" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">SpamVerify</a>, 
-                        <a href="https://sniffcat.com/" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">SniffCat</a>, 
-                        and <a href="https://github.com/sefinek/Malicious-IP-Addresses" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">Sefinek</a>.
+                        <a href="https://crowdsec.net" rel="nofollow" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">CrowdSec</a>, 
+                        <a href="https://blocklist.greensnow.co/" rel="nofollow" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">GreenSnow</a>, 
+                        <a href="https://firehol.org/" rel="nofollow" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">FireHOL</a>, 
+                        <a href="https://www.spamcop.net/" rel="nofollow" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">SpamCop</a>, 
+                        <a href="https://www.abuseipdb.com/" rel="nofollow" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">AbuseIPDB</a>, 
+                        <a href="https://spamverify.com/" rel="nofollow" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">SpamVerify</a>, 
+                        <a href="https://sniffcat.com/" rel="nofollow" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">SniffCat</a>, 
+                        and <a href="https://github.com/sefinek/Malicious-IP-Addresses" rel="nofollow" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">Sefinek</a>.
                     </p>
                     <div class="pt-3">
-                        <a href="https://www.abuseipdb.com/user/259750" target="_blank" title="AbuseIPDB Contributor" 
+                        <a href="https://www.abuseipdb.com/user/259750" rel="nofollow" target="_blank" title="AbuseIPDB Contributor" 
                             class="group inline-flex items-center justify-center rounded-xl bg-slate-800/40 p-3 border border-slate-700/50 shadow-md shadow-black/30 backdrop-blur-sm hover:bg-slate-700/60 hover:border-slate-500/50 transition-all duration-300">
                             <img src="/abuseip-badge.svg" alt="AbuseIPDB Contributor Badge" 
                                  class="w-[180px] h-auto opacity-85 group-hover:opacity-100 transition-opacity">
@@ -319,8 +325,8 @@
                 <div class="space-y-2">
                     <p class="font-bold text-slate-400 uppercase tracking-wider mb-1">Infrastructure & Mapping</p>
                     <p>
-                        Map data &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">OpenStreetMap</a> contributors.
-                        Rendered via <a href="https://leafletjs.com" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">Leaflet</a>.
+                        Map data &copy; <a href="https://www.openstreetmap.org/copyright" rel="nofollow" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">OpenStreetMap</a> contributors.
+                        Rendered via <a href="https://leafletjs.com" rel="nofollow" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">Leaflet</a>.
                     </p>
                     <p>
                         Powered by Node.js & WiredAlter Cloud.
