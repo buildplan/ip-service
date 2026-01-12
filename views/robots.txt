@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://ip.wiredalter.com/sitemap.xml
