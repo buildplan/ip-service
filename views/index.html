@@ -368,30 +368,33 @@
         <div class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity opacity-0" id="rep-modal-backdrop"></div>
         <div class="fixed inset-0 z-10 overflow-y-auto">
             <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
-                <div class="relative transform overflow-hidden rounded-2xl bg-[#0f172a] border border-slate-700 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg opacity-0 scale-95" id="rep-modal-panel">
-                    <div class="bg-slate-800/50 px-4 py-3 sm:px-6 border-b border-slate-700/50 flex justify-between items-center">
-                        <h3 class="text-base font-semibold leading-6 text-white" id="modal-title">Reputation Report</h3>
-                        <button onclick="closeReputationModal()" class="text-slate-400 hover:text-white transition-colors">
-                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                <div class="relative transform overflow-hidden rounded-2xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg opacity-0 scale-95" id="rep-modal-panel">
+                    <div class="bg-slate-50 dark:bg-slate-800/50 px-4 py-3 sm:px-6 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center">
+                        <h3 class="text-base font-semibold leading-6 text-slate-900 dark:text-white" id="modal-title">Reputation Report</h3>
+                        <button onclick="closeReputationModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
                         </button>
                     </div>
-                    <div class="px-4 py-5 sm:p-6"><div id="modal-content" class="space-y-4"></div>
-                        <div class="mt-6 pt-4 border-t border-slate-800 text-xs text-slate-500">
-                            <p class="font-semibold mb-1 uppercase tracking-wider">Databases Scanned:</p>
-                            <div class="flex flex-wrap gap-2">
-                                <span class="bg-slate-800 px-2 py-1 rounded">SpamCop</span>
-                                <span class="bg-slate-800 px-2 py-1 rounded">DroneBL</span>
-                                <span class="bg-slate-800 px-2 py-1 rounded">FireHOL L1</span>
-                                <span class="bg-slate-800 px-2 py-1 rounded">GreenSnow</span>
-                                <span class="bg-slate-800 px-2 py-1 rounded">CrowdSec</span>
-                                <span class="bg-slate-800 px-2 py-1 rounded">AbuseIPDB</span>
-                                <span class="bg-slate-800 px-2 py-1 rounded">SniffCat</span>
-                                <span class="bg-slate-800 px-2 py-1 rounded">SpamVerify</span>
-                                <span class="bg-slate-800 px-2 py-1 rounded">Sefinek</span>
+                    <div class="px-4 py-5 sm:p-6">
+                        <div id="modal-content" class="space-y-4"></div>
+                        <div class="mt-6 pt-4 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-500">
+                            <p class="font-semibold mb-1 uppercase tracking-wider text-slate-600 dark:text-slate-400">Databases Scanned:</p>
+                            <div class="flex flex-wrap gap-2 text-slate-600 dark:text-slate-300">
+                                <span class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-transparent px-2 py-1 rounded">SpamCop</span>
+                                <span class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-transparent px-2 py-1 rounded">DroneBL</span>
+                                <span class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-transparent px-2 py-1 rounded">FireHOL L1</span>
+                                <span class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-transparent px-2 py-1 rounded">GreenSnow</span>
+                                <span class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-transparent px-2 py-1 rounded">CrowdSec</span>
+                                <span class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-transparent px-2 py-1 rounded">AbuseIPDB</span>
+                                <span class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-transparent px-2 py-1 rounded">SniffCat</span>
+                                <span class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-transparent px-2 py-1 rounded">SpamVerify</span>
+                                <span class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-transparent px-2 py-1 rounded">Sefinek</span>
                             </div>
                         </div>
                     </div>
-                    <div class="bg-slate-800/30 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                    <div class="bg-slate-50 dark:bg-slate-800/30 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
                         <button type="button" onclick="closeReputationModal()" class="inline-flex w-full justify-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 sm:ml-3 sm:w-auto transition-all">Done</button>
                     </div>
                 </div>
@@ -426,7 +429,7 @@
     initTheme();
 
     const darkTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap &copy; CARTO', subdomains: 'abcd', maxZoom: 19
+        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>', subdomains: 'abcd', maxZoom: 19
     });
 
     const lightTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
@@ -632,25 +635,26 @@
         const panel = document.getElementById('rep-modal-panel');
 
         modal.classList.remove('hidden');
-        
+
         if (lastReputationResult.is_clean) {
             content.innerHTML = `
                 <div class="flex items-center gap-3 mb-4">
                     <div class="p-3 rounded-full bg-sky-500/10 border border-sky-500/20">
-                        <svg class="w-8 h-8 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <svg class="w-8 h-8 text-sky-600 dark:text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
                     </div>
                     <div>
-                        <h4 class="text-lg font-bold text-white">No Threats Detected</h4>
-                        <p class="text-sm text-slate-400">IP: <span class="font-mono text-sky-400">${lastReputationResult.ip}</span></p>
+                        <h4 class="text-lg font-bold text-slate-900 dark:text-white">No Threats Detected</h4>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">IP: <span class="font-mono text-sky-600 dark:text-sky-400">${lastReputationResult.ip}</span></p>
                     </div>
                 </div>
-                <div class="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
-                    <p class="text-sm text-slate-300 leading-relaxed">
+                <div class="p-4 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+                    <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                         This IP address was not found in any of our active threat intelligence feeds (Blocklists, Spam lists, or CrowdSec). 
                         <br><br>
-                        <span class="text-yellow-500/90 font-semibold">⚠️ Note:</span> 
-                        "No threats detected" does <strong>not</strong> guarantee safety. An IP can be malicious but not yet listed. 
-                        Always verify the context of the traffic.
+                        <span class="text-yellow-600 dark:text-yellow-500/90 font-semibold">⚠️ Note:</span> 
+                        "No threats detected" does <strong>not</strong> guarantee safety. An IP can be malicious but not yet listed.
                     </p>
                 </div>
             `;
@@ -658,12 +662,12 @@
             let listHtml = '';
             lastReputationResult.detections.forEach(det => {
                 listHtml += `
-                    <div class="p-3 rounded bg-red-900/10 border border-red-500/20 flex justify-between items-start">
+                    <div class="p-3 rounded bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-500/20 flex justify-between items-start">
                         <div>
-                            <span class="block font-bold text-red-400 text-sm">${det.source}</span>
-                            <span class="text-xs text-slate-400">${det.reason || 'Listed in blocklist'}</span>
+                            <span class="block font-bold text-red-600 dark:text-red-400 text-sm">${det.source}</span>
+                            <span class="text-xs text-slate-500 dark:text-slate-400">${det.reason || 'Listed in blocklist'}</span>
                         </div>
-                        <span class="px-2 py-0.5 bg-red-500/10 text-red-500 text-[10px] font-bold rounded uppercase border border-red-500/20">Listed</span>
+                        <span class="px-2 py-0.5 bg-red-100 dark:bg-red-500/10 text-red-600 dark:text-red-500 text-[10px] font-bold rounded uppercase border border-red-200 dark:border-red-500/20">Listed</span>
                     </div>
                 `;
             });
@@ -671,14 +675,16 @@
             content.innerHTML = `
                 <div class="flex items-center gap-3 mb-4">
                     <div class="p-3 rounded-full bg-red-500/10 border border-red-500/20">
-                        <svg class="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                        <svg class="w-8 h-8 text-red-600 dark:text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
                     </div>
                     <div>
-                        <h4 class="text-lg font-bold text-white">Threats Detected</h4>
-                        <p class="text-sm text-slate-400">IP: <span class="font-mono text-red-400">${lastReputationResult.ip}</span></p>
+                        <h4 class="text-lg font-bold text-slate-900 dark:text-white">Threats Detected</h4>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">IP: <span class="font-mono text-red-600 dark:text-red-400">${lastReputationResult.ip}</span></p>
                     </div>
                 </div>
-                <p class="text-sm text-slate-400 mb-2">The following security providers have flagged this IP:</p>
+                <p class="text-sm text-slate-600 dark:text-slate-400 mb-2">The following security providers have flagged this IP:</p>
                 <div class="space-y-2 max-h-60 overflow-y-auto custom-scrollbar pr-1">
                     ${listHtml}
                 </div>
