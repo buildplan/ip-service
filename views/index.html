@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <title>What Is My IP? Free Address, VPN & Proxy Lookup (API/CLI) - WiredAlter</title>
+    <title>What Is My IP Address? Free IP, VPN & Proxy Lookup (Web & CLI)</title>
 
     <meta name="robots" content="index, follow">
     <meta name="description" content="Instant IP address lookup with ISP, ASN, and location details. Detects VPNs, Proxies, and Tor nodes. Developer-friendly API supports curl, wget, and JSON output.">
@@ -37,6 +37,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: { colors: { wired: { dark: '#0b1120', light: '#f8fafc' }}}}}
+    </script>
+
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
@@ -61,43 +65,63 @@
 
     <style>
         html { scroll-behavior: smooth; }
-        body { font-family: 'Inter', sans-serif; }
+        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s, color 0.3s; }
         #map { height: 350px; width: 100%; border-radius: 0.75rem; z-index: 1; position: relative; }
-        .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-        .search-input { background: rgba(15, 23, 42, 0.8); transition: all 0.2s; }
-        .search-input:focus { background: rgba(30, 41, 59, 1); border-color: #3b82f6; outline: none; }
+        .glass-panel { backdrop-filter: blur(12px); transition: all 0.3s; }
+        html.dark .glass-panel { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        html:not(.dark) .glass-panel { background: rgba(255, 255, 255, 0.85); border: 1px solid rgba(203, 213, 225, 0.6); box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.05); }
+        .search-input { transition: all 0.2s; }
+        html.dark .search-input { background: rgba(15, 23, 42, 0.8); border: 1px solid #334155; color: white; }
+        html.dark .search-input:focus { background: rgba(30, 41, 59, 1); border-color: #3b82f6; outline: none; }
+        html:not(.dark) .search-input { background: rgba(255, 255, 255, 0.9); border: 1px solid #cbd5e1; color: #0f172a; }
+        html:not(.dark) .search-input:focus { background: #ffffff; border-color: #3b82f6; outline: none; }
+        html.dark .leaflet-control-layers { background-color: #1e293b; color: #cbd5e1; border: 1px solid rgba(255, 255, 255, 0.1); }
+        html.dark .leaflet-control-layers-expanded { background-color: #1e293b; color: #cbd5e1; }
+        html.dark .leaflet-control-layers-selector { accent-color: #3b82f6; }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #475569; }
-        
-        #toast {
-            visibility: hidden; min-width: 250px; background-color: #1e293b; color: #fff; text-align: center; border-radius: 8px; padding: 12px 16px; position: fixed; z-index: 100; left: 50%; bottom: 30px; transform: translateX(-50%); border: 1px solid rgba(59, 130, 246, 0.5); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); font-size: 14px; opacity: 0; transition: opacity 0.3s, bottom 0.3s;
-        }
+        html.dark .custom-scrollbar::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); }
+        html.dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        html.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #475569; }
+        html:not(.dark) .custom-scrollbar::-webkit-scrollbar-track { background: rgba(203, 213, 225, 0.5); }
+        html:not(.dark) .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
+        #toast { visibility: hidden; min-width: 250px; text-align: center; border-radius: 8px; padding: 12px 16px; position: fixed; z-index: 100; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 14px; opacity: 0; transition: opacity 0.3s, bottom 0.3s; }
+        html.dark #toast { background-color: #1e293b; color: #fff; border: 1px solid rgba(59, 130, 246, 0.5); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); }
+        html:not(.dark) #toast { background-color: #fff; color: #0f172a; border: 1px solid rgba(59, 130, 246, 0.5); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
         #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
     </style>
 </head>
-<body class="bg-[#0b1120] text-slate-300 min-h-screen flex flex-col">
+<body class="bg-wired-light dark:bg-[#0b1120] text-slate-600 dark:text-slate-300 min-h-screen flex flex-col">
 
     <nav class="absolute top-0 left-0 w-full p-6 flex flex-col md:flex-row justify-between items-center z-10 gap-6 md:gap-4">
         <div class="flex flex-col md:flex-row items-center gap-6 w-full md:w-auto">
-            <div class="text-2xl font-bold tracking-tight text-white">
+            <div class="text-2xl font-bold tracking-tight text-slate-800 dark:text-white">
                 <a href="/">IP<span class="text-red-500">.</span><span class="text-blue-500">WiredAlter</span></a>
             </div>
-            <div class="flex gap-1 bg-slate-800/50 rounded-lg p-1 border border-slate-700/50 backdrop-blur-sm">
-                <a href="https://www.wiredalter.com" class="px-4 py-2 md:px-3 md:py-1.5 text-sm font-medium rounded-md text-slate-400 hover:text-white hover:bg-slate-700 transition-all">HOME</a>
+            <div class="flex gap-1 bg-slate-200/50 dark:bg-slate-800/50 rounded-lg p-1 border border-slate-300/50 dark:border-slate-700/50 backdrop-blur-sm transition-colors">
+                <a href="https://www.wiredalter.com" class="px-4 py-2 md:px-3 md:py-1.5 text-sm font-medium rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-300 dark:hover:bg-slate-700 transition-all">HOME</a>
                 <a href="#" class="px-4 py-2 md:px-3 md:py-1.5 text-sm font-medium rounded-md text-white bg-blue-600 shadow-sm cursor-default">IP</a>
-                <a href="https://dns.wiredalter.com" class="px-4 py-2 md:px-3 md:py-1.5 text-sm font-medium rounded-md text-slate-400 hover:text-white hover:bg-slate-700 transition-all">DNS</a>
-                <a href="https://whois.wiredalter.com" class="px-4 py-2 md:px-3 md:py-1.5 text-sm font-medium rounded-md text-slate-400 hover:text-white hover:bg-slate-700 transition-all">WHOIS</a>
-                <a href="https://audit.wiredalter.com" class="px-4 py-2 md:px-3 md:py-1.5 text-sm font-medium rounded-md text-slate-400 hover:text-white hover:bg-slate-700 transition-all">AUDIT</a>
+                <a href="https://dns.wiredalter.com" class="px-4 py-2 md:px-3 md:py-1.5 text-sm font-medium rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-300 dark:hover:bg-slate-700 transition-all">DNS</a>
+                <a href="https://whois.wiredalter.com" class="px-4 py-2 md:px-3 md:py-1.5 text-sm font-medium rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-300 dark:hover:bg-slate-700 transition-all">WHOIS</a>
+                <a href="https://audit.wiredalter.com" class="px-4 py-2 md:px-3 md:py-1.5 text-sm font-medium rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-300 dark:hover:bg-slate-700 transition-all">AUDIT</a>
             </div>
         </div>
-        <div class="hidden md:flex gap-4 text-sm text-slate-500 font-medium">
-            <a href="/terms" class="hover:text-slate-300 transition-colors">Terms</a>
-            <span class="text-slate-700">|</span>
-            <a href="#faq" class="hover:text-slate-300 transition-colors">FAQ</a>
-            <span class="text-slate-700">|</span>
-            <a href="https://github.com/buildplan/ip-service" class="hover:text-slate-300 transition-colors">GitHub</a>
+        
+        <div class="absolute top-6 right-6 md:static flex items-center gap-4 text-sm font-medium text-slate-500">
+            
+            <button onclick="toggleTheme()" class="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 transition-all" aria-label="Toggle Theme">
+                <svg id="icon-sun" class="w-5 h-5 hidden dark:block text-slate-400 hover:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                <svg id="icon-moon" class="w-5 h-5 block dark:hidden text-slate-600 hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+            </button>
+            
+            <div class="hidden md:flex items-center gap-4">
+                <div class="w-px h-4 bg-slate-300 dark:bg-slate-700"></div>
+                <a href="/terms" class="hover:text-slate-900 dark:hover:text-slate-300 transition-colors">Terms</a>
+                <span class="text-slate-300 dark:text-slate-700">|</span>
+                <a href="#faq" class="hover:text-slate-900 dark:hover:text-slate-300 transition-colors">FAQ</a>
+                <span class="text-slate-300 dark:text-slate-700">|</span>
+                <a href="https://github.com/buildplan/ip-service" class="hover:text-slate-900 dark:hover:text-slate-300 transition-colors">GitHub</a>
+            </div>
+            
         </div>
     </nav>
 
@@ -105,77 +129,77 @@
 
         <div class="text-center space-y-6 max-w-3xl mx-auto mt-6 md:mt-0">
             <div class="space-y-4">
-                <h2 class="text-blue-500 text-xs font-bold uppercase tracking-widest">Your Connection</h2>
+                <h2 class="text-blue-600 dark:text-blue-500 text-xs font-bold uppercase tracking-widest">Your Connection</h2>
                 
                 <div id="ip-display-area" class="space-y-3 flex flex-col items-center justify-center">
-                    <div class="animate-pulse h-10 w-48 bg-slate-800 rounded-lg"></div>
+                    <div class="animate-pulse h-10 w-48 bg-slate-200 dark:bg-slate-800 rounded-lg"></div>
                 </div>
 
-                <p id="mainLocation" class="text-lg md:text-xl text-slate-400 min-h-[1.75rem]">...</p>
+                <p id="mainLocation" class="text-lg md:text-xl text-slate-500 dark:text-slate-400 min-h-[1.75rem]">...</p>
             </div>
 
             <div class="relative max-w-lg mx-auto mt-6">
                 <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <svg class="w-5 h-5 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </div>
-                <input type="text" id="searchInput" class="block w-full p-4 pl-10 text-sm text-white border border-slate-700 rounded-xl search-input placeholder-slate-500" placeholder="Search any IP address..." onkeydown="if(event.key === 'Enter') searchIp()">
+                <input type="text" id="searchInput" class="block w-full p-4 pl-10 text-sm rounded-xl search-input placeholder-slate-400 dark:placeholder-slate-500" placeholder="Search any IP address..." onkeydown="if(event.key === 'Enter') searchIp()">
                 <button onclick="searchIp()" class="text-white absolute right-2.5 top-2.5 bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-800 font-medium rounded-lg text-sm px-4 py-2">Search</button>
             </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div class="glass-panel p-5 md:p-6 rounded-xl space-y-1">
-                <div class="text-blue-400 text-xs font-bold uppercase tracking-wider">Provider (ISP)</div>
-                <div class="text-lg font-semibold text-white truncate" id="dataOrg">...</div>
+                <div class="text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider">Provider (ISP)</div>
+                <div class="text-lg font-semibold text-slate-800 dark:text-white truncate" id="dataOrg">...</div>
                 <div class="text-sm text-slate-500 font-mono" id="dataAsn">...</div>
             </div>
 
             <div class="glass-panel p-5 md:p-6 rounded-xl space-y-1">
-               <div class="text-blue-400 text-xs font-bold uppercase tracking-wider">Location</div>
+               <div class="text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider">Location</div>
                <div class="flex items-center gap-2">
                    <span class="text-xl" id="flag"></span> 
-                   <div class="text-lg font-semibold text-white truncate" id="dataCity">...</div>
+                   <div class="text-lg font-semibold text-slate-800 dark:text-white truncate" id="dataCity">...</div>
                </div>
                <div class="text-sm text-slate-500">
                    <span id="dataRegion">...</span>
                    <span id="zipWrapper" style="display: none;">
-                       <span class="text-slate-600 mx-1">•</span>
-                       <span id="dataZip" class="text-slate-400 font-mono"></span>
+                       <span class="text-slate-400 mx-1">•</span>
+                       <span id="dataZip" class="text-slate-500 font-mono"></span>
                    </span></div>
             </div>
 
             <div class="glass-panel p-5 md:p-6 rounded-xl space-y-1">
-                <div class="text-blue-400 text-xs font-bold uppercase tracking-wider">Timezone</div>
-                <div class="text-lg font-semibold text-white" id="dataTimezone">...</div>
+                <div class="text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider">Timezone</div>
+                <div class="text-lg font-semibold text-slate-800 dark:text-white" id="dataTimezone">...</div>
                 <div class="text-xs text-slate-500 font-mono" id="dataCoords">...</div>
             </div>
 
-	    <div class="glass-panel p-5 md:p-6 rounded-xl space-y-3">
-	        <div class="text-blue-400 text-xs font-bold uppercase tracking-wider">Risk Analysis</div>
-	        <div class="flex justify-between items-center py-1 border-b border-slate-700/50">
-	            <span class="text-sm text-slate-300">Connection</span>
-	            <span class="px-2 py-0.5 rounded text-xs font-bold bg-slate-800 text-slate-400" id="dataProxyBadge">Checking...</span>
-	        </div>
-	        <div id="reputation-section" class="pt-1">
-	            <div class="flex justify-between items-center mb-2">
-	                <span class="text-sm text-slate-300">Reputation</span>
-	                <span id="rep-badge" class="hidden px-2 py-0.5 rounded text-xs font-bold"></span>
-	            </div>
-	            <button id="btn-scan" onclick="checkReputation()" class="w-full py-1.5 rounded-lg bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 text-xs font-bold border border-blue-500/30 transition-all flex items-center justify-center gap-2">
-	                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-	                SCAN THREATS
-	            </button>
-	            <div id="rep-results" class="hidden mt-2 space-y-1"></div>
-	        </div>
-	    </div>
+            <div class="glass-panel p-5 md:p-6 rounded-xl space-y-3">
+                <div class="text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider">Risk Analysis</div>
+                <div class="flex justify-between items-center py-1 border-b border-slate-200 dark:border-slate-700/50">
+                    <span class="text-sm text-slate-600 dark:text-slate-300">Connection</span>
+                    <span class="px-2 py-0.5 rounded text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400" id="dataProxyBadge">Checking...</span>
+                </div>
+                <div id="reputation-section" class="pt-1">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm text-slate-600 dark:text-slate-300">Reputation</span>
+                        <span id="rep-badge" class="hidden px-2 py-0.5 rounded text-xs font-bold"></span>
+                    </div>
+                    <button id="btn-scan" onclick="checkReputation()" class="w-full py-1.5 rounded-lg bg-blue-100 dark:bg-blue-600/20 hover:bg-blue-200 dark:hover:bg-blue-600/40 text-blue-600 dark:text-blue-400 text-xs font-bold border border-blue-200 dark:border-blue-500/30 transition-all flex items-center justify-center gap-2">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        SCAN THREATS
+                    </button>
+                    <div id="rep-results" class="hidden mt-2 space-y-1"></div>
+                </div>
+            </div>
         </div>
 
         <div class="glass-panel p-1 rounded-xl shadow-2xl shadow-blue-900/10"><div id="map"></div></div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="space-y-4">
-                <h3 class="text-lg font-bold text-white">CLI Access</h3>
-                <div class="bg-[#0f172a] rounded-xl p-5 font-mono text-sm border border-slate-800 space-y-3">
+                <h3 class="text-lg font-bold text-slate-800 dark:text-white">CLI Access</h3>
+                <div class="bg-[#0f172a] rounded-xl p-5 font-mono text-sm border border-slate-800 space-y-3 shadow-lg">
                     <div class="group cursor-pointer" onclick="copyText('cmd1')">
                         <div class="flex justify-between items-center text-slate-300 hover:text-white transition-colors">
                             <code id="cmd1" class="mr-4 overflow-x-auto whitespace-nowrap min-w-0 flex-1 custom-scrollbar pb-2">
@@ -196,72 +220,72 @@
                 </div>
             </div>
             <div class="space-y-4">
-                <h3 class="text-lg font-bold text-white">JSON Response</h3>
-                <div class="bg-[#0f172a] rounded-xl p-4 font-mono text-xs text-green-400 border border-slate-800 h-40 overflow-y-auto custom-scrollbar" id="jsonPreview">Loading...</div>
+                <h3 class="text-lg font-bold text-slate-800 dark:text-white">JSON Response</h3>
+                <div class="bg-[#0f172a] rounded-xl p-4 font-mono text-xs text-green-400 border border-slate-800 h-40 overflow-y-auto custom-scrollbar shadow-lg" id="jsonPreview">Loading...</div>
             </div>
         </div>
 
-        <div class="border-t border-slate-800/60 pt-10 mt-10">
+        <div class="border-t border-slate-200 dark:border-slate-800/60 pt-10 mt-10">
 
             <section id="faq" class="max-w-3xl mx-auto px-4 py-16 space-y-12">
-                <h3 class="text-2xl font-bold text-center text-white mb-8">Frequently Asked Questions</h3>
+                <h3 class="text-2xl font-bold text-center text-slate-800 dark:text-white mb-8">Frequently Asked Questions</h3>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
 
                     <div class="space-y-2">
-                        <h4 class="font-bold text-blue-400">Is this service free?</h4>
-                        <p class="text-slate-400 leading-relaxed">Yes, this is a free tool for the community. Please respect the fair usage policy to keep it available for everyone.</p>
+                        <h4 class="font-bold text-blue-600 dark:text-blue-400">Is this service free?</h4>
+                        <p class="text-slate-600 dark:text-slate-400 leading-relaxed">Yes, this is a free tool for the community. Please respect the fair usage policy to keep it available for everyone.</p>
                     </div>
 
                     <div class="space-y-2">
-                        <h4 class="font-bold text-blue-400">How do I use this in scripts?</h4>
-                        <p class="text-slate-400 leading-relaxed">Use <code>curl ip.wiredalter.com</code> for a plain text IP or append <code>/json</code> for detailed metadata.</p>
+                        <h4 class="font-bold text-blue-600 dark:text-blue-400">How do I use this in scripts?</h4>
+                        <p class="text-slate-600 dark:text-slate-400 leading-relaxed">Use <code>curl ip.wiredalter.com</code> for a plain text IP or append <code>/json</code> for detailed metadata.</p>
                     </div>
 
                     <div class="space-y-2">
-                        <h4 class="font-bold text-blue-400">Does this detect VPNs?</h4>
-                        <p class="text-slate-400 leading-relaxed">Yes. We use the <strong>IP2Location LITE</strong> database specifically for proxy detection, combined with a manual analysis of ASN providers to catch unlisted datacenters.</p>
+                        <h4 class="font-bold text-blue-600 dark:text-blue-400">Does this detect VPNs?</h4>
+                        <p class="text-slate-600 dark:text-slate-400 leading-relaxed">Yes. We use the <strong>IP2Location LITE</strong> database specifically for proxy detection, combined with a manual analysis of ASN providers to catch unlisted datacenters.</p>
                     </div>
 
                     <div class="space-y-2">
-                        <h4 class="font-bold text-blue-400">How does the Reputation Scan work?</h4>
-                        <p class="text-slate-400 leading-relaxed">
+                        <h4 class="font-bold text-blue-600 dark:text-blue-400">How does the Reputation Scan work?</h4>
+                        <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
                             We aggregate real-time threat data from <strong>CrowdSec</strong> (Community Intelligence), <strong>FireHOL</strong>, <strong>GreenSnow</strong>, and major DNSBLs like <strong>SpamCop</strong> to detect active attackers, scanners, and spammers.
                         </p>
                     </div>
  
                     <div class="space-y-2">
-                        <h4 class="font-bold text-blue-400">Data Privacy</h4>
-                        <p class="text-slate-400 leading-relaxed">No logs are kept. This service runs entirely in memory to ensure privacy and security.</p>
+                        <h4 class="font-bold text-blue-600 dark:text-blue-400">Data Privacy</h4>
+                        <p class="text-slate-600 dark:text-slate-400 leading-relaxed">No logs are kept. This service runs entirely in memory to ensure privacy and security.</p>
                     </div>
 
                     <div class="space-y-2">
-                        <h4 class="font-bold text-blue-400">Are there Rate Limits?</h4>
-                        <p class="text-slate-400 leading-relaxed">To ensure stability, we limit requests to <span class="text-slate-300 font-semibold">100 per 5 minutes</span> per IP address. Exceeding this will result in a 429 HTTP error.</p>
+                        <h4 class="font-bold text-blue-600 dark:text-blue-400">Are there Rate Limits?</h4>
+                        <p class="text-slate-600 dark:text-slate-400 leading-relaxed">To ensure stability, we limit requests to <span class="text-slate-900 dark:text-slate-300 font-semibold">100 per 5 minutes</span> per IP address. Exceeding this will result in a 429 HTTP error.</p>
                     </div>
 
                     <div class="space-y-2">
-                        <h4 class="font-bold text-blue-400">How accurate is the data?</h4>
-                        <p class="text-slate-400 leading-relaxed">We combine <strong>MaxMind GeoLite2</strong> for location/ISP data with <strong>IP2Location</strong> for threat intelligence. Both databases are updated regularly.</p>
+                        <h4 class="font-bold text-blue-600 dark:text-blue-400">How accurate is the data?</h4>
+                        <p class="text-slate-600 dark:text-slate-400 leading-relaxed">We combine <strong>MaxMind GeoLite2</strong> for location/ISP data with <strong>IP2Location</strong> for threat intelligence. Both databases are updated regularly.</p>
                     </div>            
                     
                     <div class="space-y-2">
-                        <h4 class="font-bold text-blue-400">Why do I see two IP addresses?</h4>
-                        <p class="text-slate-400 leading-relaxed">Modern networks often support both IPv4 (legacy) and IPv6 (modern). We intelligently detect and display both if your connection supports them.</p>
+                        <h4 class="font-bold text-blue-600 dark:text-blue-400">Why do I see two IP addresses?</h4>
+                        <p class="text-slate-600 dark:text-slate-400 leading-relaxed">Modern networks often support both IPv4 (legacy) and IPv6 (modern). We intelligently detect and display both if your connection supports them.</p>
                     </div>
               </div>
             </section>
 
             <section class="max-w-3xl mx-auto px-4 pb-16">
-                <div class="bg-slate-900/50 border border-slate-800/60 rounded-2xl p-8 text-center backdrop-blur-sm">
+                <div class="bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800/60 rounded-2xl p-8 text-center backdrop-blur-sm shadow-sm">
                     <div class="inline-flex items-center justify-center p-3 bg-blue-500/10 rounded-full mb-4">
-                        <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-6 h-6 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
                         </svg>
                     </div>
                     
-                    <h3 class="text-xl font-bold text-white mb-2">Fully Open Source</h3>
-                    <p class="text-slate-400 mb-6 max-w-lg mx-auto">
+                    <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-2">Fully Open Source</h3>
+                    <p class="text-slate-600 dark:text-slate-400 mb-6 max-w-lg mx-auto">
                         For full transparency, this service runs entirely in memory and logs nothing. 
                         Inspect the code, audit the security, or host it yourself.
                     </p>
@@ -277,46 +301,46 @@
         </div>
     </main>
 
-    <footer class="border-t border-slate-800/60 bg-[#0b1120] py-12 text-center text-slate-600 text-sm">
+    <footer class="border-t border-slate-200 dark:border-slate-800/60 bg-white dark:bg-[#0b1120] py-12 text-center text-slate-600 dark:text-slate-600 text-sm">
         <div class="max-w-5xl mx-auto px-6 space-y-8">
             
             <div class="space-y-2">
                 <p>
-                    &copy; <span id="year"></span> <a href="https://www.wiredalter.com" class="hover:text-slate-300 transition-colors">WiredAlter IP Service</a>. All rights reserved.
+                    &copy; <span id="year"></span> <a href="https://www.wiredalter.com" class="hover:text-slate-900 dark:hover:text-slate-300 transition-colors">WiredAlter IP Service</a>. All rights reserved.
                 </p>
                 <p class="text-xs">
-                    <a href="/terms" class="hover:text-slate-300 underline decoration-slate-700 transition-colors">Terms & Privacy</a>
+                    <a href="/terms" class="hover:text-slate-900 dark:hover:text-slate-300 underline decoration-slate-400 dark:decoration-slate-700 transition-colors">Terms & Privacy</a>
                 </p>
             </div>
             
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-xs text-slate-500 leading-relaxed border-t border-slate-800/50 pt-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-xs text-slate-500 leading-relaxed border-t border-slate-200 dark:border-slate-800/50 pt-8">
                 
                 <div class="space-y-2">
-                    <p class="font-bold text-slate-400 uppercase tracking-wider mb-1">Location Intelligence</p>
+                    <p class="font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">Location Intelligence</p>
                     <p>
-                        Includes GeoLite2 data created by <a href="https://www.maxmind.com" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">MaxMind</a>.
+                        Includes GeoLite2 data created by <a href="https://www.maxmind.com" target="_blank" class="underline decoration-slate-400 dark:decoration-slate-700 hover:text-slate-900 dark:hover:text-slate-300">MaxMind</a>.
                     </p>
                     <p>
-                        Uses IP2Location LITE database available from <a href="https://lite.ip2location.com" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">IP2Location</a>.
+                        Uses IP2Location LITE database available from <a href="https://lite.ip2location.com" target="_blank" class="underline decoration-slate-400 dark:decoration-slate-700 hover:text-slate-900 dark:hover:text-slate-300">IP2Location</a>.
                     </p>
                 </div>
 
                 <div class="space-y-2">
-                    <p class="font-bold text-slate-400 uppercase tracking-wider mb-1">Threat Intelligence</p>
+                    <p class="font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">Threat Intelligence</p>
                     <p>
                         Real-time reputation analysis aggregated from 
-                        <a href="https://crowdsec.net" rel="nofollow" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">CrowdSec</a>, 
-                        <a href="https://blocklist.greensnow.co/" rel="nofollow" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">GreenSnow</a>, 
-                        <a href="https://firehol.org/" rel="nofollow" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">FireHOL</a>, 
-                        <a href="https://www.spamcop.net/" rel="nofollow" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">SpamCop</a>, 
-                        <a href="https://www.abuseipdb.com/" rel="nofollow" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">AbuseIPDB</a>, 
-                        <a href="https://spamverify.com/" rel="nofollow" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">SpamVerify</a>, 
-                        <a href="https://sniffcat.com/" rel="nofollow" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">SniffCat</a>, 
-                        and <a href="https://github.com/sefinek/Malicious-IP-Addresses" rel="nofollow" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">Sefinek</a>.
+                        <a href="https://crowdsec.net" rel="nofollow" target="_blank" class="underline decoration-slate-400 dark:decoration-slate-700 hover:text-slate-900 dark:hover:text-slate-300">CrowdSec</a>, 
+                        <a href="https://blocklist.greensnow.co/" rel="nofollow" target="_blank" class="underline decoration-slate-400 dark:decoration-slate-700 hover:text-slate-900 dark:hover:text-slate-300">GreenSnow</a>, 
+                        <a href="https://firehol.org/" rel="nofollow" target="_blank" class="underline decoration-slate-400 dark:decoration-slate-700 hover:text-slate-900 dark:hover:text-slate-300">FireHOL</a>, 
+                        <a href="https://www.spamcop.net/" rel="nofollow" target="_blank" class="underline decoration-slate-400 dark:decoration-slate-700 hover:text-slate-900 dark:hover:text-slate-300">SpamCop</a>, 
+                        <a href="https://www.abuseipdb.com/" rel="nofollow" target="_blank" class="underline decoration-slate-400 dark:decoration-slate-700 hover:text-slate-900 dark:hover:text-slate-300">AbuseIPDB</a>, 
+                        <a href="https://spamverify.com/" rel="nofollow" target="_blank" class="underline decoration-slate-400 dark:decoration-slate-700 hover:text-slate-900 dark:hover:text-slate-300">SpamVerify</a>, 
+                        <a href="https://sniffcat.com/" rel="nofollow" target="_blank" class="underline decoration-slate-400 dark:decoration-slate-700 hover:text-slate-900 dark:hover:text-slate-300">SniffCat</a>, 
+                        and <a href="https://github.com/sefinek/Malicious-IP-Addresses" rel="nofollow" target="_blank" class="underline decoration-slate-400 dark:decoration-slate-700 hover:text-slate-900 dark:hover:text-slate-300">Sefinek</a>.
                     </p>
                     <div class="pt-3">
                         <a href="https://www.abuseipdb.com/user/259750" rel="nofollow" target="_blank" title="AbuseIPDB Contributor" 
-                            class="group inline-flex items-center justify-center rounded-xl bg-slate-800/40 p-3 border border-slate-700/50 shadow-md shadow-black/30 backdrop-blur-sm hover:bg-slate-700/60 hover:border-slate-500/50 transition-all duration-300">
+                            class="group inline-flex items-center justify-center rounded-xl bg-slate-200/40 dark:bg-slate-800/40 p-3 border border-slate-300/50 dark:border-slate-700/50 shadow-md shadow-black/30 backdrop-blur-sm hover:bg-slate-300/60 dark:hover:bg-slate-700/60 hover:border-slate-400/50 dark:hover:border-slate-500/50 transition-all duration-300">
                             <img src="/abuseip-badge.svg" alt="AbuseIPDB Contributor Badge" 
                                  class="w-[180px] h-auto opacity-85 group-hover:opacity-100 transition-opacity">
                         </a>
@@ -324,10 +348,10 @@
                 </div>
 
                 <div class="space-y-2">
-                    <p class="font-bold text-slate-400 uppercase tracking-wider mb-1">Infrastructure & Mapping</p>
+                    <p class="font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">Infrastructure & Mapping</p>
                     <p>
-                        Map data &copy; <a href="https://www.openstreetmap.org/copyright" rel="nofollow" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">OpenStreetMap</a> contributors.
-                        Rendered via <a href="https://leafletjs.com" rel="nofollow" target="_blank" class="underline decoration-slate-700 hover:text-slate-300">Leaflet</a>.
+                        Map data &copy; <a href="https://www.openstreetmap.org/copyright" rel="nofollow" target="_blank" class="underline decoration-slate-400 dark:decoration-slate-700 hover:text-slate-900 dark:hover:text-slate-300">OpenStreetMap</a> contributors.
+                        Rendered via <a href="https://leafletjs.com" rel="nofollow" target="_blank" class="underline decoration-slate-400 dark:decoration-slate-700 hover:text-slate-900 dark:hover:text-slate-300">Leaflet</a>.
                     </p>
                     <p>
                         Powered by Node.js & WiredAlter Cloud.
@@ -342,24 +366,16 @@
 
     <div id="rep-modal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
         <div class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity opacity-0" id="rep-modal-backdrop"></div>
-
         <div class="fixed inset-0 z-10 overflow-y-auto">
             <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
                 <div class="relative transform overflow-hidden rounded-2xl bg-[#0f172a] border border-slate-700 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg opacity-0 scale-95" id="rep-modal-panel">
-
                     <div class="bg-slate-800/50 px-4 py-3 sm:px-6 border-b border-slate-700/50 flex justify-between items-center">
                         <h3 class="text-base font-semibold leading-6 text-white" id="modal-title">Reputation Report</h3>
                         <button onclick="closeReputationModal()" class="text-slate-400 hover:text-white transition-colors">
-                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
                     </div>
-
-                    <div class="px-4 py-5 sm:p-6">
-                        <div id="modal-content" class="space-y-4">
-                            </div>
-
+                    <div class="px-4 py-5 sm:p-6"><div id="modal-content" class="space-y-4"></div>
                         <div class="mt-6 pt-4 border-t border-slate-800 text-xs text-slate-500">
                             <p class="font-semibold mb-1 uppercase tracking-wider">Databases Scanned:</p>
                             <div class="flex flex-wrap gap-2">
@@ -375,7 +391,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="bg-slate-800/30 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
                         <button type="button" onclick="closeReputationModal()" class="inline-flex w-full justify-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 sm:ml-3 sm:w-auto transition-all">Done</button>
                     </div>
@@ -387,12 +402,69 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <script>
     document.getElementById("year").innerText = new Date().getFullYear();
-    const map = L.map('map', { zoomControl: false }).setView([51.505, -0.09], 13);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>', subdomains: 'abcd', maxZoom: 19 }).addTo(map);
+
+    function initTheme() {
+        if (localStorage.theme === 'light') {
+            document.documentElement.classList.remove('dark');
+        } else {
+            document.documentElement.classList.add('dark');
+        }
+    }
     
+    function toggleTheme() {
+        const html = document.documentElement;
+        if (html.classList.contains('dark')) {
+            html.classList.remove('dark');
+            localStorage.theme = 'light';
+            updateMapTheme('light');
+        } else {
+            html.classList.add('dark');
+            localStorage.theme = 'dark';
+            updateMapTheme('dark');
+        }
+    }
+    initTheme();
+
+    const darkTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap &copy; CARTO', subdomains: 'abcd', maxZoom: 19
+    });
+
+    const lightTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap &copy; CARTO', subdomains: 'abcd', maxZoom: 19
+    });
+
+    const satelliteTiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri', maxZoom: 19
+    });
+
+    const isDark = document.documentElement.classList.contains('dark');
+    const initialLayer = isDark ? darkTiles : lightTiles;
+
+    const map = L.map('map', { 
+        zoomControl: false, 
+        layers: [initialLayer] 
+    }).setView([51.505, -0.09], 13);
+
+    const baseMaps = {
+        "Dark Mode": darkTiles,
+        "Light Mode": lightTiles,
+        "Satellite": satelliteTiles
+    };
+    L.control.layers(baseMaps, null, { position: 'topright' }).addTo(map);
+
+    function updateMapTheme(theme) {
+        if (!map.hasLayer(satelliteTiles)) {
+            if (theme === 'dark') {
+                map.addLayer(darkTiles); map.removeLayer(lightTiles);
+            } else {
+                map.addLayer(lightTiles); map.removeLayer(darkTiles);
+            }
+        }
+    }
+
     let marker;
     let currentScanIp = ''; 
-    let lastReputationResult = null; // Store result for the modal
+    let lastReputationResult = null;
 
     function showToast(message) {
         const x = document.getElementById("toast");
@@ -400,18 +472,17 @@
         setTimeout(() => { x.className = x.className.replace("show", ""); }, 3000);
     }
 
-    // Helper: Generate HTML for an IP Row
     function createIpRow(ip, type) {
         const isV6 = type === 'IPv6';
         const badgeColor = isV6 
-            ? 'bg-purple-900/40 text-purple-400 border-purple-800' 
-            : 'bg-blue-900/40 text-blue-400 border-blue-800';
+            ? 'bg-purple-900/40 text-purple-600 dark:text-purple-400 border-purple-800' 
+            : 'bg-blue-900/40 text-blue-600 dark:text-blue-400 border-blue-800';
         return `
-        <div class="group cursor-pointer flex flex-col sm:flex-row items-center gap-2 sm:gap-4 bg-slate-900/40 px-4 py-3 rounded-xl border border-slate-800/50 hover:bg-slate-800/60 transition-all w-full md:w-auto min-w-[280px] sm:min-w-[380px] justify-center shadow-lg" onclick="navigator.clipboard.writeText('${ip}').then(() => showToast('${type} Copied!'))">
+        <div class="group cursor-pointer flex flex-col sm:flex-row items-center gap-2 sm:gap-4 bg-white dark:bg-slate-900/40 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all w-full md:w-auto min-w-[280px] sm:min-w-[380px] justify-center shadow-lg" onclick="navigator.clipboard.writeText('${ip}').then(() => showToast('${type} Copied!'))">
             <span class="px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold border uppercase tracking-wider ${badgeColor} shrink-0">${type}</span>
-            <span class="text-lg sm:text-2xl md:text-3xl font-bold text-white tracking-tight break-all font-mono text-center">${ip}</span>
+            <span class="text-lg sm:text-2xl md:text-3xl font-bold text-slate-800 dark:text-white tracking-tight break-all font-mono text-center">${ip}</span>
             <div class="hidden sm:block shrink-0">
-                    <svg class="w-5 h-5 text-slate-600 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 012 2v8a2 2 0 01-2 2h-8a2 2 0 01-2-2v-8a2 2 0 012-2z"></path></svg>
+                    <svg class="w-5 h-5 text-slate-400 dark:text-slate-600 group-hover:text-blue-500 dark:group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 012 2v8a2 2 0 01-2 2h-8a2 2 0 01-2-2v-8a2 2 0 012-2z"></path></svg>
             </div>
         </div>
         `;
@@ -471,13 +542,13 @@
         const proxyEl = document.getElementById('dataProxyBadge');
         if (data.is_proxy) {
             proxyEl.innerText = data.proxy_type; 
-            proxyEl.className = "px-2 py-0.5 rounded text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/20 shadow-[0_0_10px_rgba(239,68,68,0.2)]";
+            proxyEl.className = "px-2 py-0.5 rounded text-xs font-bold bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/20 shadow-[0_0_10px_rgba(239,68,68,0.2)]";
         } else if (data.usage_type === 'Residential' || data.usage_type === 'Mobile Data') {
             proxyEl.innerText = data.usage_type; 
-            proxyEl.className = "px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+            proxyEl.className = "px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20";
         } else {
             proxyEl.innerText = data.usage_type || "Clean"; 
-            proxyEl.className = "px-2 py-0.5 rounded text-xs font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20";
+            proxyEl.className = "px-2 py-0.5 rounded text-xs font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20";
         }
 
         if (data.latitude && data.longitude) {
@@ -506,7 +577,6 @@
         navigator.clipboard.writeText(document.getElementById(id).innerText.replace('$ ', '')).then(() => showToast('Command Copied!')); 
     }
 
-    // --- REPUTATION SYSTEM ---
     function resetReputationUI() {
         const btn = document.getElementById('btn-scan');
         if(btn) {
@@ -522,33 +592,28 @@
         const btn = document.getElementById('btn-scan');
         const badge = document.getElementById('rep-badge');
 
-        // Loading
         btn.disabled = true;
         btn.innerHTML = `<svg class="animate-spin h-3 w-3 mr-2" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> SCANNING...`;
 
         try {
             const res = await fetch(`/api/reputation?ip=${currentScanIp}`);
             const data = await res.json();
-            lastReputationResult = data; // Store for modal
+            lastReputationResult = data; 
 
             btn.classList.add('hidden');
             btn.disabled = false;
             badge.classList.remove('hidden');
             
-            // Add click handler to open modal
             badge.onclick = openReputationModal;
             badge.style.cursor = 'pointer';
 
             if (data.is_clean) {
-                // "Clean" -> "No Threats Detected"
                 badge.innerHTML = `NO THREATS DETECTED <span class="text-lg leading-none">ⓘ</span>`;
-                badge.className = "px-2 py-1 rounded text-[11px] font-bold bg-sky-500/20 text-sky-400 border border-sky-500/30 hover:bg-sky-500/30 transition-colors whitespace-nowrap flex items-center gap-1";
+                badge.className = "px-2 py-1 rounded text-[11px] font-bold bg-sky-500/20 text-sky-600 dark:text-sky-400 border border-sky-500/30 hover:bg-sky-500/30 transition-colors whitespace-nowrap flex items-center gap-1";
             } else if (data.detections) {
-                // "Malicious" -> Red with Alert
                 badge.innerText = `${data.detections.length} THREATS FOUND ⚠️`;
-                badge.className = "px-2 py-0.5 rounded text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/30 shadow-[0_0_10px_rgba(239,68,68,0.3)] hover:bg-red-500/30 transition-colors";
+                badge.className = "px-2 py-0.5 rounded text-xs font-bold bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/30 shadow-[0_0_10px_rgba(239,68,68,0.3)] hover:bg-red-500/30 transition-colors";
             } else {
-                // Fallback
                 throw new Error("Invalid API response");
             }
 
@@ -559,7 +624,6 @@
         }
     }
 
-    // --- MODAL LOGIC ---
     function openReputationModal() {
         if (!lastReputationResult) return;
         const modal = document.getElementById('rep-modal');
@@ -569,7 +633,6 @@
 
         modal.classList.remove('hidden');
         
-        // Populate Content
         if (lastReputationResult.is_clean) {
             content.innerHTML = `
                 <div class="flex items-center gap-3 mb-4">
@@ -622,7 +685,6 @@
             `;
         }
 
-        // Animation In
         setTimeout(() => {
             backdrop.classList.remove('opacity-0');
             panel.classList.remove('opacity-0', 'scale-95');
@@ -641,7 +703,7 @@
 
         setTimeout(() => {
             modal.classList.add('hidden');
-        }, 300); // Match transition duration
+        }, 300);
     }
 
     fetchSmartIPs();
