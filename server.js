@@ -331,10 +331,11 @@ app.get(['/api/info', '/json'], async (req, res) => {
 
     // Fallback
     if (!data.city || data.city === 'Unknown' || !data.country || data.country === 'Unknown') {
-        const fallback = await getGeoJS(targetIp); // Now this works!
+        const fallback = await getGeoJS(targetIp);
         if (fallback) {
             data = { ...data, ...fallback };
             data.is_fallback = true;
+            data.coordinates = `${data.latitude}, ${data.longitude}`;
         }
     }
 
