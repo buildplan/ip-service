@@ -231,6 +231,7 @@ function getGeoData(ip) {
         return {
             ip,
             country: pick(cityData?.country?.names?.en, db11Data.country_long),
+            country_code: pick(cityData?.country?.iso_code, db11Data.country_short),
             city: pick(cityData?.city?.names?.en, db11Data.city),
             region: pick(cityData?.subdivisions?.[0]?.names?.en, db11Data.region),
             timezone: pick(cityData?.location?.time_zone, db11Data.time_zone),
