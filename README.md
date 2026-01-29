@@ -171,8 +171,9 @@ docker compose up -d --build
 
 ## License & Attributions
 
-This project is licensed under the **MIT License**.
+This project is licensed under the **[MIT License](LICENSE)**.
 
 * This product includes GeoLite2 data created by MaxMind, available from [https://www.maxmind.com](https://www.maxmind.com).
 * This product uses IP2Location LITE data available from [https://lite.ip2location.com](https://lite.ip2location.com).
-* Threat intelligence data aggregated from [CrowdSec](https://www.crowdsec.net/), [AbuseIPDB](https://www.abuseipdb.com/), GreenSnow, FireHOL, and SpamCop.
+* Threat intelligence data aggregated from [CrowdSec](https://www.crowdsec.net/), [AbuseIPDB](https://www.abuseipdb.com/), [GreenSnow](https://greensnow.co/), [FireHOL](https://iplists.firehol.org/), and [SpamCop](https://www.spamcop.net/).
+* Fallback data, in case local database has issues, comes from the API of [https://www.geojs.io](https://www.geojs.io/).

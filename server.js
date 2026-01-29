@@ -13,7 +13,7 @@ const getReputation = require('./src/reputation');
 // --- CONFIGURATION ---
 app.set('json spaces', 2);
 app.set('trust proxy', true);
-app.use(cors()); // Enable CORS for v4.ip... and v6.ip...
+app.use(cors()); // Enable CORS for v4.ip... and v6.ip
 
 app.use(express.static(path.join(__dirname, 'views'), { index: false }));
 
@@ -41,6 +41,35 @@ function isCli(userAgent) {
     const ua = (userAgent || '').toLowerCase();
     return ua.includes('curl') || ua.includes('wget') || ua.includes('httpie') ||
            ua.includes('python') || ua.includes('powershell') || ua.includes('aiohttp') || ua.includes('go-http-client');
+}
+
+// GeoJS Fallback Helper
+async function getGeoJS(ip) {
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000); // 2s timeout
+
+        const res = await fetch(`https://get.geojs.io/v1/ip/geo/${ip}.json`, {
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (!res.ok) return null;
+
+        const data = await res.json();
+        return {
+            city: data.city || 'Unknown',
+            country: data.country || 'Unknown',
+            country_code: data.country_code || 'XX',
+            region: data.region || '',
+            latitude: parseFloat(data.latitude) || 0,
+            longitude: parseFloat(data.longitude) || 0,
+            isp: data.organization_name || 'Unknown',
+            timezone: data.timezone || 'UTC'
+        };
+    } catch (err) {
+        return null;
+    }
 }
 
 function getGeoData(ip) {
@@ -73,10 +102,10 @@ function getGeoData(ip) {
             // HIGH: Pure VPN/Privacy Networks (Always Flag as High Risk)
             high: [
                 'M247', 'Datacamp', 'DataPacket', 'London Trust Media', 'Kape Technologies', '31173 Services', 'Owl Limited', 'PacketHub',
-		'Hydra Communications', 'Strong Technology', 'Powerhouse Management', 'Proton', 'Mullvad', 'NordVPN', 'Surfshark', 'ExpressVPN',
-		'CyberGhost', 'Windscribe', 'TunnelBear', 'ZenMate', 'Private Internet Access', 'HideMyAss', 'QuadraNet', 'Psychz', 'ColoCrossing',
-		'NFOrce', 'i3D.net', 'Melbicom', 'Green Floid', 'LogicWeb', 'Creanova', 'EstNOC', 'Ip-Only', 'GSL Networks', 'Tzulo', 'ReliableSite',
-		'Feral Hosting', 'Spine Telecom', 'Anexia', 'HostRoyale', 'Keminet', 'Cablenet Communications', 'NovoServe'
+        'Hydra Communications', 'Strong Technology', 'Powerhouse Management', 'Proton', 'Mullvad', 'NordVPN', 'Surfshark', 'ExpressVPN',
+        'CyberGhost', 'Windscribe', 'TunnelBear', 'ZenMate', 'Private Internet Access', 'HideMyAss', 'QuadraNet', 'Psychz', 'ColoCrossing',
+        'NFOrce', 'i3D.net', 'Melbicom', 'Green Floid', 'LogicWeb', 'Creanova', 'EstNOC', 'Ip-Only', 'GSL Networks', 'Tzulo', 'ReliableSite',
+        'Feral Hosting', 'Spine Telecom', 'Anexia', 'HostRoyale', 'Keminet', 'Cablenet Communications', 'NovoServe'
             ],
             // MEDIUM: Budget/Offshore VPS (Often abused for VPNs, but distinct from Major Clouds)
             medium: [
@@ -239,7 +268,6 @@ const globalLimiter = rateLimit({
     }
 });
 
-// Apply globally to all requests
 app.use(globalLimiter);
 
 async function loadDbs() {
@@ -257,7 +285,6 @@ async function loadDbs() {
             console.log(`✅ DB11 (Fallback) loaded`);
         } catch (e) { console.warn(`⚠️ DB11 Error: ${e.message}`); }
 
-        // Load Proxy DB
         try {
             proxyLookup = new IP2Proxy();
             if (proxyLookup.open(proxyDbPath) === 0) {
@@ -278,7 +305,6 @@ app.get('/', (req, res) => {
     const ip = getClientIp(req);
     const ua = req.headers['user-agent'];
 
-    // Cache Busting Headers
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.set('Pragma', 'no-cache');
     res.set('Expires', '0');
@@ -291,19 +317,26 @@ app.get('/', (req, res) => {
 });
 
 // 2. API Endpoint
-app.get(['/api/info', '/json'], (req, res) => {
+app.get(['/api/info', '/json'], async (req, res) => {
     const targetIp = req.query.ip || getClientIp(req);
     const ua = req.headers['user-agent'];
     if (!maxmind.validate(targetIp)) return res.status(400).json({ error: 'Invalid IP' });
 
-    const data = getGeoData(targetIp);
+    let data = getGeoData(targetIp);
 
-    // If the user is using curl/wget, manually stringify and add a newline "\n"
+    // Fallback
+    if (!data.city || data.city === 'Unknown' || !data.country || data.country === 'Unknown') {
+        const fallback = await getGeoJS(targetIp); // Now this works!
+        if (fallback) {
+            data = { ...data, ...fallback };
+            data.is_fallback = true;
+        }
+    }
+
     if (isCli(ua)) {
         res.header('Content-Type', 'application/json');
         return res.send(JSON.stringify(data, null, 2) + '\n');
     }
-    // Otherwise, standard JSON response for web apps
     res.json(data);
 });
 
@@ -317,7 +350,6 @@ app.get('/cli', (req, res) => {
     const ip = getClientIp(req);
     const data = getGeoData(ip);
 
-    // Helper to hide empty fields nicely
     const show = (val) => (val && val !== 'N/A' && val !== 'Unknown') ? val : '-';
 
     const output = `
@@ -362,11 +394,9 @@ app.get('/abuseip-badge.svg', async (req, res) => {
     } catch (err) { console.error('Badge Fetch Error:', err.message); res.status(500).send(''); }
 });
 
-// --- ROUTE: Terms & Privacy ---
 app.get('/terms', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'terms.html'));
 });
 
-// Use the environment variable PORT, or default to 4040
 const PORT = process.env.PORT || 4040;
 app.listen(PORT, () => console.log(`🚀 IP-Echo Service running on ${PORT}`));
