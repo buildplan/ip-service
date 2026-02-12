@@ -10,7 +10,7 @@
     "geoip-lite": "^1.4.10",
     "ip2location-nodejs": "^9.7.0",
     "ip2proxy-nodejs": "^4.4.0",
-    "lru-cache": "^11.2.5",
+    "lru-cache": "^11.2.6",
     "maxmind": "^5.0.5"
   }
 }
