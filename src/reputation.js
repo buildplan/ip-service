@@ -2,6 +2,7 @@ const dns = require('dns').promises;
 const axios = require('axios');
 const net = require('net');
 const { LRUCache } = require('lru-cache');
+const { BlockList } = require('net');
 
 // --- CONFIGURATION ---
 // Cache: Max 1000 IPs, 3 hour TTL
@@ -21,7 +22,8 @@ let spamVerifyExhausted = false;
 let spamVerifyResetTime = 0;
 
 // --- 1. IN-MEMORY BLOCKLIST CACHE ---
-let maliciousIpSet = new Set();
+let globalBlockList = new BlockList();
+let blocklistCount = 0;
 
 const BLOCKLIST_SOURCES = [
     'https://blocklist.greensnow.co/greensnow.txt',
@@ -32,7 +34,8 @@ const BLOCKLIST_SOURCES = [
 
 async function updateBlocklists() {
     console.log('🔄 Updating Threat Intelligence Feeds...');
-    const newSet = new Set();
+    const newBlockList = new BlockList();
+    let count = 0;
 
     for (const source of BLOCKLIST_SOURCES) {
         try {
@@ -41,9 +44,20 @@ async function updateBlocklists() {
             for (const line of lines) {
                 const cleanLine = line.split('#')[0].trim();
                 if (!cleanLine) continue;
-                const ipPart = cleanLine.split('/')[0];
-                if (net.isIP(ipPart)) {
-                    newSet.add(ipPart);
+                if (cleanLine.includes('/')) {
+                    const [ip, prefix] = cleanLine.split('/');
+                    const prefixInt = parseInt(prefix, 10);
+                    if (net.isIP(ip) && !isNaN(prefixInt)) {
+                        const type = net.isIPv6(ip) ? 'ipv6' : 'ipv4';
+                        newBlockList.addSubnet(ip, prefixInt, type);
+                        count++;
+                    }
+                } else {
+                    if (net.isIP(cleanLine)) {
+                        const type = net.isIPv6(cleanLine) ? 'ipv6' : 'ipv4';
+                        newBlockList.addAddress(cleanLine, type);
+                        count++;
+                    }
                 }
             }
             console.log(`   ✅ Fetched ${source}`);
@@ -52,9 +66,10 @@ async function updateBlocklists() {
         }
     }
 
-    if (newSet.size > 0) {
-        maliciousIpSet = newSet;
-        console.log(`🛡️ Threat Intel Updated: ${newSet.size} IPs loaded.`);
+    if (count > 0) {
+        globalBlockList = newBlockList;
+        blocklistCount = count;
+        console.log(`🛡️ Threat Intel Updated: ${count} rules loaded (supporting CIDR ranges).`);
     }
 }
 
@@ -82,11 +97,12 @@ setInterval(updateBlocklists, 3 * 60 * 60 * 1000);
 // --- 2. CHECKERS ---
 
 function checkPublicBlocklists(ip) {
-    if (maliciousIpSet.has(ip)) {
+    const type = net.isIPv6(ip) ? 'ipv6' : 'ipv4';
+    if (globalBlockList.check(ip, type)) {
         return {
             source: 'Threat Feed',
             status: 'LISTED',
-            reason: 'Known Attacker (Sefinek/GreenSnow/FireHOL)'
+            reason: 'Known Attacker (FireHOL/GreenSnow/etc)'
         };
     }
     return null;
