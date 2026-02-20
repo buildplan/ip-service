@@ -30,8 +30,8 @@ async function getWhois(ip) {
         if (data.events) {
             const regEvent = data.events.find(e => e.eventAction === 'registration');
             const updEvent = data.events.find(e => e.eventAction === 'last changed');
-            if (regEvent) result.registration_date = new Date(regEvent.eventDate).toLocaleDateString();
-            if (updEvent) result.updated_date = new Date(updEvent.eventDate).toLocaleDateString();
+            if (regEvent) result.registration_date = new Date(regEvent.eventDate).toISOString().split('T')[0];
+            if (updEvent) result.updated_date = new Date(updEvent.eventDate).toISOString().split('T')[0];
         }
 
         // Helper to parse vCard arrays
