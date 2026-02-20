@@ -141,7 +141,7 @@ async function checkCrowdSec(ip) {
         const encodedIp = encodeURIComponent(ip);
         const res = await axios.get(`${apiUrl}/v1/decisions?ip=${encodedIp}`, {
             headers: { 'X-Api-Key': apiKey },
-            timeout: 2000
+            timeout: 4000
         });
 
         if (res.data && res.data.length > 0) {
@@ -276,7 +276,7 @@ async function checkAbuseIPDB(ip) {
         const res = await axios.get('https://api.abuseipdb.com/api/v2/check', {
             params: { ipAddress: ip, maxAgeInDays: 90, verbose: '' },
             headers: { 'Key': apiKey, 'Accept': 'application/json' },
-            timeout: 3000
+            timeout: 4000
         });
 
         const data = res.data.data;
