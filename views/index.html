@@ -747,39 +747,50 @@
 
             if (data.error) throw new Error(data.error);
 
-            let emailsHtml = data.abuse_contacts.length > 0 
-                ? data.abuse_contacts.map(e => `<a href="mailto:${e}" class="text-blue-500 hover:underline">${e}</a>`).join(', ')
-                : '<span class="text-slate-400">Not provided</span>';
+            if (data.is_raw) {
+                // --- RENDER FALLBACK TERMINAL UI ---
+                content.innerHTML = `
+                    <div class="bg-[#0b1120] border border-slate-700 p-4 rounded-xl font-mono text-[11px] md:text-xs text-green-400 overflow-y-auto max-h-[60vh] custom-scrollbar whitespace-pre-wrap shadow-inner">
+${data.raw_whois.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
+                    </div>
+                    <p class="text-[10px] text-slate-500 mt-3 text-center uppercase tracking-widest">Fallback: Raw WHOIS Data shown due to unformatted registry</p>
+                `;
+            } else {
+                // --- RENDER GRID UI ---
+                let emailsHtml = data.abuse_contacts.length > 0 
+                    ? data.abuse_contacts.map(e => `<a href="mailto:${e}" class="text-blue-500 hover:underline">${e}</a>`).join(', ')
+                    : '<span class="text-slate-400">Not provided</span>';
 
-            content.innerHTML = `
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                    <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50">
-                        <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Network Name</span>
-                        <span class="font-mono text-slate-800 dark:text-slate-200 break-all">${data.network_name}</span>
+                content.innerHTML = `
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                        <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50">
+                            <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Network Name</span>
+                            <span class="font-mono text-slate-800 dark:text-slate-200 break-all">${data.network_name}</span>
+                        </div>
+                        <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50">
+                            <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">IP Range</span>
+                            <span class="font-mono text-slate-800 dark:text-slate-200 break-all">${data.network_range}</span>
+                        </div>
+                        <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50 sm:col-span-2">
+                            <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Organization</span>
+                            <span class="text-slate-800 dark:text-slate-200">${data.organization}</span>
+                        </div>
+                        <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50">
+                            <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Registered</span>
+                            <span class="text-slate-800 dark:text-slate-200">${data.registration_date}</span>
+                        </div>
+                        <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50">
+                            <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Registry Handle</span>
+                            <span class="font-mono text-slate-800 dark:text-slate-200 break-all">${data.handle} (${data.country})</span>
+                        </div>
                     </div>
-                    <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50">
-                        <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">IP Range</span>
-                        <span class="font-mono text-slate-800 dark:text-slate-200 break-all">${data.network_range}</span>
+                    <div class="mt-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-500/20">
+                        <span class="block text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-wider mb-1">Abuse Contacts</span>
+                        <div class="font-medium">${emailsHtml}</div>
+                        <p class="text-xs text-slate-500 mt-2">Use these contacts to report malicious activity from this IP.</p>
                     </div>
-                    <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50 sm:col-span-2">
-                        <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Organization</span>
-                        <span class="text-slate-800 dark:text-slate-200">${data.organization}</span>
-                    </div>
-                    <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50">
-                        <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Registered</span>
-                        <span class="text-slate-800 dark:text-slate-200">${data.registration_date}</span>
-                    </div>
-                    <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50">
-                        <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Registry Handle</span>
-                        <span class="font-mono text-slate-800 dark:text-slate-200 break-all">${data.handle} (${data.country})</span>
-                    </div>
-                </div>
-                <div class="mt-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-500/20">
-                    <span class="block text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-wider mb-1">Abuse Contacts</span>
-                    <div class="font-medium">${emailsHtml}</div>
-                    <p class="text-xs text-slate-500 mt-2">Use these contacts to report malicious activity from this IP.</p>
-                </div>
-            `;
+                `;
+            }
 
             // Show Modal
             const modal = document.getElementById('whois-modal');
