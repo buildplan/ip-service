@@ -148,8 +148,11 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="glass-panel p-5 md:p-6 rounded-xl space-y-1">
-                <div class="text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider">Provider (ISP)</div>
+            <div class="glass-panel p-5 md:p-6 rounded-xl space-y-1 relative">
+                <div class="flex justify-between items-start">
+                    <div class="text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider">Provider (ISP)</div>
+                    <button id="btn-whois" onclick="checkWhois()" class="text-[10px] font-bold text-slate-500 hover:text-blue-500 bg-slate-200/50 dark:bg-slate-800/50 px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 transition-colors">WHOIS</button>
+                </div>
                 <div class="text-lg font-semibold text-slate-800 dark:text-white truncate" id="dataOrg">...</div>
                 <div class="text-sm text-slate-500 font-mono" id="dataAsn">...</div>
             </div>
@@ -396,6 +399,24 @@
                     </div>
                     <div class="bg-slate-50 dark:bg-slate-800/30 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
                         <button type="button" onclick="closeReputationModal()" class="inline-flex w-full justify-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 sm:ml-3 sm:w-auto transition-all">Done</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="whois-modal" class="fixed inset-0 z-50 hidden" aria-labelledby="whois-title" role="dialog" aria-modal="true">
+            <div class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity opacity-0" id="whois-modal-backdrop" onclick="closeWhoisModal()"></div>
+            <div class="fixed inset-0 z-10 overflow-y-auto pointer-events-none">
+                <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+                    <div class="relative transform overflow-hidden rounded-2xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-xl opacity-0 scale-95 pointer-events-auto" id="whois-modal-panel">
+                        <div class="bg-slate-50 dark:bg-slate-800/50 px-4 py-3 sm:px-6 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center">
+                            <h3 class="text-base font-semibold leading-6 text-slate-900 dark:text-white" id="whois-title">Registry Information (WHOIS)</h3>
+                            <button onclick="closeWhoisModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                        </div>
+                        <div class="px-4 py-5 sm:p-6">
+                            <div id="whois-content" class="space-y-4"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -713,6 +734,86 @@
     }
 
     fetchSmartIPs();
+
+    async function checkWhois() {
+        const btn = document.getElementById('btn-whois');
+        const content = document.getElementById('whois-content');
+        
+        btn.disabled = true;
+        btn.innerText = "LOADING...";
+
+        try {
+            const res = await fetch(`/api/whois?ip=${currentScanIp}`);
+            const data = await res.json();
+
+            if (data.error) throw new Error(data.error);
+
+            let emailsHtml = data.abuse_contacts.length > 0 
+                ? data.abuse_contacts.map(e => `<a href="mailto:${e}" class="text-blue-500 hover:underline">${e}</a>`).join(', ')
+                : '<span class="text-slate-400">Not provided</span>';
+
+            content.innerHTML = `
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                    <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50">
+                        <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Network Name</span>
+                        <span class="font-mono text-slate-800 dark:text-slate-200 break-all">${data.network_name}</span>
+                    </div>
+                    <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50">
+                        <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">IP Range</span>
+                        <span class="font-mono text-slate-800 dark:text-slate-200 break-all">${data.network_range}</span>
+                    </div>
+                    <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50 sm:col-span-2">
+                        <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Organization</span>
+                        <span class="text-slate-800 dark:text-slate-200">${data.organization}</span>
+                    </div>
+                    <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50">
+                        <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Registered</span>
+                        <span class="text-slate-800 dark:text-slate-200">${data.registration_date}</span>
+                    </div>
+                    <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50">
+                        <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Registry Handle</span>
+                        <span class="font-mono text-slate-800 dark:text-slate-200 break-all">${data.handle} (${data.country})</span>
+                    </div>
+                </div>
+                <div class="mt-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-500/20">
+                    <span class="block text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-wider mb-1">Abuse Contacts</span>
+                    <div class="font-medium">${emailsHtml}</div>
+                    <p class="text-xs text-slate-500 mt-2">Use these contacts to report malicious activity from this IP.</p>
+                </div>
+            `;
+
+            // Show Modal
+            const modal = document.getElementById('whois-modal');
+            const backdrop = document.getElementById('whois-modal-backdrop');
+            const panel = document.getElementById('whois-modal-panel');
+            
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                backdrop.classList.remove('opacity-0');
+                panel.classList.remove('opacity-0', 'scale-95');
+                panel.classList.add('opacity-100', 'scale-100');
+            }, 10);
+
+        } catch (e) {
+            showToast("WHOIS lookup failed. Registry might be rate limiting.");
+        } finally {
+            btn.innerText = "WHOIS";
+            btn.disabled = false;
+        }
+    }
+
+    function closeWhoisModal() {
+        const modal = document.getElementById('whois-modal');
+        const backdrop = document.getElementById('whois-modal-backdrop');
+        const panel = document.getElementById('whois-modal-panel');
+
+        backdrop.classList.add('opacity-0');
+        panel.classList.add('opacity-0', 'scale-95');
+        panel.classList.remove('opacity-100', 'scale-100');
+
+        setTimeout(() => { modal.classList.add('hidden'); }, 300);
+    }
+
 </script>
 
 </body>
