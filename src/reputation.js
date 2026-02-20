@@ -141,7 +141,7 @@ async function checkCrowdSec(ip) {
         const encodedIp = encodeURIComponent(ip);
         const res = await axios.get(`${apiUrl}/v1/decisions?ip=${encodedIp}`, {
             headers: { 'X-Api-Key': apiKey },
-            timeout: 4000
+            timeout: 10000
         });
 
         if (res.data && res.data.length > 0) {
@@ -177,7 +177,7 @@ async function checkSniffCat(ip) {
 
         const res = await axios.get(`https://api.sniffcat.com/api/v1/check?ip=${ip}`, {
             headers: { 'X-Secret-Token': apiKey },
-            timeout: 4000
+            timeout: 10000
         });
 
         const data = res.data;
@@ -226,7 +226,7 @@ async function checkSpamVerify(ip) {
             headers: {
                 'Accept': 'application/json'
             },
-            timeout: 5000
+            timeout: 10000
         });
 
         const ipData = res.data.ip;
@@ -276,7 +276,7 @@ async function checkAbuseIPDB(ip) {
         const res = await axios.get('https://api.abuseipdb.com/api/v2/check', {
             params: { ipAddress: ip, maxAgeInDays: 90, verbose: '' },
             headers: { 'Key': apiKey, 'Accept': 'application/json' },
-            timeout: 4000
+            timeout: 10000
         });
 
         const data = res.data.data;
