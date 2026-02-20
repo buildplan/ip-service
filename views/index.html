@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
+
     <title>What Is My IP Address? Free IP, VPN & Proxy Lookup Web & CLI</title>
 
     <meta name="robots" content="index, follow">
@@ -18,7 +18,7 @@
     <meta property="og:title" content="What Is My IP? Advanced VPN & Threat Detection">
     <meta property="og:description" content="Free IP intelligence tool. Check Geolocation, ISP, ASN, and detect active VPNs/Proxies. Supports CLI access via curl/wget.">
     <meta property="og:image" content="https://ip.wiredalter.com/preview-image.png">
-    
+
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="WiredAlter IP & Threat Lookup">
     <meta name="twitter:description" content="Developer-first IP lookup. Detect VPNs, proxies, and threats instantly via Web or CLI.">
@@ -105,14 +105,14 @@
                 <a href="https://audit.wiredalter.com" class="px-4 py-2 md:px-3 md:py-1.5 text-sm font-medium rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-300 dark:hover:bg-slate-700 transition-all">AUDIT</a>
             </div>
         </div>
-        
+
         <div class="absolute top-6 right-6 md:static flex items-center gap-4 text-sm font-medium text-slate-500">
-            
+
             <button onclick="toggleTheme()" class="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 transition-all" aria-label="Toggle Theme">
                 <svg id="icon-sun" class="w-5 h-5 hidden dark:block text-slate-400 hover:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                 <svg id="icon-moon" class="w-5 h-5 block dark:hidden text-slate-600 hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
             </button>
-            
+
             <div class="hidden md:flex items-center gap-4">
                 <div class="w-px h-4 bg-slate-300 dark:bg-slate-700"></div>
                 <a href="/terms" class="hover:text-slate-900 dark:hover:text-slate-300 transition-colors">Terms</a>
@@ -121,7 +121,7 @@
                 <span class="text-slate-300 dark:text-slate-700">|</span>
                 <a href="https://github.com/buildplan/ip-service" class="hover:text-slate-900 dark:hover:text-slate-300 transition-colors">GitHub</a>
             </div>
-            
+
         </div>
     </nav>
 
@@ -130,7 +130,7 @@
         <div class="text-center space-y-6 max-w-3xl mx-auto mt-6 md:mt-0">
             <div class="space-y-4">
                 <h2 class="text-blue-600 dark:text-blue-500 text-xs font-bold uppercase tracking-widest">Your Connection</h2>
-                
+
                 <div id="ip-display-area" class="space-y-3 flex flex-col items-center justify-center">
                     <div class="animate-pulse h-10 w-48 bg-slate-200 dark:bg-slate-800 rounded-lg"></div>
                 </div>
@@ -271,7 +271,7 @@
                         <h4 class="font-bold text-blue-600 dark:text-blue-400">How accurate is the data?</h4>
                         <p class="text-slate-600 dark:text-slate-400 leading-relaxed">We combine <strong>MaxMind GeoLite2</strong> for location/ISP data with <strong>IP2Location</strong> for threat intelligence. Both databases are updated regularly.</p>
                     </div>            
-                    
+
                     <div class="space-y-2">
                         <h4 class="font-bold text-blue-600 dark:text-blue-400">Why do I see two IP addresses?</h4>
                         <p class="text-slate-600 dark:text-slate-400 leading-relaxed">Modern networks often support both IPv4 (legacy) and IPv6 (modern). We intelligently detect and display both if your connection supports them.</p>
@@ -286,7 +286,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
                         </svg>
                     </div>
-                    
+
                     <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-2">Fully Open Source</h3>
                     <p class="text-slate-600 dark:text-slate-400 mb-6 max-w-lg mx-auto">
                         For full transparency, this service runs entirely in memory and logs nothing. 
@@ -309,15 +309,15 @@
             
             <div class="space-y-2">
                 <p>
-                    &copy; <span id="year"></span> <a href="https://www.wiredalter.com" class="hover:text-slate-900 dark:hover:text-slate-300 transition-colors">WiredAlter IP Service</a>. All rights reserved.
+                    &copy; <span id="year"></span> <a href="https://www.wiredalter.com" class="hover:text-slate-900 dark:hover:text-slate-300 transition-colors">WiredAlter.com</a>. All rights reserved.
                 </p>
                 <p class="text-xs">
                     <a href="/terms" class="hover:text-slate-900 dark:hover:text-slate-300 underline decoration-slate-400 dark:decoration-slate-700 transition-colors">Terms & Privacy</a>
                 </p>
             </div>
-            
+
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-xs text-slate-500 leading-relaxed border-t border-slate-200 dark:border-slate-800/50 pt-8">
-                
+
                 <div class="space-y-2">
                     <p class="font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">Location Intelligence</p>
                     <p>
@@ -421,7 +421,7 @@
             </div>
         </div>
     </div>
-    
+
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <script src="/app.js"></script>
 
