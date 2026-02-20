@@ -9,6 +9,7 @@ const { IP2Proxy } = require('ip2proxy-nodejs');
 const { IP2Location } = require('ip2location-nodejs');
 const app = express();
 const getReputation = require('./src/reputation');
+const getWhois = require('./src/whois');
 
 // --- CONFIGURATION ---
 app.set('json spaces', 2);
@@ -388,6 +389,16 @@ app.get('/api/reputation', async (req, res) => {
         return res.status(400).json({ error: 'Invalid IP address' });
     }
     const result = await getReputation(ip);
+    res.json(result);
+});
+
+// WHOIS / RDAP logic
+app.get('/api/whois', async (req, res) => {
+    const ip = req.query.ip || getClientIp(req);
+    if (!maxmind.validate(ip)) {
+        return res.status(400).json({ error: 'Invalid IP address' });
+    }
+    const result = await getWhois(ip);
     res.json(result);
 });
 
