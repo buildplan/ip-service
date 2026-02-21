@@ -18,6 +18,7 @@ app.set('trust proxy', true);
 app.use(cors()); // Enable CORS for v4.ip... and v6.ip
 
 app.use(express.static(path.join(__dirname, 'views'), { index: false }));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // --- DATABASE PATHS ---
 const cityDbPath = process.env.CITY_DB_PATH || path.join(__dirname, 'db', 'GeoLite2-City.mmdb');

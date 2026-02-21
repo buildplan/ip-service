@@ -1,6 +1,6 @@
 {
-  "name": "ip-echo-service",
-  "version": "1.0.1",
+  "name": "ip-service",
+  "version": "1.2.0",
   "main": "server.js",
   "dependencies": {
     "axios": "^1.13.5",
@@ -11,5 +11,15 @@
     "ip2proxy-nodejs": "^4.4.0",
     "lru-cache": "^11.2.6",
     "maxmind": "^5.0.5"
+  },
+  "devDependencies": {
+    "terser": "^5.46.0",
+    "uglifycss": "^0.0.29"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "build:js": "terser views/app.js -c -m -o views/app.min.js",
+    "build:css": "uglifycss views/style.css --output views/style.min.css",
+    "build": "npm run build:js && npm run build:css"
   }
 }
