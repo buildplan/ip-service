@@ -1,6 +1,8 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"],
+  "extends": [
+    "config:recommended"
+  ],
   "registryAliases": {
     "dhi.io": "dhi.io"
   },
@@ -15,13 +17,20 @@
   "packageRules": [
     {
       "description": "Group all non-major updates",
-      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "digest"
+      ],
       "groupName": "All non-major dependencies",
       "automerge": true
     },
     {
       "description": "Trigger build on custom manager updates",
-      "matchManagers": ["custom.regex"],
+      "matchManagers": [
+        "custom.regex"
+      ],
       "automerge": true
     }
   ],
@@ -29,7 +38,9 @@
     {
       "description": "Update Leaflet version in index.html",
       "customType": "regex",
-      "fileMatch": ["^index\\.html$"],
+      "managerFilePatterns": [
+        "/^index\\.html$/"
+      ],
       "matchStrings": [
         "renovate: leaflet-version=(?<currentValue>[^\\s]+)"
       ],
@@ -39,7 +50,9 @@
     {
       "description": "Update Inter font version in input.css",
       "customType": "regex",
-      "fileMatch": ["^views/input\\.css$"],
+      "managerFilePatterns": [
+        "/^views/input\\.css$/"
+      ],
       "matchStrings": [
         "renovate: inter-version=(?<currentValue>[^\\s\\*]+)"
       ],
