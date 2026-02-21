@@ -1,30 +1,52 @@
-# Use Node 24 LTS
+# STAGE 1: BUILDER
+FROM node:24-slim AS builder
+
+WORKDIR /app
+
+# Install system build dependencies 
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY package*.json ./
+RUN npm ci
+
+# Copy App Code and Run Build
+COPY . .
+RUN npm run build
+
+# Prune node_modules to only keep production dependencies
+RUN npm prune --production && npm cache clean --force
+
+
+# STAGE 2: RUNTIME
 FROM node:24-slim
 
-# 1. OS SETUP (Run as Root)
+# OS SETUP (Runtime dependencies)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     whois \
     netbase \
     dumb-init \
     && rm -rf /var/lib/apt/lists/*
 
-# 2. PERMISSIONS SETUP
+# PERMISSIONS SETUP
 WORKDIR /app
 RUN chown node:node /app
 
-# 3. SWITCH USER
+# COPY ONLY PRODUCTION ASSETS
 USER node
 
-# 4. DEPENDENCIES
-COPY --chown=node:node package*.json ./
+# Copy production node_modules
+COPY --from=builder --chown=node:node /app/node_modules ./node_modules
 
-# npm ci
-RUN npm ci --omit=dev && npm cache clean --force
+# Copy application source
+COPY --from=builder --chown=node:node /app ./
 
-# 5. APP CODE
-COPY --chown=node:node . .
+# 3. FINAL CLEANUP
+RUN rm -f views/input.css views/app.min.js
 
-# 6. RUNTIME
 EXPOSE 3000
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
