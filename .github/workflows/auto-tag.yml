@@ -12,6 +12,7 @@ on:
       - 'renovate.json'
       - 'LICENSE'
       - 'docs/**'
+      - 'nodhi.Dockerfile'
 
 jobs:
   tag:
