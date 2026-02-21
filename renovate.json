@@ -14,27 +14,37 @@
   ],
   "packageRules": [
     {
-      "description": "Group all minor and patch updates into a single PR and automerge them",
+      "description": "Group all non-major updates",
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "groupName": "All non-major dependencies",
       "automerge": true
     },
     {
-      "description": "Group all major updates into a single PR for manual review",
-      "matchUpdateTypes": ["major"],
-      "groupName": "All major dependencies",
-      "automerge": false
+      "description": "Trigger build on custom manager updates",
+      "matchManagers": ["custom.regex"],
+      "automerge": true
     }
   ],
   "customManagers": [
     {
-      "description": "Update Unpkg CDN links in HTML files",
+      "description": "Update Leaflet version in index.html",
       "customType": "regex",
-      "managerFilePatterns": ["/\\.html$/"],
+      "fileMatch": ["^index\\.html$"],
       "matchStrings": [
-        "https://unpkg\\.com/(?<depName>[^@\\n]+)@(?<currentValue>[^/\\n]+)"
+        "renovate: leaflet-version=(?<currentValue>[^\\s]+)"
       ],
+      "depNameTemplate": "leaflet",
       "datasourceTemplate": "npm"
+    },
+    {
+      "description": "Update Inter font version in input.css",
+      "customType": "regex",
+      "fileMatch": ["^views/input\\.css$"],
+      "matchStrings": [
+        "renovate: inter-version=(?<currentValue>[^\\s\\*]+)"
+      ],
+      "depNameTemplate": "inter",
+      "datasourceTemplate": "google-fonts"
     }
   ]
 }
