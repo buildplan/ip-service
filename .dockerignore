@@ -23,6 +23,7 @@ yarn-error.log
 .env
 .env.*
 .dockerignore
+renovate.json
 
 # --- Docker Configs ---
 docker-compose.yml
