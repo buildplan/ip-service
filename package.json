@@ -13,12 +13,14 @@
     "maxmind": "^5.0.5"
   },
   "devDependencies": {
-    "terser": "^5.46.0",
-    "uglifycss": "^0.0.29"
+    "@tailwindcss/cli": "^4.2.0",
+    "tailwindcss": "^4.2.0",
+    "terser": "^5.46.0"
   },
   "scripts": {
     "start": "node server.js",
     "build:js": "terser views/app.js -c -m -o views/app.min.js",
-    "build": "npm run build:js"
+    "build:css": "npx @tailwindcss/cli -i ./views/input.css -o ./public/style.min.css --minify",
+    "build": "npm run build:js && npm run build:css"
   }
 }
