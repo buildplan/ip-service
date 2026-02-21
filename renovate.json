@@ -30,7 +30,7 @@
     {
       "description": "Update Unpkg CDN links in HTML files",
       "customType": "regex",
-      "managerFilePatterns": ["\\.html$"],
+      "managerFilePatterns": ["/\\.html$/"],
       "matchStrings": [
         "https://unpkg\\.com/(?<depName>[^@\\n]+)@(?<currentValue>[^/\\n]+)"
       ],
