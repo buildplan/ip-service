@@ -3,12 +3,15 @@
   "extends": [
     "config:recommended"
   ],
+  "registryAliases": {
+    "dhi.io": "dhi.io"
+  },
   "hostRules": [
     {
       "matchHost": "dhi.io",
       "hostType": "docker",
-      "username": "{{secrets.MEND_DOCKERHUB_USERNAME}}",
-      "password": "{{secrets.MEND_DOCKERHUB_TOKEN}}"
+      "username": "{{ secrets.MEND_DOCKERHUB_USERNAME }}",
+      "password": "{{ secrets.MEND_DOCKERHUB_TOKEN }}"
     }
   ],
   "packageRules": [
