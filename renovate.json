@@ -7,8 +7,8 @@
     {
       "matchHost": "dhi.io",
       "hostType": "docker",
-      "username": "{{secrets.MEND_DOCKERHUB_USERNAME}}",
-      "password": "{{secrets.MEND_DOCKERHUB_TOKEN}}"
+      "username": "{{secrets.DOCKERHUB_USERNAME}}",
+      "password": "{{secrets.DOCKERHUB_TOKEN}}"
     }
   ],
   "packageRules": [
@@ -27,7 +27,7 @@
   ],
   "customManagers": [
     {
-      "description": "Update Unpkg CDN links in HTML files (like Leaflet)",
+      "description": "Update Unpkg CDN links in HTML files",
       "customType": "regex",
       "fileMatch": ["\\.html$"],
       "matchStrings": [
