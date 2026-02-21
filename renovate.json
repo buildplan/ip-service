@@ -1,0 +1,40 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "hostRules": [
+    "hostRules": [
+    {
+      "matchHost": "dhi.io",
+      "hostType": "docker",
+      "username": "{{secrets.MEND_DOCKERHUB_USERNAME}}",
+      "password": "{{secrets.MEND_DOCKERHUB_TOKEN}}"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Group all minor and patch updates into a single PR and automerge them",
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "groupName": "All non-major dependencies",
+      "automerge": true
+    },
+    {
+      "description": "Group all major updates into a single PR for manual review (Do NOT automerge)",
+      "matchUpdateTypes": ["major"],
+      "groupName": "All major dependencies",
+      "automerge": false
+    }
+  ],
+  "customManagers": [
+    {
+      "description": "Update Unpkg CDN links in HTML files (like Leaflet)",
+      "customType": "regex",
+      "fileMatch": ["\\.html$"],
+      "matchStrings": [
+        "https://unpkg\\.com/(?<depName>[^@\n]+)@(?<currentValue>[^/\n]+)"
+      ],
+      "datasourceTemplate": "npm"
+    }
+  ]
+}
