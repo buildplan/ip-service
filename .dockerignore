@@ -16,9 +16,6 @@ node_modules
 npm-debug.log
 yarn-error.log
 
-views/app.js
-views/style.css
-
 # --- Git & Config ---
 .git/
 .github
