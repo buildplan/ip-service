@@ -73,8 +73,9 @@ async function getWhois(ip) {
 
         // --- VALIDATION: Is the RDAP Registry Broken or Missing Emails? ---
         const isBroken = result.network_name === 'IANA-BLOCK' ||
+                         result.network_name === 'N/A' ||
                          result.network_range.includes('0.0.0.0') ||
-                         (result.network_name === 'N/A' && result.organization === 'N/A');
+                         result.abuse_contacts.length === 0;
 
         if (!isBroken) {
             return result;
