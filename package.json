@@ -19,7 +19,6 @@
   "scripts": {
     "start": "node server.js",
     "build:js": "terser views/app.js -c -m -o views/app.min.js",
-    "build:css": "uglifycss views/style.css --output views/style.min.css",
-    "build": "npm run build:js && npm run build:css"
+    "build": "npm run build:js"
   }
 }

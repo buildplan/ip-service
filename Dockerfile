@@ -13,7 +13,7 @@ RUN npm ci
 # Copy App Code
 COPY . .
 RUN npm run build
-RUN rm views/app.js views/style.css
+RUN mv views/app.min.js views/app.js
 RUN npm prune --production && npm cache clean --force
 
 # === Final stage: Create minimal runtime image ===
