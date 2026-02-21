@@ -1,11 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended"
-  ],
-  "registryAliases": {
-    "dhi.io": "dhi.io"
-  },
+  "extends": ["config:recommended"],
   "hostRules": [
     {
       "matchHost": "dhi.io",
@@ -22,7 +17,7 @@
       "automerge": true
     },
     {
-      "description": "Group all major updates into a single PR for manual review (Do NOT automerge)",
+      "description": "Group all major updates into a single PR for manual review",
       "matchUpdateTypes": ["major"],
       "groupName": "All major dependencies",
       "automerge": false
@@ -32,9 +27,9 @@
     {
       "description": "Update Unpkg CDN links in HTML files",
       "customType": "regex",
-      "fileMatch": ["\\.html$"],
+      "managerFilePatterns": ["\\.html$"],
       "matchStrings": [
-        "https://unpkg\\.com/(?<depName>[^@\n]+)@(?<currentValue>[^/\n]+)"
+        "https://unpkg\\.com/(?<depName>[^@\\n]+)@(?<currentValue>[^/\\n]+)"
       ],
       "datasourceTemplate": "npm"
     }
