@@ -88,6 +88,8 @@ function createIpRow(ip, type) {
 async function fetchSmartIPs() {
     const displayArea = document.getElementById('ip-display-area');
     try {
+        const configRes = await fetch('/api/config');
+        const config = await configRes.json();
         const res = await fetch('/api/info');
         const primaryData = await res.json();
         const primaryIsV6 = primaryData.ip.includes(':');
@@ -96,9 +98,7 @@ async function fetchSmartIPs() {
         displayArea.innerHTML = createIpRow(primaryData.ip, primaryType);
         populateDetails(primaryData);
 
-        const missingUrl = primaryIsV6
-            ? 'https://v4-ip.wiredalter.com/api/info'
-            : 'https://v6-ip.wiredalter.com/api/info';
+        const missingUrl = primaryIsV6 ? config.v4_url : config.v6_url;
         const missingType = primaryIsV6 ? 'IPv4' : 'IPv6';
 
         try {
@@ -231,7 +231,7 @@ function openReputationModal() {
     modal.classList.remove('hidden');
 
     if (lastReputationResult.is_clean) {
-        const copyStr = `IP: ${lastReputationResult.ip} - Status: CLEAN (No threats detected in active feeds)`;    
+        const copyStr = `IP: ${lastReputationResult.ip} - Status: CLEAN (No threats detected in active feeds)`;
         content.innerHTML = `
             <div class="flex items-center gap-3 mb-4">
                 <div class="p-3 rounded-full bg-sky-500/10 border border-sky-500/20">
@@ -259,7 +259,7 @@ function openReputationModal() {
         `;
     } else {
         let listHtml = '';
-        let threatSources = [];    
+        let threatSources = [];
         lastReputationResult.detections.forEach(det => {
             threatSources.push(det.source);
             listHtml += `
@@ -429,7 +429,7 @@ function closeWhoisModal() {
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
         const repModal = document.getElementById('rep-modal');
-        const whoisModal = document.getElementById('whois-modal');    
+        const whoisModal = document.getElementById('whois-modal');
         if (repModal && !repModal.classList.contains('hidden')) closeReputationModal();
         if (whoisModal && !whoisModal.classList.contains('hidden')) closeWhoisModal();
     }

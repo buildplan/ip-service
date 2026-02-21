@@ -6,6 +6,12 @@ on:
       - main
     tags-ignore:
       - '**'
+    paths-ignore:
+      - '**.md'
+      - '.gitignore'
+      - 'renovate.json'
+      - 'LICENSE'
+      - 'docs/**'
 
 jobs:
   tag:
