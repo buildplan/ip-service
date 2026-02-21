@@ -231,6 +231,7 @@ function openReputationModal() {
     modal.classList.remove('hidden');
 
     if (lastReputationResult.is_clean) {
+        const copyStr = `IP: ${lastReputationResult.ip} - Status: CLEAN (No threats detected in active feeds)`;    
         content.innerHTML = `
             <div class="flex items-center gap-3 mb-4">
                 <div class="p-3 rounded-full bg-sky-500/10 border border-sky-500/20">
@@ -251,10 +252,16 @@ function openReputationModal() {
                     "No threats detected" does <strong>not</strong> guarantee safety. An IP can be malicious but not yet listed.
                 </p>
             </div>
+            <button onclick="navigator.clipboard.writeText('${copyStr}').then(() => showToast('Scan Result Copied!'))" class="mt-4 w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold tracking-wider uppercase transition-colors flex justify-center items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 012 2v8a2 2 0 01-2 2h-8a2 2 0 01-2-2v-8a2 2 0 012-2z"></path></svg>
+                Copy Scan Result
+            </button>
         `;
     } else {
         let listHtml = '';
+        let threatSources = [];    
         lastReputationResult.detections.forEach(det => {
+            threatSources.push(det.source);
             listHtml += `
                 <div class="p-3 rounded bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-500/20 flex justify-between items-start">
                     <div>
@@ -265,6 +272,8 @@ function openReputationModal() {
                 </div>
             `;
         });
+
+        const copyStr = `⚠️ THREAT DETECTED ⚠️\\nIP: ${lastReputationResult.ip}\\nListed By: ${threatSources.join(', ')}`;
 
         content.innerHTML = `
             <div class="flex items-center gap-3 mb-4">
@@ -282,6 +291,10 @@ function openReputationModal() {
             <div class="space-y-2 max-h-60 overflow-y-auto custom-scrollbar pr-1">
                 ${listHtml}
             </div>
+            <button onclick="navigator.clipboard.writeText('${copyStr}').then(() => showToast('Threat Report Copied!'))" class="mt-4 w-full px-4 py-2.5 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-500/30 rounded-lg text-xs font-bold tracking-wider uppercase transition-colors flex justify-center items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 012 2v8a2 2 0 01-2 2h-8a2 2 0 01-2-2v-8a2 2 0 012-2z"></path></svg>
+                Copy Threat Report
+            </button>
         `;
     }
 
@@ -322,10 +335,14 @@ async function checkWhois() {
         if (data.error) throw new Error(data.error);
 
         if (data.is_raw) {
+            const emailRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/gi;
+            let formattedRawText = data.raw_whois
+                .replace(/</g, '&lt;').replace(/>/g, '&gt;') // Sanitize HTML first
+                .replace(emailRegex, '<a href="mailto:$1" class="text-blue-400 hover:text-blue-300 hover:underline">$1</a>');
             // --- RENDER FALLBACK TERMINAL UI ---
             content.innerHTML = `
                 <div class="bg-[#0b1120] border border-slate-700 p-4 rounded-xl font-mono text-[11px] md:text-xs text-green-400 overflow-y-auto max-h-[60vh] custom-scrollbar whitespace-pre-wrap shadow-inner">
-${data.raw_whois.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
+${formattedRawText}
                 </div>
                 <p class="text-[10px] text-slate-500 mt-3 text-center uppercase tracking-widest">Fallback: Raw WHOIS Data shown due to unformatted registry</p>
             `;
@@ -348,6 +365,15 @@ ${data.raw_whois.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
                     <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50 sm:col-span-2">
                         <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Organization</span>
                         <span class="text-slate-800 dark:text-slate-200">${data.organization}</span>
+                    </div>
+                    <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50">
+                        <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Allocation Type</span>
+                        <span class="text-slate-800 dark:text-slate-200">${data.type}</span>
+                    </div>
+
+                    <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50">
+                        <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Last Updated</span>
+                        <span class="text-slate-800 dark:text-slate-200">${data.updated_date}</span>
                     </div>
                     <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50">
                         <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Registered</span>
@@ -396,4 +422,32 @@ function closeWhoisModal() {
     panel.classList.remove('opacity-100', 'scale-100');
 
     setTimeout(() => { modal.classList.add('hidden'); }, 300);
+}
+
+// --- MODAL UX ---
+    // Close on 'Escape'
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        const repModal = document.getElementById('rep-modal');
+        const whoisModal = document.getElementById('whois-modal');    
+        if (repModal && !repModal.classList.contains('hidden')) closeReputationModal();
+        if (whoisModal && !whoisModal.classList.contains('hidden')) closeWhoisModal();
+    }
+});
+// Close when clicking outside the panel
+const repModal = document.getElementById('rep-modal');
+if (repModal) {
+    repModal.addEventListener('click', (e) => {
+        if (e.target.id === 'rep-modal' || e.target.id === 'rep-modal-backdrop') {
+            closeReputationModal();
+        }
+    });
+}
+const whoisModal = document.getElementById('whois-modal');
+if (whoisModal) {
+    whoisModal.addEventListener('click', (e) => {
+        if (e.target.id === 'whois-modal' || e.target.id === 'whois-modal-backdrop') {
+            closeWhoisModal();
+        }
+    });
 }
