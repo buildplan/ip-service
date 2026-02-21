@@ -4,7 +4,6 @@
     "config:recommended"
   ],
   "hostRules": [
-    "hostRules": [
     {
       "matchHost": "dhi.io",
       "hostType": "docker",
