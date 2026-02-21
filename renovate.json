@@ -43,8 +43,8 @@
       "matchStrings": [
         "renovate: inter-version=(?<currentValue>[^\\s\\*]+)"
       ],
-      "depNameTemplate": "inter",
-      "datasourceTemplate": "google-fonts"
+      "depNameTemplate": "rsms/inter",
+      "datasourceTemplate": "github-tags"
     }
   ]
 }
