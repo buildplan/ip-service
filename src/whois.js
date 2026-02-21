@@ -1,14 +1,18 @@
 const axios = require('axios');
 const net = require('net');
 
+const appUrl = process.env.APP_URL || 'https://github.com/buildplan/ip-service';
+const adminEmail = process.env.ADMIN_EMAIL || 'open-source-user@example.com';
+const customUserAgent = `Threat-Intel-API/1.0 (${appUrl}; ${adminEmail})`;
+
 async function getWhois(ip) {
     if (!net.isIP(ip)) return { error: "Invalid IP" };
 
     try {
         // --- 1. TRY RDAP FIRST ---
         const rdapRes = await axios.get(`https://rdap.org/ip/${ip}`, {
-            timeout: 5000,
-            headers: { 'Accept': 'application/rdap+json' }
+            timeout: 10000,
+            headers: { 'Accept': 'application/rdap+json','User-Agent': customUserAgent }
         });
 
         const data = rdapRes.data;
@@ -85,8 +89,8 @@ async function getWhois(ip) {
     // --- 2. FALLBACK: FETCH RAW WHOIS (RIPEstat) ---
     try {
         const statRes = await axios.get(`https://stat.ripe.net/data/whois/data.json?resource=${ip}`, {
-            timeout: 6000,
-            headers: { 'Accept': 'application/json' }
+            timeout: 10000,
+            headers: { 'Accept': 'application/json','User-Agent': customUserAgent }
         });
 
         const statData = statRes.data.data;
