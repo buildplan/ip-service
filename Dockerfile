@@ -34,8 +34,8 @@ WORKDIR /app
 EXPOSE 4040
 
 # Healthcheck
-HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:4040/health || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD ["node", "-e", "fetch('http://127.0.0.1:4040/health').then(res => process.exit(res.ok ? 0 : 1)).catch(() => process.exit(1))"]
 
 # Start with dumb-init for proper signal handling
 CMD ["dumb-init", "node", "server.js"]
