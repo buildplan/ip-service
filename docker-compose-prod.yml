@@ -14,6 +14,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=4040
+      - MAX_MEMORY_MB=1024
       - CROWDSEC_URL=http://crowdsec:8080
       - CROWDSEC_API_KEY=${CROWDSEC_API_KEY}
       - ABUSEIPDB_API_KEY=${ABUSEIPDB_API_KEY}
@@ -27,7 +28,7 @@ services:
       resources:
         limits:
           cpus: '0.50'
-          memory: 256M
+          memory: 512M
 
 networks:
   wa-net:

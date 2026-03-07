@@ -375,5 +375,17 @@ app.get('/terms', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'terms.html'));
 });
 
+// --- Health Check ---
+app.get('/health', (req, res) => {
+    const memoryUsage = process.memoryUsage();
+    const rssMB = Math.round(memoryUsage.rss / 1024 / 1024);
+    const MAX_MEMORY_MB = process.env.MAX_MEMORY_MB || 1024;
+    if (rssMB > MAX_MEMORY_MB) {
+        console.error(`🚨 Health Check Failed: Memory usage (${rssMB}MB) exceeded limit (${MAX_MEMORY_MB}MB)`);
+        return res.status(503).json({ status: 'unhealthy', reason: 'Memory limit exceeded', memory_mb: rssMB, limit_mb: MAX_MEMORY_MB });
+    }
+    res.status(200).json({ status: 'healthy', memory_mb: rssMB, limit_mb: MAX_MEMORY_MB });
+});
+
 const PORT = process.env.PORT || 4040;
 app.listen(PORT, () => console.log(`🚀 IP-Echo Service running on ${PORT}`));
