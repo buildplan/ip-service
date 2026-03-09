@@ -154,6 +154,12 @@ function getGeoData(ip) {
             else if (vpnHostingProviders.medium.some(p => orgName.toLowerCase().includes(p.toLowerCase()))) {
                 isProxy = true; riskLabel = "VPN Hosting (Medium Confidence)";
             }
+            // Low Confidence Cloud Providers
+            else if (vpnHostingProviders.low.some(p => orgName.toLowerCase().includes(p.toLowerCase()))) {
+                if (usageType === 'DCH' || usageType === 'Datacenter' || usageType === 'Cloud Infrastructure') {
+                    isProxy = true; riskLabel = "Cloud Hosting (Low Confidence)";
+                }
+            }
         }
 
         // D) ASN-based detection (High-Risk Networks ONLY)
