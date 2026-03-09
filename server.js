@@ -25,11 +25,13 @@ const cityDbPath = process.env.CITY_DB_PATH || path.join(__dirname, 'db', 'GeoLi
 const asnDbPath = process.env.ASN_DB_PATH || path.join(__dirname, 'db', 'GeoLite2-ASN.mmdb');
 const proxyDbPath = process.env.PROXY_DB_PATH || path.join(__dirname, 'db', 'IP2PROXY-LITE-PX11.BIN');
 const db11Path = process.env.DB11_PATH || path.join(__dirname, 'db', 'IP2LOCATION-LITE-DB11.IPV6.BIN');
+const ipinfoAsnDbPath = process.env.IPINFO_ASN_DB_PATH || path.join(__dirname, 'db', 'ipinfo-asn.mmdb');
 
 let cityLookup;
 let asnLookup;
 let proxyLookup;
 let db11Lookup;
+let ipinfoAsnLookup;
 
 // --- HELPERS ---
 function getClientIp(req) {
@@ -86,6 +88,13 @@ function getGeoData(ip) {
         const cityData = cityLookup ? cityLookup.get(ip) : null;
         const asnData = asnLookup ? asnLookup.get(ip) : null;
         const proxyData = proxyLookup ? proxyLookup.getAll(ip) : {};
+        const ipinfoData = ipinfoAsnLookup ? ipinfoAsnLookup.get(ip) : null;
+
+        let orgName = asnData ? asnData.autonomous_system_organization : 'Unknown ISP';
+        if (orgName === 'Unknown ISP' && ipinfoData && ipinfoData.name) {
+            orgName = ipinfoData.name;
+        }
+        const asnNumber = asnData ? `AS${asnData.autonomous_system_number}` : (ipinfoData ? ipinfoData.asn : 'Unknown');
 
         // DB11 Fallback
         const db11Data = db11Lookup ? db11Lookup.getAll(ip) : {};
@@ -96,9 +105,6 @@ function getGeoData(ip) {
             if (secondary && secondary !== '-' && secondary !== 'This parameter is unavailable for selected data file.') return secondary;
             return 'Unknown';
         };
-
-        const orgName = asnData ? asnData.autonomous_system_organization : 'Unknown ISP';
-        const asnNumber = asnData ? `AS${asnData.autonomous_system_number}` : 'Unknown';
 
         // --- USAGE TYPE DETECTION ---
         let rawUsage = proxyData.usageType;
@@ -123,7 +129,7 @@ function getGeoData(ip) {
         let isProxy = false;
         let riskLabel = "No";
 
-        // A) Check Database First
+        // A) Check Database First (IP2Proxy LITE)
         if (proxyData && proxyData.isProxy === 1) {
             isProxy = true;
             const typeMap = {
@@ -133,7 +139,14 @@ function getGeoData(ip) {
             riskLabel = typeMap[proxyData.proxyType] || proxyData.proxyType;
         }
 
-        // B) Fallback: Check Provider Lists
+        // B) Check IPinfo ASN Database
+        if (!isProxy && ipinfoData && ipinfoData.type === 'hosting') {
+            isProxy = true;
+            riskLabel = "Cloud/VPS Provider";
+            usageType = 'Datacenter';
+        }
+
+        // C) Fallback: Check Provider Lists
         if (!isProxy && orgName !== 'Unknown ISP') {
             if (vpnHostingProviders.high.some(p => orgName.toLowerCase().includes(p.toLowerCase()))) {
                 isProxy = true; riskLabel = "VPN Hosting (High Confidence)";
@@ -141,14 +154,9 @@ function getGeoData(ip) {
             else if (vpnHostingProviders.medium.some(p => orgName.toLowerCase().includes(p.toLowerCase()))) {
                 isProxy = true; riskLabel = "VPN Hosting (Medium Confidence)";
             }
-            else if (vpnHostingProviders.low.some(p => orgName.toLowerCase().includes(p.toLowerCase()))) {
-                if (usageType === 'DCH' || usageType === 'Datacenter') {
-                    isProxy = true; riskLabel = "Cloud Hosting (Low Confidence)";
-                }
-            }
         }
 
-        // C) ASN-based detection (High-Risk Networks ONLY)
+        // D) ASN-based detection (High-Risk Networks ONLY)
         if (!isProxy && vpnASNs.includes(asnNumber)) {
             isProxy = true; riskLabel = "VPN ASN Match";
         }
@@ -236,6 +244,11 @@ async function loadDbs() {
             asnLookup = await maxmind.open(asnDbPath);
             console.log(`✅ ASN DB loaded`);
         } catch (e) { console.warn(`⚠️ ASN DB missing`); }
+
+        try {
+            ipinfoAsnLookup = await maxmind.open(ipinfoAsnDbPath);
+            console.log(`✅ IPinfo ASN DB loaded`);
+        } catch (e) { console.warn(`⚠️ IPinfo ASN DB missing: ${e.message}`); }
 
         try {
             db11Lookup = new IP2Location();
