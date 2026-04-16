@@ -5,12 +5,14 @@ const axios = require('axios');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
 const cors = require('cors');
-const { IP2Proxy } = require('ip2proxy-nodejs');
-const { IP2Location } = require('ip2location-nodejs');
-const app = express();
+const { LRUCache } = require('lru-cache');
+
+// --- CUSTOM MODULES ---
 const getReputation = require('./src/reputation');
-const { vpnHostingProviders, vpnASNs } = require('./src/providers.js');
 const getWhois = require('./src/whois');
+const { initGeoDb, getGeoData } = require('./src/geoip');
+
+const app = express();
 
 // --- CONFIGURATION ---
 app.set('json spaces', 2);
@@ -20,18 +22,11 @@ app.use(cors()); // Enable CORS for v4.ip... and v6.ip
 app.use(express.static(path.join(__dirname, 'views'), { index: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// --- DATABASE PATHS ---
-const cityDbPath = process.env.CITY_DB_PATH || path.join(__dirname, 'db', 'GeoLite2-City.mmdb');
-const asnDbPath = process.env.ASN_DB_PATH || path.join(__dirname, 'db', 'GeoLite2-ASN.mmdb');
-const proxyDbPath = process.env.PROXY_DB_PATH || path.join(__dirname, 'db', 'IP2PROXY-LITE-PX11.BIN');
-const db11Path = process.env.DB11_PATH || path.join(__dirname, 'db', 'IP2LOCATION-LITE-DB11.IPV6.BIN');
-const ipinfoAsnDbPath = process.env.IPINFO_ASN_DB_PATH || path.join(__dirname, 'db', 'ipinfo-asn.mmdb');
-
-let cityLookup;
-let asnLookup;
-let proxyLookup;
-let db11Lookup;
-let ipinfoAsnLookup;
+// --- CACHE SETUP ---
+const geoCache = new LRUCache({
+    max: 2000,
+    ttl: 5 * 60 * 1000,
+});
 
 // --- HELPERS ---
 function getClientIp(req) {
@@ -77,148 +72,6 @@ async function getGeoJS(ip) {
     }
 }
 
-function getGeoData(ip) {
-    // 1. Reserved / Local IP Checks
-    if (ip === '::1' || ip === '127.0.0.1' || ip.startsWith('192.168.') || ip.startsWith('10.')) {
-        return { ip, country: 'Reserved', city: 'Local Network', asn: 'N/A', org: 'Localhost', is_proxy: false, proxy_type: 'Local', usage_type: 'RES', threat: 'None', provider: 'N/A' };
-    }
-
-    try {
-        // --- DATA LOOKUPS ---
-        const cityData = cityLookup ? cityLookup.get(ip) : null;
-        const asnData = asnLookup ? asnLookup.get(ip) : null;
-        const proxyData = proxyLookup ? proxyLookup.getAll(ip) : {};
-        const ipinfoData = ipinfoAsnLookup ? ipinfoAsnLookup.get(ip) : null;
-
-        let orgName = asnData ? asnData.autonomous_system_organization : 'Unknown ISP';
-        if (orgName === 'Unknown ISP' && ipinfoData && ipinfoData.name) {
-            orgName = ipinfoData.name;
-        }
-        const asnNumber = asnData ? `AS${asnData.autonomous_system_number}` : (ipinfoData ? ipinfoData.asn : 'Unknown');
-
-        // DB11 Fallback
-        const db11Data = db11Lookup ? db11Lookup.getAll(ip) : {};
-
-        // Helper: Prioritize MaxMind -> DB11 -> Unknown
-        const pick = (primary, secondary) => {
-            if (primary && primary !== 'Unknown' && primary !== '') return primary;
-            if (secondary && secondary !== '-' && secondary !== 'This parameter is unavailable for selected data file.') return secondary;
-            return 'Unknown';
-        };
-
-        // --- USAGE TYPE DETECTION ---
-        let rawUsage = proxyData.usageType;
-        if (!rawUsage || rawUsage === '-' || rawUsage === 'RP') {
-            rawUsage = 'Standard';
-        }
-        const usageMap = {
-            'ISP': 'Residential', 'MOB': 'Mobile Data', 'COM': 'Commercial', 'ORG': 'Organization',
-            'EDU': 'University', 'GOV': 'Government', 'DCH': 'Datacenter', 'CDN': 'CDN',
-            'SES': 'Search Engine Spider', 'Standard': 'Standard ISP'
-        };
-        let usageType = usageMap[rawUsage] || rawUsage;
-
-        // If it's a "Standard ISP" (unknown) but matches a Cloud Provider, rename it.
-        if (usageType === 'Standard ISP') {
-            if (vpnHostingProviders.low.some(p => orgName.toLowerCase().includes(p.toLowerCase()))) {
-                usageType = 'Cloud Infrastructure';
-            }
-        }
-
-        // --- PROXY DETECTION LOGIC ---
-        let isProxy = false;
-        let riskLabel = "No";
-
-        // A) Check Database First (IP2Proxy LITE)
-        if (proxyData && proxyData.isProxy === 1) {
-            isProxy = true;
-            const typeMap = {
-                'VPN': 'VPN Service', 'DCH': 'Datacenter', 'TOR': 'Tor Node',
-                'PUB': 'Public Proxy', 'SES': 'Search Engine Spider'
-            };
-            riskLabel = typeMap[proxyData.proxyType] || proxyData.proxyType;
-        }
-
-        // B) Check IPinfo ASN Database
-        if (!isProxy && ipinfoData && ipinfoData.type === 'hosting') {
-            isProxy = true;
-            riskLabel = "Cloud/VPS Provider";
-            usageType = 'Datacenter';
-        }
-
-        // C) Fallback: Check Provider Lists
-        if (!isProxy && orgName !== 'Unknown ISP') {
-            if (vpnHostingProviders.high.some(p => orgName.toLowerCase().includes(p.toLowerCase()))) {
-                isProxy = true; riskLabel = "VPN Hosting (High Confidence)";
-            }
-            else if (vpnHostingProviders.medium.some(p => orgName.toLowerCase().includes(p.toLowerCase()))) {
-                isProxy = true; riskLabel = "VPN Hosting (Medium Confidence)";
-            }
-            // Low Confidence Cloud Providers
-            else if (vpnHostingProviders.low.some(p => orgName.toLowerCase().includes(p.toLowerCase()))) {
-                if (usageType === 'DCH' || usageType === 'Datacenter' || usageType === 'Cloud Infrastructure') {
-                    isProxy = true; riskLabel = "Cloud Hosting (Low Confidence)";
-                }
-            }
-        }
-
-        // D) ASN-based detection (High-Risk Networks ONLY)
-        if (!isProxy && vpnASNs.includes(asnNumber)) {
-            isProxy = true; riskLabel = "VPN ASN Match";
-        }
-
-        // --- THREAT & PROVIDER SANITIZATION ---
-        let threat = proxyData.threat || '-';
-        let provider = proxyData.provider || '-';
-
-        if (threat === '-') threat = 'None';
-        if (provider === '-') provider = 'N/A';
-
-        if (isProxy && riskLabel !== "No") {
-            if (usageType === 'Standard ISP' || usageType === 'Standard') usageType = 'Datacenter';
-            if (provider === 'N/A') provider = orgName;
-
-            if (threat === 'None') {
-                if (riskLabel.includes('High') || riskLabel === 'VPN ASN Match') threat = 'High (VPN Hosting)';
-                else if (riskLabel.includes('Medium')) threat = 'Medium (Hosting Provider)';
-                else threat = 'Low (Cloud Provider)';
-            }
-        }
-
-        // --- FINAL MERGE ---
-        let lat = cityData?.location?.latitude || 0;
-        let long = cityData?.location?.longitude || 0;
-
-        if (lat === 0 && db11Data.latitude && db11Data.latitude !== '0.000000') {
-            lat = parseFloat(db11Data.latitude);
-            long = parseFloat(db11Data.longitude);
-        }
-
-        return {
-            ip,
-            country: pick(cityData?.country?.names?.en, db11Data.country_long),
-            country_code: pick(cityData?.country?.iso_code, db11Data.country_short),
-            city: pick(cityData?.city?.names?.en, db11Data.city),
-            region: pick(cityData?.subdivisions?.[0]?.names?.en, db11Data.region),
-            timezone: pick(cityData?.location?.time_zone, db11Data.time_zone),
-            coordinates: `${lat}, ${long}`,
-            latitude: lat,
-            longitude: long,
-            zip: (db11Data.zip_code && db11Data.zip_code !== '-') ? db11Data.zip_code : 'N/A',
-            asn: asnNumber,
-            org: orgName,
-            is_proxy: isProxy,
-            proxy_type: riskLabel,
-            usage_type: usageType,
-            threat: threat,
-            provider: provider
-        };
-    } catch (err) {
-        console.error(`Geo lookup failed for ${ip}:`, err);
-        return { ip, error: 'Lookup Failed' };
-    }
-}
-
 // RATE LIMITER
 const globalLimiter = rateLimit({
     windowMs: 5 * 60 * 1000, // 5 minutes
@@ -242,38 +95,8 @@ const globalLimiter = rateLimit({
 
 app.use(globalLimiter);
 
-async function loadDbs() {
-    try {
-        cityLookup = await maxmind.open(cityDbPath);
-        console.log(`✅ City DB loaded`);
-        try {
-            asnLookup = await maxmind.open(asnDbPath);
-            console.log(`✅ ASN DB loaded`);
-        } catch (e) { console.warn(`⚠️ ASN DB missing`); }
-
-        try {
-            ipinfoAsnLookup = await maxmind.open(ipinfoAsnDbPath);
-            console.log(`✅ IPinfo ASN DB loaded`);
-        } catch (e) { console.warn(`⚠️ IPinfo ASN DB missing: ${e.message}`); }
-
-        try {
-            db11Lookup = new IP2Location();
-            db11Lookup.open(db11Path);
-            console.log(`✅ DB11 (Fallback) loaded`);
-        } catch (e) { console.warn(`⚠️ DB11 Error: ${e.message}`); }
-
-        try {
-            proxyLookup = new IP2Proxy();
-            if (proxyLookup.open(proxyDbPath) === 0) {
-                 console.log(`✅ Proxy DB loaded`);
-            } else {
-                 console.warn(`⚠️ Proxy DB failed to open`);
-            }
-        } catch (e) { console.warn(`⚠️ Proxy DB error: ${e.message}`); }
-
-    } catch (err) { console.error('❌ DB Error:', err); }
-}
-loadDbs();
+// --- INITIALIZE DATABASES ---
+initGeoDb();
 
 // Expose dynamic frontend configuration from environment variables set in docker-compose
 app.get('/api/config', (req, res) => {
@@ -307,6 +130,17 @@ app.get(['/api/info', '/json'], async (req, res) => {
     const ua = req.headers['user-agent'];
     if (!maxmind.validate(targetIp)) return res.status(400).json({ error: 'Invalid IP' });
 
+    // --- CACHE CHECK ---
+    if (geoCache.has(targetIp)) {
+        const cachedData = geoCache.get(targetIp);
+        if (isCli(ua)) {
+            res.header('Content-Type', 'application/json');
+            return res.send(JSON.stringify(cachedData, null, 2) + '\n');
+        }
+        return res.json(cachedData);
+    }
+
+    // --- GENERATE DATA (Cache Miss) ---
     let data = getGeoData(targetIp);
 
     // Fallback
@@ -318,6 +152,9 @@ app.get(['/api/info', '/json'], async (req, res) => {
             data.coordinates = `${data.latitude}, ${data.longitude}`;
         }
     }
+
+    // --- SAVE TO CACHE ---
+    geoCache.set(targetIp, data);
 
     if (isCli(ua)) {
         res.header('Content-Type', 'application/json');
