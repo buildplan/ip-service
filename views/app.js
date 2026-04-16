@@ -69,17 +69,32 @@ function showToast(message) {
     setTimeout(() => { x.className = x.className.replace("show", ""); }, 3000);
 }
 
-function createIpRow(ip, type) {
+function copyWithFeedback(ip, elId, type) {
+    navigator.clipboard.writeText(ip).then(() => {
+        showToast(`${type} Copied!`);
+        const iconContainer = document.getElementById(elId);
+        const originalSvg = iconContainer.innerHTML;
+        iconContainer.innerHTML = `<svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>`;
+        setTimeout(() => { iconContainer.innerHTML = originalSvg; }, 2000);
+    });
+}
+
+function createIpRow(ip, type, isPrimary = true) {
     const isV6 = type === 'IPv6';
     const badgeColor = isV6
         ? 'bg-purple-900/40 text-purple-600 dark:text-purple-400 border-purple-800'
         : 'bg-blue-900/40 text-blue-600 dark:text-blue-400 border-blue-800';
+
+    const textSize = isPrimary ? 'text-3xl md:text-5xl' : 'text-xl md:text-2xl text-slate-500 dark:text-slate-400';
+    const padding = isPrimary ? 'px-6 py-4' : 'px-4 py-2 opacity-80 hover:opacity-100';
+    const iconId = `copy-icon-${type}`;
+
     return `
-    <div class="group cursor-pointer flex flex-col sm:flex-row items-center gap-2 sm:gap-4 bg-white dark:bg-slate-900/40 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all w-full md:w-auto min-w-[280px] sm:min-w-[380px] justify-center shadow-lg" onclick="navigator.clipboard.writeText('${ip}').then(() => showToast('${type} Copied!'))">
-        <span class="px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold border uppercase tracking-wider ${badgeColor} shrink-0">${type}</span>
-        <span class="text-lg sm:text-2xl md:text-3xl font-bold text-slate-800 dark:text-white tracking-tight break-all font-mono text-center">${ip}</span>
-        <div class="hidden sm:block shrink-0">
-                <svg class="w-5 h-5 text-slate-400 dark:text-slate-600 group-hover:text-blue-500 dark:group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 012 2v8a2 2 0 01-2 2h-8a2 2 0 01-2-2v-8a2 2 0 012-2z"></path></svg>
+    <div class="group cursor-pointer flex flex-col sm:flex-row items-center gap-3 sm:gap-5 bg-white dark:bg-slate-900/60 ${padding} rounded-2xl border border-slate-200 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all w-full md:w-auto min-w-[280px] sm:min-w-[420px] justify-center shadow-lg hover:shadow-blue-900/10 hover:border-blue-500/30 dark:hover:border-blue-500/30" onclick="copyWithFeedback('${ip}', '${iconId}', '${type}')">
+        <span class="px-2.5 py-1 rounded text-[10px] sm:text-xs font-bold border uppercase tracking-wider ${badgeColor} shrink-0">${type}</span>
+        <span class="font-bold tracking-tight break-all font-mono text-center ${textSize} text-slate-800 dark:text-white">${ip}</span>
+        <div id="${iconId}" class="hidden sm:block shrink-0">
+            <svg class="w-5 h-5 text-slate-400 dark:text-slate-600 group-hover:text-blue-500 dark:group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 012 2v8a2 2 0 01-2 2h-8a2 2 0 01-2-2v-8a2 2 0 012-2z"></path></svg>
         </div>
     </div>
     `;
@@ -95,7 +110,7 @@ async function fetchSmartIPs() {
         const primaryIsV6 = primaryData.ip.includes(':');
         const primaryType = primaryIsV6 ? 'IPv6' : 'IPv4';
 
-        displayArea.innerHTML = createIpRow(primaryData.ip, primaryType);
+        displayArea.innerHTML = createIpRow(primaryData.ip, primaryType, true); // true = isPrimary
         populateDetails(primaryData);
 
         const missingUrl = primaryIsV6 ? config.v4_url : config.v6_url;
@@ -105,7 +120,7 @@ async function fetchSmartIPs() {
             const secRes = await fetch(missingUrl);
             if (secRes.ok) {
                 const secData = await secRes.json();
-                displayArea.innerHTML += createIpRow(secData.ip, missingType);
+                displayArea.innerHTML += createIpRow(secData.ip, missingType, false); // false = isSecondary
             }
         } catch (e) { console.log("Secondary protocol unavailable."); }
 
@@ -134,7 +149,7 @@ function populateDetails(data) {
 
     document.getElementById('dataTimezone').innerText = data.timezone;
     document.getElementById('dataCoords').innerText = data.coordinates;
-    document.getElementById('jsonPreview').innerText = JSON.stringify(data, null, 2);
+    document.getElementById('jsonPreview').innerHTML = syntaxHighlight(data);
 
     const proxyEl = document.getElementById('dataProxyBadge');
     if (data.is_proxy) {
@@ -449,5 +464,27 @@ if (whoisModal) {
         if (e.target.id === 'whois-modal' || e.target.id === 'whois-modal-backdrop') {
             closeWhoisModal();
         }
+    });
+}
+
+function syntaxHighlight(json) {
+    if (typeof json != 'string') {
+        json = JSON.stringify(json, undefined, 2);
+    }
+    json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+        let cls = 'text-blue-400 dark:text-blue-300'; // Numbers
+        if (/^"/.test(match)) {
+            if (/:$/.test(match)) {
+                cls = 'text-indigo-500 dark:text-indigo-300 font-semibold'; // Keys
+            } else {
+                cls = 'text-emerald-500 dark:text-emerald-400'; // Strings
+            }
+        } else if (/true|false/.test(match)) {
+            cls = 'text-orange-500 dark:text-orange-400'; // Booleans
+        } else if (/null/.test(match)) {
+            cls = 'text-slate-400'; // Null
+        }
+        return '<span class="' + cls + '">' + match + '</span>';
     });
 }
