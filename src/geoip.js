@@ -46,9 +46,19 @@ async function initGeoDb() {
 }
 
 function getGeoData(ip) {
-    // 1. Reserved / Local IP Checks
-    if (ip === '::1' || ip === '127.0.0.1' || ip.startsWith('192.168.') || ip.startsWith('10.')) {
-        return { ip, country: 'Reserved', city: 'Local Network', asn: 'N/A', org: 'Localhost', is_proxy: false, proxy_type: 'Local', usage_type: 'RES', threat: 'None', provider: 'N/A' };
+    // 1. Reserved / Local / Docker IP Checks
+    const isLocal = ip === '::1' || ip === '127.0.0.1' || ip.startsWith('192.168.') || ip.startsWith('10.') || ip.startsWith('169.254.') || ip.startsWith('fc00:') || ip.startsWith('fd00:');
+    let isDocker = false;
+    if (ip.startsWith('172.')) {
+        const secondOctet = parseInt(ip.split('.')[1], 10);
+        if (secondOctet >= 16 && secondOctet <= 31) isDocker = true;
+    }
+    if (isLocal || isDocker) {
+        return {
+            ip, country: 'Reserved', country_code: 'XX', city: 'Local Network',
+            asn: 'N/A', org: 'Localhost', is_proxy: false, proxy_type: 'Local',
+            usage_type: 'RES', threat: 'None', provider: 'N/A'
+        };
     }
 
     try {

@@ -95,9 +95,6 @@ const globalLimiter = rateLimit({
 
 app.use(globalLimiter);
 
-// --- INITIALIZE DATABASES ---
-initGeoDb();
-
 // Expose dynamic frontend configuration from environment variables set in docker-compose
 app.get('/api/config', (req, res) => {
     res.json({
@@ -244,4 +241,9 @@ app.get('/health', (req, res) => {
 });
 
 const PORT = process.env.PORT || 4040;
-app.listen(PORT, () => console.log(`🚀 IP-Echo Service running on ${PORT}`));
+
+initGeoDb().then(() => {
+    app.listen(PORT, () => console.log(`🚀 IP-Echo Service running on ${PORT}`));
+}).catch(err => {
+    console.error("Failed to initialize databases:", err);
+});
