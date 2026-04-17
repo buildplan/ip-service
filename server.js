@@ -79,6 +79,11 @@ const globalLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
 
+    skip: (req) => {
+        const ip = getClientIp(req);
+        return ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1' || ip.startsWith('172.');
+    },
+
     keyGenerator: (req) => {
         return getClientIp(req);
     },

@@ -2,25 +2,47 @@
 #
 # GeoLite2 Database Auto-Update
 #
+# Description: This script checks for updates to the GeoLite2-Country database from
+# the node-geolite2-redist GitHub repository, downloads it if it's newer,
+# places it in a specified directory, and sends notifications on success/failure.
+#
+# Requirements: curl, tar, find, mv, cp, (sha256sum OR shasum), chown, chmod. jq only required for Discord.
+# Usage: Configure DEST_DIR and notification settings or create a geolite2.env and add:
 # -----
-# create and set strict per missions to .env file chmod 600 /path/to/secrets/.geolite2.env
-# then run the script - ./geolite2-update-db.sh
-# or crontab 30 6 * * 3,6 /path/to/geolite2-update-db.sh
+# GeoLite2 Update Configuration (example: https://github.com/buildplan/docker/blob/main/Pangolin/geolite2.env)
+# Set permissions: chmod 600 geolite2.env
+#
+# Required: Destination directory for database
+# export DEST_DIR="/var/lib/geoip"
+#
+# Optional: Enable ntfy notifications
+# export NTFY_ENABLED=true
+# export NTFY_TOPIC="geolite2-updates"
+# export NTFY_SERVER="https://ntfy.self-host.url"
+# export NTFY_TOKEN="tk_..."  # Bearer token for private topics
+#
+# Optional: Enable Discord notifications
+# export DISCORD_ENABLED=false
+# export DISCORD_WEBHOOK_URL="https://discord.com/api/..."
+# -----
+# set strict per missions to .env file chmod 600 /path/to/.secrets/geolite2.env
+# then run the script - ./geolite2-update.sh
+# Example systemd cron: Wed/Sat at 06:30, (systemd example: https://github.com/buildplan/docker/blob/main/Pangolin/geolite-systemd.md)
+# or crontab 30 6 * * 3,6 /path/to/geolite2-update.sh
 set -euo pipefail
 PATH=/usr/sbin:/usr/bin:/sbin:/bin
 umask 077
 
-# Get the physical directory of the script
+# Get the physical directory of the script, resolving any symlinks
 SCRIPT_DIR=$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 # Path to secure env file.
-ENV_FILE="${SCRIPT_DIR}/.geolite2.env"
+ENV_FILE="${SCRIPT_DIR}/.env.geolite2"
 
 # --- Configuration ---
 DEST_DIR="${DEST_DIR:-/path/to/your/config/}" # <-- Change this to actual config directory.
-DB_FILENAME="${DB_FILENAME:-GeoLite2-City.mmdb}" # Final db name.
-DOWNLOAD_URL="${DOWNLOAD_URL:-https://github.com/GitSquared/node-geolite2-redist/raw/refs/heads/master/redist/GeoLite2-City.tar.gz}"
-DOCKER_SERVICE="${DOCKER_SERVICE:-ip-service}"
-LOG_FILE="${SCRIPT_DIR}/geolite2-update-db.log" # Log file path (ensure writable by script)
+DB_FILENAME="GeoLite2-City.mmdb" # Final db name.
+DOWNLOAD_URL="https://github.com/GitSquared/node-geolite2-redist/raw/refs/heads/master/redist/GeoLite2-City.tar.gz"
+LOG_FILE="${SCRIPT_DIR}/geolite2-update.log" # Log file path (ensure writable by runner) or leave default and change below
 LOG_MAX_LINES="500"
 
 # ntfy
@@ -59,7 +81,7 @@ run_cpu() {
     fi
 }
 
-# Filesize (bytes)
+# Portable filesize (bytes) - supports GNU stat and BSD/macOS
 filesize() {
     local file="$1"
     if stat --version >/dev/null 2>&1; then
@@ -69,7 +91,7 @@ filesize() {
     fi
 }
 
-# SHA256 computation: prefer sha256sum, fallback to shasum -a 256
+# Portable SHA256 computation: prefer sha256sum, fallback to shasum -a 256
 compute_sha256() {
     local file="$1"
     if command -v sha256sum >/dev/null 2>&1; then
@@ -499,14 +521,6 @@ if [ "$UPDATE_NEEDED" = true ]; then
     log_message "SUCCESS" "Database has been successfully updated."
     send_success_notification "The GeoLite2-City.mmdb database was successfully updated."
 
-    # restart container using db
-    log_message "INFO" "Restarting '${DOCKER_SERVICE}' to load new database..."
-    if docker restart "${DOCKER_SERVICE}"; then
-        log_message "SUCCESS" "Docker container '${DOCKER_SERVICE}' restarted successfully."
-    else
-        log_message "ERROR" "Failed to restart Docker container. Old DB might still be loaded."
-        send_failure_notification "Database updated, but Docker restart failed."
-    fi
 else
     log_message "INFO" "Update check complete. No new version found."
     send_checkin_notification "Database is already up-to-date. No action needed."
