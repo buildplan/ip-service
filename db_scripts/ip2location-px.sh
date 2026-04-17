@@ -2,11 +2,11 @@
 
 # -------- CONFIGURATION ---------
 SCRIPT_DIR=$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
-LOG_FILE="${SCRIPT_DIR}/ip2loc-db-update.log"
+LOG_FILE="${SCRIPT_DIR}/ip2loc-px-update.log"
 log() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOG_FILE"
 }
-ENV_FILE="${SCRIPT_DIR}/.env_ip2db"
+ENV_FILE="${SCRIPT_DIR}/.env_ip2px"
 if [ -f "$ENV_FILE" ]; then
     # shellcheck source=/dev/null
     source "$ENV_FILE"
@@ -16,7 +16,7 @@ fi
 # Define variables using env values OR defaults
 TOKEN="${IP2_TOKEN:-token_in_env}"
 CODE="${DB_CODE:-DB11LITEBINIPV6}"
-DEST_DIR="${DEST_DIR:-/ip-service/ip_dbs}"
+DEST_DIR="${DEST_DIR:-/home/alis/ip-service/ip_dbs}"
 TARGET_FILE="${TARGET_FILE:-IP2LOCATION-LITE-DB11.IPV6.BIN}"
 COMPOSE_FILE="${COMPOSE_FILE:-/home/alis/sites/ip-service/docker-compose-prod.yml}"
 SERVICE_NAME="${SERVICE_NAME:-ip-echo}"
