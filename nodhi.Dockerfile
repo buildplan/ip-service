@@ -1,53 +1,43 @@
 # STAGE 1: BUILDER
-FROM node:24-slim AS builder
+FROM node:25-alpine3.23 AS builder
 
-WORKDIR /app
+WORKDIR /usr/src/app
 
-# Install system build dependencies 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 \
-    make \
-    g++ \
-    && rm -rf /var/lib/apt/lists/*
+# Install dumb-init
+RUN apk add --no-cache dumb-init
 
-COPY package*.json ./
+# Install Dependencies
+COPY package.json package-lock.json* ./
 RUN npm ci
 
-# Copy App Code and Run Build
+# Copy App Code
 COPY . .
 RUN npm run build
-
-# Prune node_modules to only keep production dependencies
+RUN mv views/app.min.js views/app.js && rm views/input.css
 RUN npm prune --production && npm cache clean --force
 
-
 # STAGE 2: RUNTIME
-FROM node:24-slim
+FROM node:25-alpine3.23
 
-# OS SETUP (Runtime dependencies)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    whois \
-    netbase \
-    dumb-init \
-    && rm -rf /var/lib/apt/lists/*
+ENV NODE_ENV=production
+ENV PATH=/app/node_modules/.bin:$PATH
 
-# PERMISSIONS SETUP
+# Copy dumb-init from builder
+COPY --from=builder /usr/bin/dumb-init /usr/bin/dumb-init
+
+# Copy application with dependencies from builder
+COPY --from=builder --chown=node:node /usr/src/app /app
+
 WORKDIR /app
-RUN chown node:node /app
 
-# COPY ONLY PRODUCTION ASSETS
+# Switch to the secure non-root user
 USER node
 
-# Copy production node_modules
-COPY --from=builder --chown=node:node /app/node_modules ./node_modules
+# Expose Port 4040 (IP Echo Service)
+EXPOSE 4040
 
-# Copy application source
-COPY --from=builder --chown=node:node /app ./
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD ["node", "-e", "fetch('http://127.0.0.1:4040/health').then(res => process.exit(res.ok ? 0 : 1)).catch(() => process.exit(1))"]
 
-# 3. FINAL CLEANUP
-RUN rm -f views/input.css views/app.min.js
-
-EXPOSE 3000
-
-ENTRYPOINT ["/usr/bin/dumb-init", "--"]
-CMD ["node", "server.js"]
+CMD ["dumb-init", "node", "server.js"]
