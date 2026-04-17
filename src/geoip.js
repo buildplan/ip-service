@@ -2,6 +2,7 @@ const maxmind = require('maxmind');
 const { IP2Location } = require('ip2location-nodejs');
 const { IP2Proxy } = require('ip2proxy-nodejs');
 const path = require('path');
+const fs = require('fs');
 const { vpnHostingProviders, vpnASNs } = require('./providers.js');
 
 // --- DATABASE PATHS ---
@@ -13,34 +14,65 @@ const ipinfoAsnDbPath = process.env.IPINFO_ASN_DB_PATH || path.join(__dirname, '
 
 let cityLookup, asnLookup, proxyLookup, db11Lookup, ipinfoAsnLookup;
 
+function watchDatabase(filePath, reloadCallback, dbName) {
+    if (!fs.existsSync(filePath)) return;
+
+    let debounceTimer;
+    fs.watch(filePath, (event) => {
+        if (event === 'rename' || event === 'change') {
+            clearTimeout(debounceTimer);
+
+            debounceTimer = setTimeout(async () => {
+                console.log(`♻️ Update detected for ${dbName}. Reloading into memory...`);
+                try {
+                    await reloadCallback();
+                    console.log(`✅ ${dbName} Hot-Reload Complete.`);
+                } catch (err) {
+                    console.error(`❌ FAILED to hot-reload ${dbName}. Keeping previous version in memory. Error:`, err.message);
+                }
+            }, 2000);
+        }
+    });
+}
+
 async function initGeoDb() {
     try {
-        cityLookup = await maxmind.open(cityDbPath);
-        console.log(`✅ City DB loaded`);
+        const loadCity = async () => { cityLookup = await maxmind.open(cityDbPath); };
+        await loadCity(); console.log(`✅ City DB loaded`);
+        watchDatabase(cityDbPath, loadCity, 'GeoLite2-City');
+
         try {
-            asnLookup = await maxmind.open(asnDbPath);
-            console.log(`✅ ASN DB loaded`);
+            const loadAsn = async () => { asnLookup = await maxmind.open(asnDbPath); };
+            await loadAsn(); console.log(`✅ ASN DB loaded`);
+            watchDatabase(asnDbPath, loadAsn, 'GeoLite2-ASN');
         } catch (e) { console.warn(`⚠️ ASN DB missing`); }
 
         try {
-            ipinfoAsnLookup = await maxmind.open(ipinfoAsnDbPath);
-            console.log(`✅ IPinfo ASN DB loaded`);
-        } catch (e) { console.warn(`⚠️ IPinfo ASN DB missing: ${e.message}`); }
+            const loadIpInfo = async () => { ipinfoAsnLookup = await maxmind.open(ipinfoAsnDbPath); };
+            await loadIpInfo(); console.log(`✅ IPinfo ASN DB loaded`);
+            watchDatabase(ipinfoAsnDbPath, loadIpInfo, 'IPinfo-ASN');
+        } catch (e) { console.warn(`⚠️ IPinfo ASN DB missing`); }
 
         try {
-            db11Lookup = new IP2Location();
-            db11Lookup.open(db11Path);
-            console.log(`✅ DB11 (Fallback) loaded`);
-        } catch (e) { console.warn(`⚠️ DB11 Error: ${e.message}`); }
+            const loadDb11 = () => {
+                const newDb11 = new IP2Location();
+                newDb11.open(db11Path);
+                db11Lookup = newDb11;
+            };
+            loadDb11(); console.log(`✅ DB11 (Fallback) loaded`);
+            watchDatabase(db11Path, loadDb11, 'IP2Location-DB11');
+        } catch (e) { console.warn(`⚠️ DB11 Error`); }
 
         try {
-            proxyLookup = new IP2Proxy();
-            if (proxyLookup.open(proxyDbPath) === 0) {
-                 console.log(`✅ Proxy DB loaded`);
-            } else {
-                 console.warn(`⚠️ Proxy DB failed to open`);
-            }
-        } catch (e) { console.warn(`⚠️ Proxy DB error: ${e.message}`); }
+            const loadProxy = () => {
+                const newProxy = new IP2Proxy();
+                if (newProxy.open(proxyDbPath) === 0) {
+                    proxyLookup = newProxy;
+                }
+            };
+            loadProxy(); console.log(`✅ Proxy DB loaded`);
+            watchDatabase(proxyDbPath, loadProxy, 'IP2Proxy');
+        } catch (e) { console.warn(`⚠️ Proxy DB error`); }
 
     } catch (err) { console.error('❌ DB Error:', err); }
 }
