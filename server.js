@@ -202,20 +202,30 @@ app.get('/cli', (req, res) => {
 // IP Reputation logic
 app.get('/api/reputation', async (req, res) => {
     const ip = req.query.ip || getClientIp(req);
+    const ua = req.headers['user-agent'];
     if (!maxmind.validate(ip)) {
         return res.status(400).json({ error: 'Invalid IP address' });
     }
     const result = await getReputation(ip);
+    if (isCli(ua)) {
+        res.header('Content-Type', 'application/json');
+        return res.send(JSON.stringify(result, null, 2) + '\n');
+    }
     res.json(result);
 });
 
 // WHOIS / RDAP logic
 app.get('/api/whois', async (req, res) => {
     const ip = req.query.ip || getClientIp(req);
+    const ua = req.headers['user-agent'];
     if (!maxmind.validate(ip)) {
         return res.status(400).json({ error: 'Invalid IP address' });
     }
     const result = await getWhois(ip);
+    if (isCli(ua)) {
+        res.header('Content-Type', 'application/json');
+        return res.send(JSON.stringify(result, null, 2) + '\n');
+    }
     res.json(result);
 });
 
