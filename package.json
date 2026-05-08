@@ -15,7 +15,7 @@
   "devDependencies": {
     "@tailwindcss/cli": "^4.2.4",
     "tailwindcss": "^4.2.4",
-    "terser": "^5.47.0"
+    "terser": "^5.47.1"
   },
   "scripts": {
     "start": "node server.js",
