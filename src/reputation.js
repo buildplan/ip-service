@@ -215,7 +215,8 @@ async function checkSpamVerify(ip) {
         const apiKey = process.env.SPAMVERIFY_API_KEY;
         if (!apiKey) return null;
 
-        const res = await axios.get(`https://api.spamverify.com/v1/check/ip/${ip}`, {
+        const encodedIp = encodeURIComponent(ip);
+        const res = await axios.get(`https://api.spamverify.com/v1/check/ip/${encodedIp}`, {
             params: {
                 days: 365,
                 limit: 10,
