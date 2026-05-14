@@ -223,7 +223,7 @@ function getGeoData(ip) {
             provider: provider
         };
     } catch (err) {
-        console.error(`Geo lookup failed for ${ip}:`, err);
+        console.error('Geo lookup failed for IP:', ip, err);
         return { ip, error: 'Lookup Failed' };
     }
 }

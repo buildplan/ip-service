@@ -8,9 +8,10 @@ const customUserAgent = `Threat-Intel-API/1.0 (${appUrl}; ${adminEmail})`;
 async function getWhois(ip) {
     if (!net.isIP(ip)) return { error: "Invalid IP" };
 
+    const encodedIp = encodeURIComponent(ip);
     try {
         // --- 1. TRY RDAP FIRST ---
-        const rdapRes = await axios.get(`https://rdap.org/ip/${ip}`, {
+        const rdapRes = await axios.get(`https://rdap.org/ip/${encodedIp}`, {
             timeout: 10000,
             headers: { 'Accept': 'application/rdap+json','User-Agent': customUserAgent }
         });
@@ -88,7 +89,7 @@ async function getWhois(ip) {
 
     // --- 2. FALLBACK: FETCH RAW WHOIS (RIPEstat) ---
     try {
-        const statRes = await axios.get(`https://stat.ripe.net/data/whois/data.json?resource=${ip}`, {
+        const statRes = await axios.get(`https://stat.ripe.net/data/whois/data.json?resource=${encodedIp}`, {
             timeout: 10000,
             headers: { 'Accept': 'application/json','User-Agent': customUserAgent }
         });

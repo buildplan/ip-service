@@ -46,10 +46,11 @@ function isCli(userAgent) {
 // GeoJS Fallback Helper
 async function getGeoJS(ip) {
     try {
+        const encodedIp = encodeURIComponent(ip);
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 2000); // 2s timeout
 
-        const res = await fetch(`https://get.geojs.io/v1/ip/geo/${ip}.json`, {
+        const res = await fetch(`https://get.geojs.io/v1/ip/geo/${encodedIp}.json`, {
             signal: controller.signal
         });
         clearTimeout(timeoutId);
