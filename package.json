@@ -7,15 +7,15 @@
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "express-rate-limit": "^8.5.2",
-    "ip2location-nodejs": "^9.7.0",
+    "ip2location-nodejs": "^9.8.0",
     "ip2proxy-nodejs": "^4.5.0",
-    "lru-cache": "^11.3.6",
+    "lru-cache": "^11.5.0",
     "maxmind": "^5.0.6"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.3.0",
     "tailwindcss": "^4.3.0",
-    "terser": "^5.47.1"
+    "terser": "^5.48.0"
   },
   "scripts": {
     "start": "node server.js",
