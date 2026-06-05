@@ -17,7 +17,7 @@ RUN mv views/app.min.js views/app.js && rm views/input.css
 RUN npm prune --production && npm cache clean --force
 
 # === Final stage: Create minimal runtime image ===
-FROM dhi.io/node:26.2.0-alpine3.23@sha256:e13734fabe5fe8bc2a139a7cb6fdddb07a18806ef5766af4dd91043ccf75bfc8
+FROM dhi.io/node:26.3.0-alpine3.23@sha256:06d198004a7b868a1d1931cfe86b9efca6f048d47e7cd4c15784f1fe1f1cc195
 
 ENV NODE_ENV=production
 ENV PATH=/app/node_modules/.bin:$PATH
