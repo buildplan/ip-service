@@ -105,24 +105,49 @@ async function fetchSmartIPs() {
     try {
         const configRes = await fetch('/api/config');
         const config = await configRes.json();
-        const res = await fetch('/api/info');
+
+        let apiUrl = '/api/info';
+        const rawSearch = window.location.search.substring(1).trim();
+        let targetIp = null;
+
+        if (rawSearch) {
+            const params = new URLSearchParams(window.location.search);
+            if (params.has('ip')) {
+                targetIp = params.get('ip');
+            } else if (!rawSearch.includes('=')) {
+                targetIp = rawSearch;
+            }
+        }
+
+        if (targetIp) {
+            apiUrl = `/api/info?ip=${targetIp}`;
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) searchInput.value = targetIp;
+        }
+
+        const res = await fetch(apiUrl);
         const primaryData = await res.json();
+        if (primaryData.error) throw new Error(primaryData.error);
+
         const primaryIsV6 = primaryData.ip.includes(':');
         const primaryType = primaryIsV6 ? 'IPv6' : 'IPv4';
 
         displayArea.innerHTML = createIpRow(primaryData.ip, primaryType, true); // true = isPrimary
         populateDetails(primaryData);
 
-        const missingUrl = primaryIsV6 ? config.v4_url : config.v6_url;
-        const missingType = primaryIsV6 ? 'IPv4' : 'IPv6';
+        // Only fetch secondary protocol IP if we are checking the client's own IP
+        if (!targetIp) {
+            const missingUrl = primaryIsV6 ? config.v4_url : config.v6_url;
+            const missingType = primaryIsV6 ? 'IPv4' : 'IPv6';
 
-        try {
-            const secRes = await fetch(missingUrl);
-            if (secRes.ok) {
-                const secData = await secRes.json();
-                displayArea.innerHTML += createIpRow(secData.ip, missingType, false); // false = isSecondary
-            }
-        } catch (e) { console.log("Secondary protocol unavailable."); }
+            try {
+                const secRes = await fetch(missingUrl);
+                if (secRes.ok) {
+                    const secData = await secRes.json();
+                    displayArea.innerHTML += createIpRow(secData.ip, missingType, false); // false = isSecondary
+                }
+            } catch (e) { console.log("Secondary protocol unavailable."); }
+        }
 
     } catch (err) {
         displayArea.innerHTML = `<span class="text-red-400">Error loading IP</span>`;
