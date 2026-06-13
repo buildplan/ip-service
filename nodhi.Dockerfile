@@ -1,5 +1,5 @@
 # STAGE 1: BUILDER
-FROM node:26-alpine3.23 AS builder
+FROM node:26-alpine3.24 AS builder
 
 WORKDIR /usr/src/app
 
@@ -17,7 +17,7 @@ RUN mv views/app.min.js views/app.js && rm views/input.css
 RUN npm prune --production && npm cache clean --force
 
 # STAGE 2: RUNTIME
-FROM node:26-alpine3.23
+FROM node:26-alpine3.24
 
 ENV NODE_ENV=production
 ENV PATH=/app/node_modules/.bin:$PATH
