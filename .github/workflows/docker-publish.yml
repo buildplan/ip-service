@@ -78,7 +78,9 @@ jobs:
 
       # 6. Cleanup Old Images
       - name: Clean up old GHCR images
+        if: github.ref_type == 'branch'
         uses: quartx-analytics/ghcr-cleaner@v1
+        continue-on-error: true
         with:
           owner-type: user
           token: ${{ secrets.PAT_TOKEN }}
