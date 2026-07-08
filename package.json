@@ -9,7 +9,7 @@
     "express-rate-limit": "^8.5.2",
     "ip2location-nodejs": "^9.8.0",
     "ip2proxy-nodejs": "^4.5.0",
-    "lru-cache": "^11.5.1",
+    "lru-cache": "^11.5.2",
     "maxmind": "^5.0.6"
   },
   "devDependencies": {
