@@ -42,44 +42,53 @@ async function runDnsLeakTest() {
         const res = await fetch(`https://bash.ws/dnsleak/test/${id}?json`);
         const data = await res.json();
         
+        const clientIpObj = data.find(d => d.type === 'ip');
         const dnsServers = data.filter(d => d.type === 'dns');
-        const conclusion = data.find(d => d.type === 'conclusion');
         
         let serversHtml = dnsServers.map(s => `
-            <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50 flex justify-between items-center mb-2">
-                <div>
-                    <div class="font-mono font-bold text-slate-800 dark:text-white">${s.ip}</div>
-                    <div class="text-xs text-slate-500 mt-1">${s.asn || 'Unknown ASN'}</div>
-                </div>
-                <div class="text-right">
-                    <div class="text-sm font-semibold text-slate-700 dark:text-slate-300">${s.country_name || s.country || 'Unknown Location'}</div>
-                </div>
-            </div>
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
+                <td class="p-3 font-mono font-bold text-slate-800 dark:text-white">${s.ip}</td>
+                <td class="p-3 text-slate-600 dark:text-slate-300">${s.asn || 'Unknown ASN'}</td>
+                <td class="p-3 text-slate-600 dark:text-slate-300">${s.country_name || s.country || 'Unknown'}</td>
+            </tr>
         `).join('');
         
         if(dnsServers.length === 0) {
-            serversHtml = '<div class="text-center text-slate-500 dark:text-slate-400 py-4">No DNS resolvers found.</div>';
-        }
-        
-        let conclusionHtml = '';
-        if (conclusion) {
-            const isLeaking = conclusion.ip.toLowerCase().includes('leaking');
-            const alertColor = isLeaking ? 'text-red-600 bg-red-100 border-red-200 dark:text-red-400 dark:bg-red-900/20 dark:border-red-500/20' : 'text-emerald-600 bg-emerald-100 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-900/20 dark:border-emerald-500/20';
-            conclusionHtml = `
-                <div class="p-4 rounded-lg border ${alertColor} mb-4 text-center font-bold">
-                    ${conclusion.ip}
-                </div>
-            `;
+            serversHtml = '<tr><td colspan="3" class="p-4 text-center text-slate-500">No DNS resolvers found.</td></tr>';
         }
 
+        const publicIp = clientIpObj ? clientIpObj.ip : (window.currentScanIp || 'Unknown');
+
         content.innerHTML = `
-            ${conclusionHtml}
-            <div class="text-sm font-bold text-slate-600 dark:text-slate-400 mb-2">Resolvers detected (${dnsServers.length}):</div>
-            <div class="max-h-[50vh] overflow-y-auto custom-scrollbar pr-1">
-                ${serversHtml}
-            </div>
-            <div class="mt-4 p-4 rounded-lg bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-500/20 text-xs text-slate-600 dark:text-slate-400">
-                <strong>What does this mean?</strong> If you are using a VPN and see DNS servers provided by your ISP or a third party not associated with your VPN, your DNS queries are leaking.
+            <div class="text-left">
+                <div class="mb-4 text-slate-700 dark:text-slate-300 font-medium">
+                    Your public IP: <span class="font-mono text-blue-600 dark:text-blue-400 font-bold">${publicIp}</span>
+                </div>
+
+                <h4 class="text-xl font-bold text-slate-800 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-2 mb-4">Test complete</h4>
+                
+                <div class="max-h-[40vh] overflow-y-auto custom-scrollbar pr-1 mb-6 border border-slate-200 dark:border-slate-700/50 rounded-lg">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100 dark:bg-slate-800/50 text-xs uppercase tracking-wider text-slate-500">
+                                <th class="p-3 rounded-tl-lg">IP</th>
+                                <th class="p-3">ISP / Provider</th>
+                                <th class="p-3 rounded-tr-lg">Country</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm divide-y divide-slate-200 dark:divide-slate-700/50">
+                            ${serversHtml}
+                        </tbody>
+                    </table>
+                </div>
+
+                <h4 class="text-lg font-bold text-slate-800 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-2 mb-3">What do the results of this test mean?</h4>
+                
+                <ul class="list-disc list-outside ml-5 space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                    <li>The servers identified above receive a request to resolve a domain name (e.g. www.eff.org) to an IP address every time you enter a website address in your browser.</li>
+                    <li>The owners of the servers above have the ability to associate your personal IP address with the names of all the sites you connect to. <strong>You need to trust whatever their privacy policy says</strong>.</li>
+                    <li>If you are connected to a VPN service and ANY of the servers listed above are not provided by the VPN service, then you have a DNS leak and are exposing your private data.</li>
+                </ul>
             </div>
         `;
     } catch (e) {
