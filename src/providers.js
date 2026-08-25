@@ -8,10 +8,13 @@ module.exports = {
       "DataPacket",
       "London Trust Media",
       "Kape Technologies",
-      "Tefincom" /* NordVPN Parent */,
+      /* NordVPN Parent */
+      "Tefincom",
       "Amagicom",
-      /* Mullvad Parent */ "Golden Frog",
-      /* VyprVPN Parent */ "Mudhook" /* IPVanish Parent */,
+      /* Mullvad Parent */
+      "Golden Frog",
+      /* VyprVPN Parent */
+      "Mudhook",
       "Proton",
       "Mullvad",
       "NordVPN",
@@ -137,10 +140,12 @@ module.exports = {
       "AlexHost",
       "KnownHost",
       "CloudCone",
+      "HostPapa",
     ],
 
     // LOW: Major Clouds, CDNs & Enterprise Infrastructure (Safe Datacenters, NOT Residential)
     low: [
+      // Big Cloud
       "Amazon",
       "AWS",
       "Google",
@@ -148,7 +153,7 @@ module.exports = {
       "Microsoft",
       "Azure",
       "Oracle",
-      "Oracle Cloud", // Big Cloud
+      "Oracle Cloud",
       "Alibaba",
       "Aliyun",
       "Tencent",
@@ -162,7 +167,8 @@ module.exports = {
       "Rackspace",
       "Salesforce",
       "SAP",
-      "Cisco", // Tier 1 Enterprise
+      // Tier 1 Enterprise
+      "Cisco",
       "Hetzner",
       "OVH",
       "OVHcloud",
@@ -183,7 +189,8 @@ module.exports = {
       "Limelight",
       "EdgeCast",
       "CDN77",
-      "BunnyCDN", // CDNs & EDGE Nets
+      "BunnyCDN",
+      // CDNs & EDGE Nets
       "Imperva",
       "Incapsula",
       "Sucuri",
@@ -226,20 +233,26 @@ module.exports = {
       "Gandi",
 
       // --- REGIONAL ---
+      // Japan
       "Sakura Internet",
-      "GMO Internet", // Japan
+      "GMO Internet",
+      // Korea
       "Naver Cloud",
-      "Kakao Corp", // Korea
+      "Kakao Corp",
+      // Russia/CIS
       "Yandex",
       "Selectel",
       "VK Cloud",
-      "Mail.Ru", // Russia/CIS
+      "Mail.Ru",
+      // China (Tier 2)
       "Kingsoft",
       "JD Cloud",
-      "UCloud", // China (Tier 2)
+      "UCloud",
+      // Brazil / LATAM
       "UOL",
-      "Locaweb", // Brazil / LATAM
-      "Tata Communications", // India
+      "Locaweb",
+      // India
+      "Tata Communications",
     ],
   },
 

@@ -43,7 +43,7 @@ async function runDnsLeakTest() {
         fetch(`https://${i}.${id}.bash.ws`, {
           mode: "no-cors",
           cache: "no-store",
-        }).catch(() => {}),
+        }).catch(() => { }),
       );
     }
     await Promise.all(promises);
@@ -138,7 +138,7 @@ async function runDnsLeakTest() {
                 </div>
 
                 <h4 class="text-xl font-bold text-slate-800 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-2 mb-4">Test complete</h4>
-                
+
                 ${dynamicConclusion}
 
                 <div class="max-h-[35vh] overflow-y-auto custom-scrollbar pr-1 mb-6 border border-slate-200 dark:border-slate-700/50 rounded-lg">
@@ -157,7 +157,7 @@ async function runDnsLeakTest() {
                 </div>
 
                 <h4 class="text-lg font-bold text-slate-800 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-2 mb-3">Understanding the results</h4>
-                
+
                 <ul class="list-disc list-outside ml-5 space-y-2 text-sm text-slate-600 dark:text-slate-400">
                     <li>Whenever you type a website address into your browser, your computer asks the servers listed above to convert that name into an IP address.</li>
                     <li>Because these servers handle all your web requests, their owners can associate your public IP with the websites you visit. You need to trust their privacy policy.</li>
