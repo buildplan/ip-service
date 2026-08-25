@@ -1,427 +1,1045 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" class="dark">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <title>What Is My IP Address? Free IP, VPN & Proxy Lookup Web & CLI</title>
 
-    <meta name="robots" content="index, follow">
-    <meta name="description" content="Instant IP address lookup with ISP, ASN, and location details. Detects VPNs, Proxies, and Tor nodes. Developer-friendly API supports curl, wget, and JSON output.">
-    <meta name="keywords" content="what is my ip, ip lookup, vpn detector, proxy check, asn lookup, curl ip, wget ip, developer api, ip reputation, ip geolocation">
-    <meta name="author" content="WiredAlter">
-    <link rel="canonical" href="https://ip.wiredalter.com/">
-    <meta name="theme-color" content="#0b1120">
+    <meta name="robots" content="index, follow" />
+    <meta
+      name="description"
+      content="Instant IP address lookup with ISP, ASN, and location details. Detects VPNs, Proxies, and Tor nodes. Developer-friendly API supports curl, wget, and JSON output."
+    />
+    <meta
+      name="keywords"
+      content="what is my ip, ip lookup, vpn detector, proxy check, asn lookup, curl ip, wget ip, developer api, ip reputation, ip geolocation"
+    />
+    <meta name="author" content="WiredAlter" />
+    <link rel="canonical" href="https://ip.wiredalter.com/" />
+    <meta name="theme-color" content="#0b1120" />
 
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://ip.wiredalter.com/">
-    <meta property="og:title" content="What Is My IP? Advanced VPN & Threat Detection">
-    <meta property="og:description" content="Free IP intelligence tool. Check Geolocation, ISP, ASN, and detect active VPNs/Proxies. Supports CLI access via curl/wget.">
-    <meta property="og:image" content="https://ip.wiredalter.com/preview-image.png">
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://ip.wiredalter.com/" />
+    <meta
+      property="og:title"
+      content="What Is My IP? Advanced VPN & Threat Detection"
+    />
+    <meta
+      property="og:description"
+      content="Free IP intelligence tool. Check Geolocation, ISP, ASN, and detect active VPNs/Proxies. Supports CLI access via curl/wget."
+    />
+    <meta
+      property="og:image"
+      content="https://ip.wiredalter.com/preview-image.png"
+    />
 
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="WiredAlter IP & Threat Lookup">
-    <meta name="twitter:description" content="Developer-first IP lookup. Detect VPNs, proxies, and threats instantly via Web or CLI.">
-    <meta name="twitter:image" content="https://ip.wiredalter.com/preview-image.png">
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="WiredAlter IP & Threat Lookup" />
+    <meta
+      name="twitter:description"
+      content="Developer-first IP lookup. Detect VPNs, proxies, and threats instantly via Web or CLI."
+    />
+    <meta
+      name="twitter:image"
+      content="https://ip.wiredalter.com/preview-image.png"
+    />
 
-    <link rel="icon" type="image/x-icon" href="/favicon/favicon.ico">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png">
-    <link rel="icon" type="image/svg+xml" href="/favicon/favicon.svg">
-    <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="/favicon/android-chrome-192x192.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="/favicon/android-chrome-512x512.png">
-    <link rel="manifest" href="/favicon/site.webmanifest">
+    <link rel="icon" type="image/x-icon" href="/favicon/favicon.ico" />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="/favicon/favicon-32x32.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      href="/favicon/favicon-16x16.png"
+    />
+    <link rel="icon" type="image/svg+xml" href="/favicon/favicon.svg" />
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="/favicon/apple-touch-icon.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="192x192"
+      href="/favicon/android-chrome-192x192.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="512x512"
+      href="/favicon/android-chrome-512x512.png"
+    />
+    <link rel="manifest" href="/favicon/site.webmanifest" />
 
     <link rel="stylesheet" href="/style.min.css?v=1.1" />
 
     <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebApplication",
-      "name": "WiredAlter IP Lookup",
-      "url": "https://ip.wiredalter.com",
-      "applicationCategory": "DeveloperApplication",
-      "operatingSystem": "Any",
-      "browserRequirements": "Requires JavaScript",
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "USD"
-      },
-      "description": "A professional tool for IP address lookup, VPN detection, and ISP intelligence.",
-      "featureList": "IP Geolocation, VPN Detection, Proxy Detection, ASN Lookup, CLI Support (curl/wget), JSON API"
-    }
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "WiredAlter IP Lookup",
+        "url": "https://ip.wiredalter.com",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "description": "A professional tool for IP address lookup, VPN detection, and ISP intelligence.",
+        "featureList": "IP Geolocation, VPN Detection, Proxy Detection, ASN Lookup, CLI Support (curl/wget), JSON API"
+      }
     </script>
-
-</head>
-<body class="bg-wired-light dark:bg-[#0b1120] text-slate-600 dark:text-slate-300 min-h-screen flex flex-col">
-
-    <nav class="absolute top-0 left-0 w-full p-6 flex flex-col md:flex-row justify-between items-center z-10 gap-6 md:gap-4">
-        <div class="flex flex-col md:flex-row items-center gap-6 w-full md:w-auto">
-            <div class="text-2xl font-bold tracking-tight text-slate-800 dark:text-white">
-                <a href="/">IP<span class="text-red-500">.</span><span class="text-blue-500">WiredAlter</span></a>
-            </div>
-            <div class="flex gap-1 bg-slate-200/50 dark:bg-slate-800/50 rounded-lg p-1 border border-slate-300/50 dark:border-slate-700/50 backdrop-blur-sm transition-colors">
-                <a href="https://www.wiredalter.com" class="px-4 py-2 md:px-3 md:py-1.5 text-sm font-medium rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-300 dark:hover:bg-slate-700 transition-all">HOME</a>
-                <a href="#" class="px-4 py-2 md:px-3 md:py-1.5 text-sm font-medium rounded-md text-white bg-blue-600 shadow-sm cursor-default">IP</a>
-                <a href="https://dns.wiredalter.com" class="px-4 py-2 md:px-3 md:py-1.5 text-sm font-medium rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-300 dark:hover:bg-slate-700 transition-all">DNS</a>
-                <a href="https://whois.wiredalter.com" class="px-4 py-2 md:px-3 md:py-1.5 text-sm font-medium rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-300 dark:hover:bg-slate-700 transition-all">WHOIS</a>
-                <a href="https://audit.wiredalter.com" class="px-4 py-2 md:px-3 md:py-1.5 text-sm font-medium rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-300 dark:hover:bg-slate-700 transition-all">AUDIT</a>
-            </div>
+  </head>
+  <body
+    class="bg-wired-light dark:bg-[#0b1120] text-slate-600 dark:text-slate-300 min-h-screen flex flex-col"
+  >
+    <nav
+      class="absolute top-0 left-0 w-full p-6 flex flex-col md:flex-row justify-between items-center z-10 gap-6 md:gap-4"
+    >
+      <div
+        class="flex flex-col md:flex-row items-center gap-6 w-full md:w-auto"
+      >
+        <div
+          class="text-2xl font-bold tracking-tight text-slate-800 dark:text-white"
+        >
+          <a href="/"
+            >IP<span class="text-red-500">.</span
+            ><span class="text-blue-500">WiredAlter</span></a
+          >
         </div>
-
-        <div class="absolute top-6 right-6 md:static flex items-center gap-4 text-sm font-medium text-slate-500">
-
-            <button onclick="toggleTheme()" class="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 transition-all" aria-label="Toggle Theme">
-                <svg id="icon-sun" class="w-5 h-5 hidden dark:block text-slate-400 hover:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                <svg id="icon-moon" class="w-5 h-5 block dark:hidden text-slate-600 hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
-            </button>
-
-            <div class="hidden md:flex items-center gap-4">
-                <div class="w-px h-4 bg-slate-300 dark:bg-slate-700"></div>
-                <a href="/terms" class="hover:text-slate-900 dark:hover:text-slate-300 transition-colors">Terms</a>
-                <span class="text-slate-300 dark:text-slate-700">|</span>
-                <a href="#faq" class="hover:text-slate-900 dark:hover:text-slate-300 transition-colors">FAQ</a>
-                <span class="text-slate-300 dark:text-slate-700">|</span>
-                <a href="https://github.com/buildplan/ip-service" class="hover:text-slate-900 dark:hover:text-slate-300 transition-colors">GitHub</a>
-            </div>
-
+        <div
+          class="flex gap-1 bg-slate-200/50 dark:bg-slate-800/50 rounded-lg p-1 border border-slate-300/50 dark:border-slate-700/50 backdrop-blur-sm transition-colors"
+        >
+          <a
+            href="https://www.wiredalter.com"
+            class="px-4 py-2 md:px-3 md:py-1.5 text-sm font-medium rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-300 dark:hover:bg-slate-700 transition-all"
+            >HOME</a
+          >
+          <a
+            href="#"
+            class="px-4 py-2 md:px-3 md:py-1.5 text-sm font-medium rounded-md text-white bg-blue-600 shadow-sm cursor-default"
+            >IP</a
+          >
+          <a
+            href="https://dns.wiredalter.com"
+            class="px-4 py-2 md:px-3 md:py-1.5 text-sm font-medium rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-300 dark:hover:bg-slate-700 transition-all"
+            >DNS</a
+          >
+          <a
+            href="https://whois.wiredalter.com"
+            class="px-4 py-2 md:px-3 md:py-1.5 text-sm font-medium rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-300 dark:hover:bg-slate-700 transition-all"
+            >WHOIS</a
+          >
+          <a
+            href="https://audit.wiredalter.com"
+            class="px-4 py-2 md:px-3 md:py-1.5 text-sm font-medium rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-300 dark:hover:bg-slate-700 transition-all"
+            >AUDIT</a
+          >
         </div>
+      </div>
+
+      <div
+        class="absolute top-6 right-6 md:static flex items-center gap-4 text-sm font-medium text-slate-500"
+      >
+        <button
+          onclick="toggleTheme()"
+          class="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 transition-all"
+          aria-label="Toggle Theme"
+        >
+          <svg
+            id="icon-sun"
+            class="w-5 h-5 hidden dark:block text-slate-400 hover:text-yellow-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+            ></path>
+          </svg>
+          <svg
+            id="icon-moon"
+            class="w-5 h-5 block dark:hidden text-slate-600 hover:text-blue-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+            ></path>
+          </svg>
+        </button>
+
+        <div class="hidden md:flex items-center gap-4">
+          <div class="w-px h-4 bg-slate-300 dark:bg-slate-700"></div>
+          <a
+            href="/terms"
+            class="hover:text-slate-900 dark:hover:text-slate-300 transition-colors"
+            >Terms</a
+          >
+          <span class="text-slate-300 dark:text-slate-700">|</span>
+          <a
+            href="#faq"
+            class="hover:text-slate-900 dark:hover:text-slate-300 transition-colors"
+            >FAQ</a
+          >
+          <span class="text-slate-300 dark:text-slate-700">|</span>
+          <a
+            href="https://github.com/buildplan/ip-service"
+            class="hover:text-slate-900 dark:hover:text-slate-300 transition-colors"
+            >GitHub</a
+          >
+        </div>
+      </div>
     </nav>
 
-    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-44 pb-12 md:py-24 w-full space-y-10">
+    <main
+      class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-44 pb-12 md:py-24 w-full space-y-10"
+    >
+      <div
+        class="text-center space-y-6 max-w-3xl mx-auto mt-6 md:mt-0 relative"
+      >
+        <div
+          class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-48 bg-blue-500/10 dark:bg-blue-600/15 blur-[100px] rounded-full pointer-events-none -z-10"
+        ></div>
 
-        <div class="text-center space-y-6 max-w-3xl mx-auto mt-6 md:mt-0 relative">
-            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-48 bg-blue-500/10 dark:bg-blue-600/15 blur-[100px] rounded-full pointer-events-none -z-10"></div>
+        <div class="space-y-4">
+          <h2
+            class="text-blue-600 dark:text-blue-500 text-xs font-bold uppercase tracking-widest relative z-10"
+          >
+            Your Connection
+          </h2>
 
-            <div class="space-y-4">
-                <h2 class="text-blue-600 dark:text-blue-500 text-xs font-bold uppercase tracking-widest relative z-10">Your Connection</h2>
+          <div
+            id="ip-display-area"
+            class="space-y-3 flex flex-col items-center justify-center relative z-10"
+          >
+            <div
+              class="animate-pulse h-12 w-64 bg-slate-200 dark:bg-slate-800 rounded-xl"
+            ></div>
+          </div>
 
-                <div id="ip-display-area" class="space-y-3 flex flex-col items-center justify-center relative z-10">
-                    <div class="animate-pulse h-12 w-64 bg-slate-200 dark:bg-slate-800 rounded-xl"></div>
-                </div>
-
-                <p id="mainLocation" class="text-lg md:text-xl text-slate-500 dark:text-slate-400 min-h-[1.75rem] relative z-10">...</p>
-            </div>
-
-            <div class="relative max-w-lg mx-auto mt-6">
-                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <svg class="w-5 h-5 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                </div>
-                <input type="text" id="searchInput" class="block w-full p-4 pl-10 text-sm rounded-xl search-input placeholder-slate-400 dark:placeholder-slate-500" placeholder="Search any IP address..." onkeydown="if(event.key === 'Enter') searchIp()">
-                <button onclick="searchIp()" class="text-white absolute right-2.5 top-2.5 bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-800 font-medium rounded-lg text-sm px-4 py-2">Search</button>
-            </div>
+          <p
+            id="mainLocation"
+            class="text-lg md:text-xl text-slate-500 dark:text-slate-400 min-h-[1.75rem] relative z-10"
+          >
+            ...
+          </p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="glass-panel p-5 md:p-6 rounded-xl space-y-1 relative">
-                <div class="flex justify-between items-start">
-                    <div class="text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider">Provider (ISP)</div>
-                    <div class="flex gap-1">
-                        <button id="btn-dnsleak" onclick="runDnsLeakTest()" class="text-[10px] font-bold text-slate-500 hover:text-blue-500 bg-slate-200/50 dark:bg-slate-800/50 px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 transition-colors">DNS LEAK</button>
-                        <button id="btn-whois" onclick="checkWhois()" class="text-[10px] font-bold text-slate-500 hover:text-blue-500 bg-slate-200/50 dark:bg-slate-800/50 px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 transition-colors">WHOIS</button>
-                    </div>
-                </div>
-                <div class="text-lg font-semibold text-slate-800 dark:text-white truncate" id="dataOrg">...</div>
-                <div class="text-sm text-slate-500 font-mono flex justify-between items-center" id="dataAsn">...</div>
-                <div id="hostnameWrapper" class="pt-2 mt-2 border-t border-slate-200 dark:border-slate-700/50 hidden">
-                    <div class="text-blue-600 dark:text-blue-400 text-[10px] font-bold uppercase tracking-wider mb-1">Hostname / DNS</div>
-                    <div id="dataHostname" class="text-xs font-mono text-slate-500 truncate block"></div>
-                </div>
-            </div>
+        <div class="relative max-w-lg mx-auto mt-6">
+          <div
+            class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"
+          >
+            <svg
+              class="w-5 h-5 text-slate-400 dark:text-slate-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              ></path>
+            </svg>
+          </div>
+          <input
+            type="text"
+            id="searchInput"
+            class="block w-full p-4 pl-10 text-sm rounded-xl search-input placeholder-slate-400 dark:placeholder-slate-500"
+            placeholder="Search any IP address..."
+            onkeydown="if (event.key === 'Enter') searchIp();"
+          />
+          <button
+            onclick="searchIp()"
+            class="text-white absolute right-2.5 top-2.5 bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-800 font-medium rounded-lg text-sm px-4 py-2"
+          >
+            Search
+          </button>
+        </div>
+      </div>
 
-            <div class="glass-panel p-5 md:p-6 rounded-xl space-y-1">
-               <div class="text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider">Location</div>
-               <div class="flex items-center gap-2">
-                   <span class="text-xl" id="flag"></span> 
-                   <div class="text-lg font-semibold text-slate-800 dark:text-white truncate" id="dataCity">...</div>
-               </div>
-               <div class="text-sm text-slate-500">
-                   <span id="dataRegion">...</span>
-                   <span id="zipWrapper" style="display: none;">
-                       <span class="text-slate-400 mx-1">•</span>
-                       <span id="dataZip" class="text-slate-500 font-mono"></span>
-                   </span></div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="glass-panel p-5 md:p-6 rounded-xl space-y-1 relative">
+          <div class="flex justify-between items-start">
+            <div
+              class="text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider"
+            >
+              Provider (ISP)
             </div>
-
-            <div class="glass-panel p-5 md:p-6 rounded-xl space-y-1">
-                <div class="text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider">Timezone</div>
-                <div class="text-lg font-semibold text-slate-800 dark:text-white" id="dataTimezone">...</div>
-                <div class="text-xs text-slate-500 font-mono" id="dataCoords">...</div>
+            <div class="flex gap-1">
+              <button
+                id="btn-dnsleak"
+                onclick="runDnsLeakTest()"
+                class="text-[10px] font-bold text-slate-500 hover:text-blue-500 bg-slate-200/50 dark:bg-slate-800/50 px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 transition-colors"
+              >
+                DNS LEAK
+              </button>
+              <button
+                id="btn-whois"
+                onclick="checkWhois()"
+                class="text-[10px] font-bold text-slate-500 hover:text-blue-500 bg-slate-200/50 dark:bg-slate-800/50 px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 transition-colors"
+              >
+                WHOIS
+              </button>
             </div>
-
-            <div class="glass-panel p-5 md:p-6 rounded-xl space-y-3">
-                <div class="text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider">Risk Analysis</div>
-                <div class="flex justify-between items-center py-1 border-b border-slate-200 dark:border-slate-700/50">
-                    <span class="text-sm text-slate-600 dark:text-slate-300">Connection</span>
-                    <span class="px-2 py-0.5 rounded text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400" id="dataProxyBadge">Checking...</span>
-                </div>
-                <div id="reputation-section" class="pt-1">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-sm text-slate-600 dark:text-slate-300">Reputation</span>
-                        <span id="rep-badge" class="hidden px-2 py-0.5 rounded text-xs font-bold"></span>
-                    </div>
-                    <button id="btn-scan" onclick="checkReputation()" class="w-full py-1.5 rounded-lg bg-blue-100 dark:bg-blue-600/20 hover:bg-blue-200 dark:hover:bg-blue-600/40 text-blue-600 dark:text-blue-400 text-xs font-bold border border-blue-200 dark:border-blue-500/30 transition-all flex items-center justify-center gap-2">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        SCAN THREATS
-                    </button>
-                    <div id="rep-results" class="hidden mt-2 space-y-1"></div>
-                </div>
+          </div>
+          <div
+            class="text-lg font-semibold text-slate-800 dark:text-white truncate"
+            id="dataOrg"
+          >
+            ...
+          </div>
+          <div
+            class="text-sm text-slate-500 font-mono flex justify-between items-center"
+            id="dataAsn"
+          >
+            ...
+          </div>
+          <div
+            id="hostnameWrapper"
+            class="pt-2 mt-2 border-t border-slate-200 dark:border-slate-700/50 hidden"
+          >
+            <div
+              class="text-blue-600 dark:text-blue-400 text-[10px] font-bold uppercase tracking-wider mb-1"
+            >
+              Hostname / DNS
             </div>
+            <div
+              id="dataHostname"
+              class="text-xs font-mono text-slate-500 truncate block"
+            ></div>
+          </div>
         </div>
 
-        <div class="glass-panel p-1 rounded-xl shadow-2xl shadow-blue-900/10"><div id="map"></div></div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="space-y-4">
-                <h3 class="text-lg font-bold text-slate-800 dark:text-white">CLI Access</h3>
-                <div class="bg-[#0f172a] rounded-xl p-5 font-mono text-sm border border-slate-800 space-y-3 shadow-lg">
-                    <div class="group cursor-pointer" onclick="copyText('cmd1')">
-                        <div class="flex justify-between items-center text-slate-300 hover:text-white transition-colors">
-                            <code id="cmd1" class="mr-4 overflow-x-auto whitespace-nowrap min-w-0 flex-1 custom-scrollbar pb-2">
-                                $ curl ip.wiredalter.com
-                            </code>
-                            <span class="text-blue-500 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity shrink-0">Copy</span>
-                        </div>
-                    </div>
-                    <div class="w-full h-px bg-slate-800"></div>
-                    <div class="group cursor-pointer" onclick="copyText('cmd2')">
-                        <div class="flex justify-between items-center text-slate-300 hover:text-white transition-colors">
-                            <code id="cmd2" class="mr-4 overflow-x-auto whitespace-nowrap min-w-0 flex-1 custom-scrollbar pb-2">
-                                $ curl ip.wiredalter.com/json
-                            </code>
-                            <span class="text-blue-500 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity shrink-0">Copy</span>
-                        </div>
-                    </div>
-                </div>
+        <div class="glass-panel p-5 md:p-6 rounded-xl space-y-1">
+          <div
+            class="text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider"
+          >
+            Location
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xl" id="flag"></span>
+            <div
+              class="text-lg font-semibold text-slate-800 dark:text-white truncate"
+              id="dataCity"
+            >
+              ...
             </div>
-            <div class="space-y-4">
-                <h3 class="text-lg font-bold text-slate-800 dark:text-white">JSON Response</h3>
-                <pre class="bg-[#0f172a] rounded-xl p-4 font-mono text-[11px] md:text-xs text-slate-300 border border-slate-800 h-40 overflow-y-auto custom-scrollbar shadow-lg whitespace-pre-wrap" id="jsonPreview">Loading...</pre>
-                <div class="hidden text-indigo-500 dark:text-indigo-300 text-emerald-500 dark:text-emerald-400 text-orange-500 dark:text-orange-400 text-blue-400 dark:text-blue-300 text-slate-400 font-semibold"></div>
-            </div>
+          </div>
+          <div class="text-sm text-slate-500">
+            <span id="dataRegion">...</span>
+            <span id="zipWrapper" style="display: none">
+              <span class="text-slate-400 mx-1">•</span>
+              <span id="dataZip" class="text-slate-500 font-mono"></span>
+            </span>
+          </div>
         </div>
 
-        <div class="border-t border-slate-200 dark:border-slate-800/60 pt-10 mt-10">
+        <div class="glass-panel p-5 md:p-6 rounded-xl space-y-1">
+          <div
+            class="text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider"
+          >
+            Timezone
+          </div>
+          <div
+            class="text-lg font-semibold text-slate-800 dark:text-white"
+            id="dataTimezone"
+          >
+            ...
+          </div>
+          <div class="text-xs text-slate-500 font-mono" id="dataCoords">
+            ...
+          </div>
+        </div>
 
-            <section id="faq" class="max-w-3xl mx-auto px-4 py-16 space-y-12">
-                <h3 class="text-2xl font-bold text-center text-slate-800 dark:text-white mb-8">Frequently Asked Questions</h3>
+        <div class="glass-panel p-5 md:p-6 rounded-xl space-y-3">
+          <div
+            class="text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider"
+          >
+            Risk Analysis
+          </div>
+          <div
+            class="flex justify-between items-center py-1 border-b border-slate-200 dark:border-slate-700/50"
+          >
+            <span class="text-sm text-slate-600 dark:text-slate-300"
+              >Connection</span
+            >
+            <span
+              class="px-2 py-0.5 rounded text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+              id="dataProxyBadge"
+              >Checking...</span
+            >
+          </div>
+          <div id="reputation-section" class="pt-1">
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-sm text-slate-600 dark:text-slate-300"
+                >Reputation</span
+              >
+              <span
+                id="rep-badge"
+                class="hidden px-2 py-0.5 rounded text-xs font-bold"
+              ></span>
+            </div>
+            <button
+              id="btn-scan"
+              onclick="checkReputation()"
+              class="w-full py-1.5 rounded-lg bg-blue-100 dark:bg-blue-600/20 hover:bg-blue-200 dark:hover:bg-blue-600/40 text-blue-600 dark:text-blue-400 text-xs font-bold border border-blue-200 dark:border-blue-500/30 transition-all flex items-center justify-center gap-2"
+            >
+              <svg
+                class="w-3 h-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                ></path>
+              </svg>
+              SCAN THREATS
+            </button>
+            <div id="rep-results" class="hidden mt-2 space-y-1"></div>
+          </div>
+        </div>
+      </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
+      <div class="glass-panel p-1 rounded-xl shadow-2xl shadow-blue-900/10">
+        <div id="map"></div>
+      </div>
 
-                    <div class="space-y-2">
-                        <h4 class="font-bold text-blue-600 dark:text-blue-400">Is this service free?</h4>
-                        <p class="text-slate-600 dark:text-slate-400 leading-relaxed">Yes, this is a free tool for the community. Please respect the fair usage policy to keep it available for everyone.</p>
-                    </div>
-
-                    <div class="space-y-2">
-                        <h4 class="font-bold text-blue-600 dark:text-blue-400">How do I use this in scripts?</h4>
-                        <p class="text-slate-600 dark:text-slate-400 leading-relaxed">Use <code>curl ip.wiredalter.com</code> for a plain text IP or append <code>/json</code> for detailed metadata.</p>
-                    </div>
-
-                    <div class="space-y-2">
-                        <h4 class="font-bold text-blue-600 dark:text-blue-400">Does this detect VPNs?</h4>
-                        <p class="text-slate-600 dark:text-slate-400 leading-relaxed">Yes. We use the <strong>IP2Location LITE</strong> database specifically for proxy detection, combined with a manual analysis of ASN providers to catch unlisted datacenters.</p>
-                    </div>
-
-                    <div class="space-y-2">
-                        <h4 class="font-bold text-blue-600 dark:text-blue-400">How does the Reputation Scan work?</h4>
-                        <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
-                            We aggregate real-time threat data from <strong>CrowdSec</strong> (Community Intelligence), <strong>FireHOL</strong>, <strong>GreenSnow</strong>, and major DNSBLs like <strong>SpamCop</strong> to detect active attackers, scanners, and spammers.
-                        </p>
-                    </div>
- 
-                    <div class="space-y-2">
-                        <h4 class="font-bold text-blue-600 dark:text-blue-400">Data Privacy</h4>
-                        <p class="text-slate-600 dark:text-slate-400 leading-relaxed">No logs are kept. This service runs entirely in memory to ensure privacy and security.</p>
-                    </div>
-
-                    <div class="space-y-2">
-                        <h4 class="font-bold text-blue-600 dark:text-blue-400">Are there Rate Limits?</h4>
-                        <p class="text-slate-600 dark:text-slate-400 leading-relaxed">To ensure stability, we limit requests to <span class="text-slate-900 dark:text-slate-300 font-semibold">100 per 5 minutes</span> per IP address. Exceeding this will result in a 429 HTTP error.</p>
-                    </div>
-
-                    <div class="space-y-2">
-                        <h4 class="font-bold text-blue-600 dark:text-blue-400">How accurate is the data?</h4>
-                        <p class="text-slate-600 dark:text-slate-400 leading-relaxed">We combine <strong>MaxMind GeoLite2</strong> for location/ISP data with <strong>IP2Location</strong> for threat intelligence. Both databases are updated regularly.</p>
-                    </div>            
-
-                    <div class="space-y-2">
-                        <h4 class="font-bold text-blue-600 dark:text-blue-400">Why do I see two IP addresses?</h4>
-                        <p class="text-slate-600 dark:text-slate-400 leading-relaxed">Modern networks often support both IPv4 (legacy) and IPv6 (modern). We intelligently detect and display both if your connection supports them.</p>
-                    </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="space-y-4">
+          <h3 class="text-lg font-bold text-slate-800 dark:text-white">
+            CLI Access
+          </h3>
+          <div
+            class="bg-[#0f172a] rounded-xl p-5 font-mono text-sm border border-slate-800 space-y-3 shadow-lg"
+          >
+            <div class="group cursor-pointer" onclick="copyText('cmd1')">
+              <div
+                class="flex justify-between items-center text-slate-300 hover:text-white transition-colors"
+              >
+                <code
+                  id="cmd1"
+                  class="mr-4 overflow-x-auto whitespace-nowrap min-w-0 flex-1 custom-scrollbar pb-2"
+                >
+                  $ curl ip.wiredalter.com
+                </code>
+                <span
+                  class="text-blue-500 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                  >Copy</span
+                >
               </div>
-            </section>
-
-            <section class="max-w-3xl mx-auto px-4 pb-16">
-                <div class="bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800/60 rounded-2xl p-8 text-center backdrop-blur-sm shadow-sm">
-                    <div class="inline-flex items-center justify-center p-3 bg-blue-500/10 rounded-full mb-4">
-                        <svg class="w-6 h-6 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                        </svg>
-                    </div>
-
-                    <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-2">Fully Open Source</h3>
-                    <p class="text-slate-600 dark:text-slate-400 mb-6 max-w-lg mx-auto">
-                        For full transparency, this service runs entirely in memory and logs nothing. 
-                        Inspect the code, audit the security, or host it yourself.
-                    </p>
-
-                    <a href="https://github.com/buildplan/ip-service" target="_blank" class="inline-flex items-center gap-2 px-6 py-3 bg-[#24292e] hover:bg-[#2f363d] text-white rounded-xl font-medium transition-all duration-200 hover:scale-[1.02] shadow-lg shadow-black/20 border border-white/5">
-                        <svg class="w-5 h-5" viewBox="0 0 16 16" fill="currentColor">
-                            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
-                        </svg>
-                        GitHub
-                    </a>
-                </div>
-            </section>
+            </div>
+            <div class="w-full h-px bg-slate-800"></div>
+            <div class="group cursor-pointer" onclick="copyText('cmd2')">
+              <div
+                class="flex justify-between items-center text-slate-300 hover:text-white transition-colors"
+              >
+                <code
+                  id="cmd2"
+                  class="mr-4 overflow-x-auto whitespace-nowrap min-w-0 flex-1 custom-scrollbar pb-2"
+                >
+                  $ curl ip.wiredalter.com/json
+                </code>
+                <span
+                  class="text-blue-500 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                  >Copy</span
+                >
+              </div>
+            </div>
+          </div>
         </div>
+        <div class="space-y-4">
+          <h3 class="text-lg font-bold text-slate-800 dark:text-white">
+            JSON Response
+          </h3>
+          <pre
+            class="bg-[#0f172a] rounded-xl p-4 font-mono text-[11px] md:text-xs text-slate-300 border border-slate-800 h-40 overflow-y-auto custom-scrollbar shadow-lg whitespace-pre-wrap"
+            id="jsonPreview"
+          >
+Loading...</pre>
+          <div
+            class="hidden text-indigo-500 dark:text-indigo-300 text-emerald-500 dark:text-emerald-400 text-orange-500 dark:text-orange-400 text-blue-400 dark:text-blue-300 text-slate-400 font-semibold"
+          ></div>
+        </div>
+      </div>
+
+      <div
+        class="border-t border-slate-200 dark:border-slate-800/60 pt-10 mt-10"
+      >
+        <section id="faq" class="max-w-3xl mx-auto px-4 py-16 space-y-12">
+          <h3
+            class="text-2xl font-bold text-center text-slate-800 dark:text-white mb-8"
+          >
+            Frequently Asked Questions
+          </h3>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
+            <div class="space-y-2">
+              <h4 class="font-bold text-blue-600 dark:text-blue-400">
+                Is this service free?
+              </h4>
+              <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+                Yes, this is a free tool for the community. Please respect the
+                fair usage policy to keep it available for everyone.
+              </p>
+            </div>
+
+            <div class="space-y-2">
+              <h4 class="font-bold text-blue-600 dark:text-blue-400">
+                How do I use this in scripts?
+              </h4>
+              <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+                Use <code>curl ip.wiredalter.com</code> for a plain text IP or
+                append <code>/json</code> for detailed metadata.
+              </p>
+            </div>
+
+            <div class="space-y-2">
+              <h4 class="font-bold text-blue-600 dark:text-blue-400">
+                Does this detect VPNs?
+              </h4>
+              <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+                Yes. We use the <strong>IP2Location LITE</strong> database
+                specifically for proxy detection, combined with a manual
+                analysis of ASN providers to catch unlisted datacenters.
+              </p>
+            </div>
+
+            <div class="space-y-2">
+              <h4 class="font-bold text-blue-600 dark:text-blue-400">
+                How does the Reputation Scan work?
+              </h4>
+              <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+                We aggregate real-time threat data from
+                <strong>CrowdSec</strong> (Community Intelligence),
+                <strong>FireHOL</strong>, <strong>GreenSnow</strong>, and major
+                DNSBLs like <strong>SpamCop</strong> to detect active attackers,
+                scanners, and spammers.
+              </p>
+            </div>
+
+            <div class="space-y-2">
+              <h4 class="font-bold text-blue-600 dark:text-blue-400">
+                Data Privacy
+              </h4>
+              <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+                No logs are kept. This service runs entirely in memory to ensure
+                privacy and security.
+              </p>
+            </div>
+
+            <div class="space-y-2">
+              <h4 class="font-bold text-blue-600 dark:text-blue-400">
+                Are there Rate Limits?
+              </h4>
+              <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+                To ensure stability, we limit requests to
+                <span class="text-slate-900 dark:text-slate-300 font-semibold"
+                  >100 per 5 minutes</span
+                >
+                per IP address. Exceeding this will result in a 429 HTTP error.
+              </p>
+            </div>
+
+            <div class="space-y-2">
+              <h4 class="font-bold text-blue-600 dark:text-blue-400">
+                How accurate is the data?
+              </h4>
+              <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+                We combine <strong>MaxMind GeoLite2</strong> for location/ISP
+                data with <strong>IP2Location</strong> for threat intelligence.
+                Both databases are updated regularly.
+              </p>
+            </div>
+
+            <div class="space-y-2">
+              <h4 class="font-bold text-blue-600 dark:text-blue-400">
+                Why do I see two IP addresses?
+              </h4>
+              <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+                Modern networks often support both IPv4 (legacy) and IPv6
+                (modern). We intelligently detect and display both if your
+                connection supports them.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section class="max-w-3xl mx-auto px-4 pb-16">
+          <div
+            class="bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800/60 rounded-2xl p-8 text-center backdrop-blur-sm shadow-sm"
+          >
+            <div
+              class="inline-flex items-center justify-center p-3 bg-blue-500/10 rounded-full mb-4"
+            >
+              <svg
+                class="w-6 h-6 text-blue-500 dark:text-blue-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                ></path>
+              </svg>
+            </div>
+
+            <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-2">
+              Fully Open Source
+            </h3>
+            <p class="text-slate-600 dark:text-slate-400 mb-6 max-w-lg mx-auto">
+              For full transparency, this service runs entirely in memory and
+              logs nothing. Inspect the code, audit the security, or host it
+              yourself.
+            </p>
+
+            <a
+              href="https://github.com/buildplan/ip-service"
+              target="_blank"
+              class="inline-flex items-center gap-2 px-6 py-3 bg-[#24292e] hover:bg-[#2f363d] text-white rounded-xl font-medium transition-all duration-200 hover:scale-[1.02] shadow-lg shadow-black/20 border border-white/5"
+            >
+              <svg class="w-5 h-5" viewBox="0 0 16 16" fill="currentColor">
+                <path
+                  d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"
+                ></path>
+              </svg>
+              GitHub
+            </a>
+          </div>
+        </section>
+      </div>
     </main>
 
-    <footer class="border-t border-slate-200 dark:border-slate-800/60 bg-white dark:bg-[#0b1120] py-12 text-center text-slate-600 dark:text-slate-600 text-sm">
-        <div class="max-w-5xl mx-auto px-6 space-y-8">
-            
-            <div class="space-y-2">
-                <p>
-                    &copy; <span id="year"></span> <a href="https://www.wiredalter.com" class="hover:text-slate-900 dark:hover:text-slate-300 transition-colors">WiredAlter.com</a>. All rights reserved.
-                </p>
-                <p class="text-xs">
-                    <a href="/terms" class="hover:text-slate-900 dark:hover:text-slate-300 underline decoration-slate-400 dark:decoration-slate-700 transition-colors">Terms & Privacy</a>
-                </p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-xs text-slate-500 leading-relaxed border-t border-slate-200 dark:border-slate-800/50 pt-8">
-
-                <div class="space-y-2">
-                    <p class="font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">Location Intelligence</p>
-                    <p>
-                        Includes GeoLite2 data created by <a href="https://www.maxmind.com" target="_blank" class="underline decoration-slate-400 dark:decoration-slate-700 hover:text-slate-900 dark:hover:text-slate-300">MaxMind</a>.
-                    </p>
-                    <p>
-                        Uses IP2Location LITE database available from <a href="https://lite.ip2location.com" target="_blank" class="underline decoration-slate-400 dark:decoration-slate-700 hover:text-slate-900 dark:hover:text-slate-300">IP2Location</a>.
-                    </p>
-                </div>
-
-                <div class="space-y-2">
-                    <p class="font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">Threat Intelligence</p>
-                    <p>
-                        Real-time reputation analysis aggregated from 
-                        <a href="https://crowdsec.net" rel="nofollow" target="_blank" class="underline decoration-slate-400 dark:decoration-slate-700 hover:text-slate-900 dark:hover:text-slate-300">CrowdSec</a>, 
-                        <a href="https://blocklist.greensnow.co/" rel="nofollow" target="_blank" class="underline decoration-slate-400 dark:decoration-slate-700 hover:text-slate-900 dark:hover:text-slate-300">GreenSnow</a>, 
-                        <a href="https://firehol.org/" rel="nofollow" target="_blank" class="underline decoration-slate-400 dark:decoration-slate-700 hover:text-slate-900 dark:hover:text-slate-300">FireHOL</a>, 
-                        <a href="https://www.spamcop.net/" rel="nofollow" target="_blank" class="underline decoration-slate-400 dark:decoration-slate-700 hover:text-slate-900 dark:hover:text-slate-300">SpamCop</a>, 
-                        <a href="https://www.abuseipdb.com/" rel="nofollow" target="_blank" class="underline decoration-slate-400 dark:decoration-slate-700 hover:text-slate-900 dark:hover:text-slate-300">AbuseIPDB</a>, 
-                        <a href="https://spamverify.com/" rel="nofollow" target="_blank" class="underline decoration-slate-400 dark:decoration-slate-700 hover:text-slate-900 dark:hover:text-slate-300">SpamVerify</a>, 
-                        <a href="https://sniffcat.com/" rel="nofollow" target="_blank" class="underline decoration-slate-400 dark:decoration-slate-700 hover:text-slate-900 dark:hover:text-slate-300">SniffCat</a>, 
-                        and <a href="https://github.com/sefinek/Malicious-IP-Addresses" rel="nofollow" target="_blank" class="underline decoration-slate-400 dark:decoration-slate-700 hover:text-slate-900 dark:hover:text-slate-300">Sefinek</a>.
-                    </p>
-                    <div class="pt-3">
-                        <a href="https://www.abuseipdb.com/user/259750" rel="nofollow" target="_blank" title="AbuseIPDB Contributor" 
-                            class="group inline-flex items-center justify-center rounded-xl bg-slate-200/40 dark:bg-slate-800/40 p-3 border border-slate-300/50 dark:border-slate-700/50 shadow-md shadow-black/30 backdrop-blur-sm hover:bg-slate-300/60 dark:hover:bg-slate-700/60 hover:border-slate-400/50 dark:hover:border-slate-500/50 transition-all duration-300">
-                            <img src="/abuseip-badge.svg" alt="AbuseIPDB Contributor Badge" 
-                                 class="w-[180px] h-auto opacity-85 group-hover:opacity-100 transition-opacity">
-                        </a>
-                    </div>
-                </div>
-
-                <div class="space-y-2">
-                    <p class="font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">Infrastructure & Mapping</p>
-                    <p>
-                        Map data &copy; <a href="https://www.openstreetmap.org/copyright" rel="nofollow" target="_blank" class="underline decoration-slate-400 dark:decoration-slate-700 hover:text-slate-900 dark:hover:text-slate-300">OpenStreetMap</a> contributors.
-                        Rendered via <a href="https://leafletjs.com" rel="nofollow" target="_blank" class="underline decoration-slate-400 dark:decoration-slate-700 hover:text-slate-900 dark:hover:text-slate-300">Leaflet</a>.
-                    </p>
-                    <p>
-                        Powered by Node.js & WiredAlter Cloud.
-                    </p>
-                </div>
-
-            </div>
+    <footer
+      class="border-t border-slate-200 dark:border-slate-800/60 bg-white dark:bg-[#0b1120] py-12 text-center text-slate-600 dark:text-slate-600 text-sm"
+    >
+      <div class="max-w-5xl mx-auto px-6 space-y-8">
+        <div class="space-y-2">
+          <p>
+            &copy; <span id="year"></span>
+            <a
+              href="https://www.wiredalter.com"
+              class="hover:text-slate-900 dark:hover:text-slate-300 transition-colors"
+              >WiredAlter.com</a
+            >. All rights reserved.
+          </p>
+          <p class="text-xs">
+            <a
+              href="/terms"
+              class="hover:text-slate-900 dark:hover:text-slate-300 underline decoration-slate-400 dark:decoration-slate-700 transition-colors"
+              >Terms & Privacy</a
+            >
+          </p>
         </div>
+
+        <div
+          class="grid grid-cols-1 md:grid-cols-3 gap-8 text-xs text-slate-500 leading-relaxed border-t border-slate-200 dark:border-slate-800/50 pt-8"
+        >
+          <div class="space-y-2">
+            <p
+              class="font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1"
+            >
+              Location Intelligence
+            </p>
+            <p>
+              Includes GeoLite2 data created by
+              <a
+                href="https://www.maxmind.com"
+                target="_blank"
+                class="underline decoration-slate-400 dark:decoration-slate-700 hover:text-slate-900 dark:hover:text-slate-300"
+                >MaxMind</a
+              >.
+            </p>
+            <p>
+              Uses IP2Location LITE database available from
+              <a
+                href="https://lite.ip2location.com"
+                target="_blank"
+                class="underline decoration-slate-400 dark:decoration-slate-700 hover:text-slate-900 dark:hover:text-slate-300"
+                >IP2Location</a
+              >.
+            </p>
+            <p>
+              DNS Leak test API powered by
+              <a
+                href="https://bash.ws"
+                target="_blank"
+                class="underline decoration-slate-400 dark:decoration-slate-700 hover:text-slate-900 dark:hover:text-slate-300"
+                >bash.ws</a
+              >.
+            </p>
+          </div>
+
+          <div class="space-y-2">
+            <p
+              class="font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1"
+            >
+              Threat Intelligence
+            </p>
+            <p>
+              Real-time reputation analysis aggregated from
+              <a
+                href="https://crowdsec.net"
+                rel="nofollow"
+                target="_blank"
+                class="underline decoration-slate-400 dark:decoration-slate-700 hover:text-slate-900 dark:hover:text-slate-300"
+                >CrowdSec</a
+              >,
+              <a
+                href="https://blocklist.greensnow.co/"
+                rel="nofollow"
+                target="_blank"
+                class="underline decoration-slate-400 dark:decoration-slate-700 hover:text-slate-900 dark:hover:text-slate-300"
+                >GreenSnow</a
+              >,
+              <a
+                href="https://firehol.org/"
+                rel="nofollow"
+                target="_blank"
+                class="underline decoration-slate-400 dark:decoration-slate-700 hover:text-slate-900 dark:hover:text-slate-300"
+                >FireHOL</a
+              >,
+              <a
+                href="https://www.spamcop.net/"
+                rel="nofollow"
+                target="_blank"
+                class="underline decoration-slate-400 dark:decoration-slate-700 hover:text-slate-900 dark:hover:text-slate-300"
+                >SpamCop</a
+              >,
+              <a
+                href="https://www.abuseipdb.com/"
+                rel="nofollow"
+                target="_blank"
+                class="underline decoration-slate-400 dark:decoration-slate-700 hover:text-slate-900 dark:hover:text-slate-300"
+                >AbuseIPDB</a
+              >,
+              <a
+                href="https://spamverify.com/"
+                rel="nofollow"
+                target="_blank"
+                class="underline decoration-slate-400 dark:decoration-slate-700 hover:text-slate-900 dark:hover:text-slate-300"
+                >SpamVerify</a
+              >,
+              <a
+                href="https://sniffcat.com/"
+                rel="nofollow"
+                target="_blank"
+                class="underline decoration-slate-400 dark:decoration-slate-700 hover:text-slate-900 dark:hover:text-slate-300"
+                >SniffCat</a
+              >, and
+              <a
+                href="https://github.com/sefinek/Malicious-IP-Addresses"
+                rel="nofollow"
+                target="_blank"
+                class="underline decoration-slate-400 dark:decoration-slate-700 hover:text-slate-900 dark:hover:text-slate-300"
+                >Sefinek</a
+              >.
+            </p>
+            <div class="pt-3">
+              <a
+                href="https://www.abuseipdb.com/user/259750"
+                rel="nofollow"
+                target="_blank"
+                title="AbuseIPDB Contributor"
+                class="group inline-flex items-center justify-center rounded-xl bg-slate-200/40 dark:bg-slate-800/40 p-3 border border-slate-300/50 dark:border-slate-700/50 shadow-md shadow-black/30 backdrop-blur-sm hover:bg-slate-300/60 dark:hover:bg-slate-700/60 hover:border-slate-400/50 dark:hover:border-slate-500/50 transition-all duration-300"
+              >
+                <img
+                  src="/abuseip-badge.svg"
+                  alt="AbuseIPDB Contributor Badge"
+                  class="w-[180px] h-auto opacity-85 group-hover:opacity-100 transition-opacity"
+                />
+              </a>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <p
+              class="font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1"
+            >
+              Infrastructure & Mapping
+            </p>
+            <p>
+              Map data &copy;
+              <a
+                href="https://www.openstreetmap.org/copyright"
+                rel="nofollow"
+                target="_blank"
+                class="underline decoration-slate-400 dark:decoration-slate-700 hover:text-slate-900 dark:hover:text-slate-300"
+                >OpenStreetMap</a
+              >
+              contributors. Rendered via
+              <a
+                href="https://leafletjs.com"
+                rel="nofollow"
+                target="_blank"
+                class="underline decoration-slate-400 dark:decoration-slate-700 hover:text-slate-900 dark:hover:text-slate-300"
+                >Leaflet</a
+              >.
+            </p>
+            <p>Powered by Node.js & WiredAlter Cloud.</p>
+          </div>
+        </div>
+      </div>
     </footer>
 
     <div id="toast">Notification</div>
 
-    <div id="rep-modal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity opacity-0" id="rep-modal-backdrop" onclick="closeReputationModal()"></div>
-        <div class="fixed inset-0 z-10 overflow-y-auto pointer-events-none">
-            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
-                <div class="relative transform overflow-hidden rounded-2xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg opacity-0 scale-95 pointer-events-auto" id="rep-modal-panel">
-                    <div class="bg-slate-50 dark:bg-slate-800/50 px-4 py-3 sm:px-6 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center">
-                        <h3 class="text-base font-semibold leading-6 text-slate-900 dark:text-white" id="modal-title">Reputation Report</h3>
-                        <button onclick="closeReputationModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
-                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="px-4 py-5 sm:p-6">
-                        <div id="modal-content" class="space-y-4"></div>
-                        <div class="mt-6 pt-4 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-500">
-                            <p class="font-semibold mb-1 uppercase tracking-wider text-slate-600 dark:text-slate-400">Databases Scanned:</p>
-                            <div class="flex flex-wrap gap-2 text-slate-600 dark:text-slate-300">
-                                <span class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-transparent px-2 py-1 rounded">SpamCop</span>
-                                <span class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-transparent px-2 py-1 rounded">DroneBL</span>
-                                <span class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-transparent px-2 py-1 rounded">FireHOL L1</span>
-                                <span class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-transparent px-2 py-1 rounded">GreenSnow</span>
-                                <span class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-transparent px-2 py-1 rounded">CrowdSec</span>
-                                <span class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-transparent px-2 py-1 rounded">AbuseIPDB</span>
-                                <span class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-transparent px-2 py-1 rounded">SniffCat</span>
-                                <span class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-transparent px-2 py-1 rounded">SpamVerify</span>
-                                <span class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-transparent px-2 py-1 rounded">Sefinek</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-slate-50 dark:bg-slate-800/30 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-                        <button type="button" onclick="closeReputationModal()" class="inline-flex w-full justify-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 sm:ml-3 sm:w-auto transition-all">Done</button>
-                    </div>
-                </div>
+    <div
+      id="rep-modal"
+      class="fixed inset-0 z-50 hidden"
+      aria-labelledby="modal-title"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity opacity-0"
+        id="rep-modal-backdrop"
+        onclick="closeReputationModal()"
+      ></div>
+      <div class="fixed inset-0 z-10 overflow-y-auto pointer-events-none">
+        <div
+          class="flex min-h-full items-center justify-center p-4 text-center sm:p-0"
+        >
+          <div
+            class="relative transform overflow-hidden rounded-2xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg opacity-0 scale-95 pointer-events-auto"
+            id="rep-modal-panel"
+          >
+            <div
+              class="bg-slate-50 dark:bg-slate-800/50 px-4 py-3 sm:px-6 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center"
+            >
+              <h3
+                class="text-base font-semibold leading-6 text-slate-900 dark:text-white"
+                id="modal-title"
+              >
+                Reputation Report
+              </h3>
+              <button
+                onclick="closeReputationModal()"
+                class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors"
+              >
+                <svg
+                  class="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
             </div>
+            <div class="px-4 py-5 sm:p-6">
+              <div id="modal-content" class="space-y-4"></div>
+              <div
+                class="mt-6 pt-4 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-500"
+              >
+                <p
+                  class="font-semibold mb-1 uppercase tracking-wider text-slate-600 dark:text-slate-400"
+                >
+                  Databases Scanned:
+                </p>
+                <div
+                  class="flex flex-wrap gap-2 text-slate-600 dark:text-slate-300"
+                >
+                  <span
+                    class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-transparent px-2 py-1 rounded"
+                    >SpamCop</span
+                  >
+                  <span
+                    class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-transparent px-2 py-1 rounded"
+                    >DroneBL</span
+                  >
+                  <span
+                    class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-transparent px-2 py-1 rounded"
+                    >FireHOL L1</span
+                  >
+                  <span
+                    class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-transparent px-2 py-1 rounded"
+                    >GreenSnow</span
+                  >
+                  <span
+                    class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-transparent px-2 py-1 rounded"
+                    >CrowdSec</span
+                  >
+                  <span
+                    class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-transparent px-2 py-1 rounded"
+                    >AbuseIPDB</span
+                  >
+                  <span
+                    class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-transparent px-2 py-1 rounded"
+                    >SniffCat</span
+                  >
+                  <span
+                    class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-transparent px-2 py-1 rounded"
+                    >SpamVerify</span
+                  >
+                  <span
+                    class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-transparent px-2 py-1 rounded"
+                    >Sefinek</span
+                  >
+                </div>
+              </div>
+            </div>
+            <div
+              class="bg-slate-50 dark:bg-slate-800/30 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6"
+            >
+              <button
+                type="button"
+                onclick="closeReputationModal()"
+                class="inline-flex w-full justify-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 sm:ml-3 sm:w-auto transition-all"
+              >
+                Done
+              </button>
+            </div>
+          </div>
         </div>
+      </div>
     </div>
 
-    <div id="whois-modal" class="fixed inset-0 z-50 hidden" aria-labelledby="whois-title" role="dialog" aria-modal="true">
-        <div class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity opacity-0" id="whois-modal-backdrop" onclick="closeWhoisModal()"></div>
-        <div class="fixed inset-0 z-10 overflow-y-auto pointer-events-none">
-            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
-                <div class="relative transform overflow-hidden rounded-2xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-xl opacity-0 scale-95 pointer-events-auto" id="whois-modal-panel">
-                    <div class="bg-slate-50 dark:bg-slate-800/50 px-4 py-3 sm:px-6 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center">
-                        <h3 class="text-base font-semibold leading-6 text-slate-900 dark:text-white" id="whois-title">Registry Information (WHOIS)</h3>
-                        <button onclick="closeWhoisModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
-                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                        </button>
-                    </div>
-                    <div class="px-4 py-5 sm:p-6">
-                        <div id="whois-content" class="space-y-4"></div>
-                    </div>
-                </div>
+    <div
+      id="whois-modal"
+      class="fixed inset-0 z-50 hidden"
+      aria-labelledby="whois-title"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity opacity-0"
+        id="whois-modal-backdrop"
+        onclick="closeWhoisModal()"
+      ></div>
+      <div class="fixed inset-0 z-10 overflow-y-auto pointer-events-none">
+        <div
+          class="flex min-h-full items-center justify-center p-4 text-center sm:p-0"
+        >
+          <div
+            class="relative transform overflow-hidden rounded-2xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-xl opacity-0 scale-95 pointer-events-auto"
+            id="whois-modal-panel"
+          >
+            <div
+              class="bg-slate-50 dark:bg-slate-800/50 px-4 py-3 sm:px-6 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center"
+            >
+              <h3
+                class="text-base font-semibold leading-6 text-slate-900 dark:text-white"
+                id="whois-title"
+              >
+                Registry Information (WHOIS)
+              </h3>
+              <button
+                onclick="closeWhoisModal()"
+                class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors"
+              >
+                <svg
+                  class="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
             </div>
+            <div class="px-4 py-5 sm:p-6">
+              <div id="whois-content" class="space-y-4"></div>
+            </div>
+          </div>
         </div>
+      </div>
     </div>
 
-    <div id="dnsleak-modal" class="fixed inset-0 z-50 hidden" aria-labelledby="dnsleak-title" role="dialog" aria-modal="true">
-        <div class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity opacity-0" id="dnsleak-modal-backdrop" onclick="closeDnsLeakModal()"></div>
-        <div class="fixed inset-0 z-10 overflow-y-auto pointer-events-none">
-            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
-                <div class="relative transform overflow-hidden rounded-2xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-2xl opacity-0 scale-95 pointer-events-auto" id="dnsleak-modal-panel">
-                    <div class="bg-slate-50 dark:bg-slate-800/50 px-4 py-3 sm:px-6 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center">
-                        <h3 class="text-base font-semibold leading-6 text-slate-900 dark:text-white" id="dnsleak-title">DNS Leak Test</h3>
-                        <button onclick="closeDnsLeakModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
-                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                        </button>
-                    </div>
-                    <div class="px-4 py-5 sm:p-6">
-                        <div id="dnsleak-content" class="space-y-4"></div>
-                    </div>
-                </div>
+    <div
+      id="dnsleak-modal"
+      class="fixed inset-0 z-50 hidden"
+      aria-labelledby="dnsleak-title"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity opacity-0"
+        id="dnsleak-modal-backdrop"
+        onclick="closeDnsLeakModal()"
+      ></div>
+      <div class="fixed inset-0 z-10 overflow-y-auto pointer-events-none">
+        <div
+          class="flex min-h-full items-center justify-center p-4 text-center sm:p-0"
+        >
+          <div
+            class="relative transform overflow-hidden rounded-2xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-2xl opacity-0 scale-95 pointer-events-auto"
+            id="dnsleak-modal-panel"
+          >
+            <div
+              class="bg-slate-50 dark:bg-slate-800/50 px-4 py-3 sm:px-6 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center"
+            >
+              <h3
+                class="text-base font-semibold leading-6 text-slate-900 dark:text-white"
+                id="dnsleak-title"
+              >
+                DNS Leak Test
+              </h3>
+              <button
+                onclick="closeDnsLeakModal()"
+                class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors"
+              >
+                <svg
+                  class="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
             </div>
+            <div class="px-4 py-5 sm:p-6">
+              <div id="dnsleak-content" class="space-y-4"></div>
+            </div>
+          </div>
         </div>
+      </div>
     </div>
 
     <link rel="stylesheet" href="/leaflet/leaflet.css" />
     <script src="/leaflet/leaflet.js"></script>
     <script src="/app.js?v=1.4"></script>
     <script src="/dnsleak.js?v=1.0"></script>
-
-</body>
+  </body>
 </html>
