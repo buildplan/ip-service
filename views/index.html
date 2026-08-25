@@ -277,8 +277,8 @@
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="glass-panel p-5 md:p-6 rounded-xl space-y-1 relative">
-          <div class="flex justify-between items-start">
+        <div class="glass-panel p-5 md:p-6 rounded-xl relative">
+          <div class="flex justify-between items-start mb-2">
             <div
               class="text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider"
             >
@@ -302,13 +302,13 @@
             </div>
           </div>
           <div
-            class="text-lg font-semibold text-slate-800 dark:text-white truncate"
+            class="text-base font-semibold text-slate-800 dark:text-white leading-snug"
             id="dataOrg"
           >
             ...
           </div>
           <div
-            class="text-sm text-slate-500 font-mono flex justify-between items-center"
+            class="text-xs text-slate-400 font-mono mt-0.5"
             id="dataAsn"
           >
             ...
@@ -318,13 +318,13 @@
             class="pt-2 mt-2 border-t border-slate-200 dark:border-slate-700/50 hidden"
           >
             <div
-              class="text-blue-600 dark:text-blue-400 text-[10px] font-bold uppercase tracking-wider mb-1"
+              class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5"
             >
-              Hostname / DNS
+              Reverse DNS
             </div>
             <div
               id="dataHostname"
-              class="text-xs font-mono text-slate-500 truncate block"
+              class="text-xs font-mono text-slate-500 dark:text-slate-400 break-all leading-relaxed"
             ></div>
           </div>
         </div>
@@ -940,14 +940,14 @@ Loading...</pre>
       ></div>
       <div class="fixed inset-0 z-10 overflow-y-auto pointer-events-none">
         <div
-          class="flex min-h-full items-center justify-center p-4 text-center sm:p-0"
+          class="flex min-h-full items-end sm:items-center justify-center p-0 sm:p-4 text-center"
         >
           <div
-            class="relative transform overflow-hidden rounded-2xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-xl opacity-0 scale-95 pointer-events-auto"
+            class="relative flex flex-col w-full sm:max-w-xl max-h-[90dvh] sm:my-8 transform rounded-t-2xl sm:rounded-2xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 text-left shadow-2xl transition-all opacity-0 scale-95 pointer-events-auto"
             id="whois-modal-panel"
           >
             <div
-              class="bg-slate-50 dark:bg-slate-800/50 px-4 py-3 sm:px-6 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center"
+              class="flex-shrink-0 bg-slate-50 dark:bg-slate-800/50 px-4 py-3 sm:px-6 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center rounded-t-2xl sm:rounded-t-2xl"
             >
               <h3
                 class="text-base font-semibold leading-6 text-slate-900 dark:text-white"
@@ -958,6 +958,7 @@ Loading...</pre>
               <button
                 onclick="closeWhoisModal()"
                 class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors"
+                aria-label="Close"
               >
                 <svg
                   class="h-5 w-5"
@@ -974,8 +975,19 @@ Loading...</pre>
                 </svg>
               </button>
             </div>
-            <div class="px-4 py-5 sm:p-6">
+            <div class="flex-1 overflow-y-auto px-4 py-5 sm:p-6">
               <div id="whois-content" class="space-y-4"></div>
+            </div>
+            <div
+              class="flex-shrink-0 bg-slate-50 dark:bg-slate-800/30 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 border-t border-slate-200 dark:border-slate-700/50"
+            >
+              <button
+                type="button"
+                onclick="closeWhoisModal()"
+                class="inline-flex w-full justify-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 sm:ml-3 sm:w-auto transition-all"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>

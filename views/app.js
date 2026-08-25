@@ -430,6 +430,24 @@ async function checkWhois() {
   btn.disabled = true;
   btn.innerText = "LOADING...";
 
+  // Open modal immediately with a spinner — gives instant feedback
+  const modal = document.getElementById("whois-modal");
+  const backdrop = document.getElementById("whois-modal-backdrop");
+  const panel = document.getElementById("whois-modal-panel");
+
+  content.innerHTML = `
+    <div class="text-center py-10">
+      <svg class="animate-spin h-8 w-8 mx-auto text-blue-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+      <p class="text-sm text-slate-500">Looking up registry data...</p>
+    </div>
+  `;
+  modal.classList.remove("hidden");
+  setTimeout(() => {
+    backdrop.classList.remove("opacity-0");
+    panel.classList.remove("opacity-0", "scale-95");
+    panel.classList.add("opacity-100", "scale-100");
+  }, 10);
+
   try {
     const res = await fetch(`/api/whois?ip=${window.currentScanIp}`);
     const data = await res.json();
@@ -447,7 +465,7 @@ async function checkWhois() {
         );
       // --- RENDER FALLBACK TERMINAL UI ---
       content.innerHTML = `
-                <div class="bg-[#0b1120] border border-slate-700 p-4 rounded-xl font-mono text-[11px] md:text-xs text-green-400 overflow-y-auto max-h-[60vh] custom-scrollbar whitespace-pre-wrap shadow-inner">
+                <div class="bg-[#0b1120] border border-slate-700 p-4 rounded-xl font-mono text-[11px] md:text-xs text-green-400 overflow-y-auto max-h-[50vh] custom-scrollbar whitespace-pre-wrap shadow-inner">
 ${formattedRawText}
                 </div>
                 <p class="text-[10px] text-slate-500 mt-3 text-center uppercase tracking-widest">Fallback: Raw WHOIS Data shown due to unformatted registry</p>
@@ -465,7 +483,7 @@ ${formattedRawText}
           : '<span class="text-slate-400">Not provided</span>';
 
       content.innerHTML = `
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                     <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50">
                         <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Network Name</span>
                         <span class="font-mono text-slate-800 dark:text-slate-200 break-all">${data.network_name}</span>
@@ -482,41 +500,33 @@ ${formattedRawText}
                         <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Allocation Type</span>
                         <span class="text-slate-800 dark:text-slate-200">${data.type}</span>
                     </div>
-
                     <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50">
-                        <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Last Updated</span>
-                        <span class="text-slate-800 dark:text-slate-200">${data.updated_date}</span>
+                        <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Registry Handle</span>
+                        <span class="font-mono text-slate-800 dark:text-slate-200 break-all">${data.handle} (${data.country})</span>
                     </div>
                     <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50">
                         <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Registered</span>
                         <span class="text-slate-800 dark:text-slate-200">${data.registration_date}</span>
                     </div>
                     <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50">
-                        <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Registry Handle</span>
-                        <span class="font-mono text-slate-800 dark:text-slate-200 break-all">${data.handle} (${data.country})</span>
+                        <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Last Updated</span>
+                        <span class="text-slate-800 dark:text-slate-200">${data.updated_date}</span>
                     </div>
                 </div>
-                <div class="mt-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-500/20">
+                <div class="mt-3 p-4 rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-500/20">
                     <span class="block text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-wider mb-1">Abuse Contacts</span>
-                    <div class="font-medium">${emailsHtml}</div>
+                    <div class="font-medium text-sm">${emailsHtml}</div>
                     <p class="text-xs text-slate-500 mt-2">Use these contacts to report malicious activity from this IP.</p>
                 </div>
             `;
     }
-
-    // Show Modal
-    const modal = document.getElementById("whois-modal");
-    const backdrop = document.getElementById("whois-modal-backdrop");
-    const panel = document.getElementById("whois-modal-panel");
-
-    modal.classList.remove("hidden");
-    setTimeout(() => {
-      backdrop.classList.remove("opacity-0");
-      panel.classList.remove("opacity-0", "scale-95");
-      panel.classList.add("opacity-100", "scale-100");
-    }, 10);
   } catch (e) {
-    showToast("WHOIS lookup failed. Registry might be rate limiting.");
+    content.innerHTML = `
+      <div class="text-center py-8 text-red-500">
+        <svg class="h-10 w-10 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        <p class="text-sm">WHOIS lookup failed. The registry may be rate limiting.</p>
+      </div>
+    `;
   } finally {
     btn.innerText = "WHOIS";
     btn.disabled = false;
