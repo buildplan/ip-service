@@ -58,6 +58,37 @@ async function runDnsLeakTest() {
         }
 
         const publicIp = clientIpObj ? clientIpObj.ip : (window.currentScanIp || 'Unknown');
+        const publicAsn = clientIpObj && clientIpObj.asn ? clientIpObj.asn : 'your internet provider';
+
+        let dynamicConclusion = '';
+        if (dnsServers.length > 0) {
+            // Check if all DNS servers match the public IP's ASN
+            const allMatch = dnsServers.every(s => {
+                if (!s.asn || !publicAsn) return false;
+                return s.asn === publicAsn || s.asn.includes(publicAsn) || publicAsn.includes(s.asn);
+            });
+
+            if (allMatch) {
+                dynamicConclusion = `
+                    <div class="mb-5 p-4 rounded-lg bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-500/20">
+                        <h5 class="text-sm font-bold text-emerald-800 dark:text-emerald-400 mb-1">✅ DNS does not appear to be leaking.</h5>
+                        <p class="text-sm text-emerald-900/80 dark:text-emerald-200/80">
+                            You use the same ISP for DNS and Internet. If <strong>${publicAsn}</strong> is your VPN or intended provider, then your connection is secure.
+                        </p>
+                    </div>
+                `;
+            } else {
+                const dnsIsps = [...new Set(dnsServers.map(s => s.asn || 'an unknown provider'))].join(', ');
+                dynamicConclusion = `
+                    <div class="mb-5 p-4 rounded-lg bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-500/20">
+                        <h5 class="text-sm font-bold text-orange-800 dark:text-orange-400 mb-1">⚠️ DNS may be leaking.</h5>
+                        <p class="text-sm text-orange-900/80 dark:text-orange-200/80">
+                            You use different ISPs for the DNS and Internet. If <strong>${publicAsn}</strong> is your VPN, your internet traffic is 100% secured. But your DNS queries are handled separately by <strong>${dnsIsps}</strong>. The question is: do you trust them?
+                        </p>
+                    </div>
+                `;
+            }
+        }
 
         content.innerHTML = `
             <div class="text-left">
@@ -67,6 +98,8 @@ async function runDnsLeakTest() {
 
                 <h4 class="text-xl font-bold text-slate-800 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-2 mb-4">Test complete</h4>
                 
+                ${dynamicConclusion}
+
                 <div class="max-h-[40vh] overflow-y-auto custom-scrollbar pr-1 mb-6 border border-slate-200 dark:border-slate-700/50 rounded-lg">
                     <table class="w-full text-left border-collapse">
                         <thead>
@@ -82,12 +115,12 @@ async function runDnsLeakTest() {
                     </table>
                 </div>
 
-                <h4 class="text-lg font-bold text-slate-800 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-2 mb-3">What do the results of this test mean?</h4>
+                <h4 class="text-lg font-bold text-slate-800 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-2 mb-3">Understanding the results</h4>
                 
                 <ul class="list-disc list-outside ml-5 space-y-2 text-sm text-slate-600 dark:text-slate-400">
-                    <li>The servers identified above receive a request to resolve a domain name (e.g. www.eff.org) to an IP address every time you enter a website address in your browser.</li>
-                    <li>The owners of the servers above have the ability to associate your personal IP address with the names of all the sites you connect to. <strong>You need to trust whatever their privacy policy says</strong>.</li>
-                    <li>If you are connected to a VPN service and ANY of the servers listed above are not provided by the VPN service, then you have a DNS leak and are exposing your private data.</li>
+                    <li>Whenever you type a website address into your browser, your computer asks the servers listed above to convert that name into an IP address.</li>
+                    <li>Because these servers handle all your web requests, their owners can associate your public IP with the websites you visit. You need to trust their privacy policy.</li>
+                    <li>If you are using a VPN to hide your activity, but the servers above belong to your home ISP (e.g. Comcast or Virgin Media), you have a <strong>DNS leak</strong> and your browsing history is still exposed.</li>
                 </ul>
             </div>
         `;
