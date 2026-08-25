@@ -7,6 +7,8 @@ const rateLimit = require('express-rate-limit');
 const cors = require('cors');
 const { LRUCache } = require('lru-cache');
 
+const dns = require('dns').promises;
+
 // --- CUSTOM MODULES ---
 const getReputation = require('./src/reputation');
 const getWhois = require('./src/whois');
@@ -156,6 +158,14 @@ app.get(['/api/info', '/json'], async (req, res) => {
         }
     }
 
+    // --- HOSTNAME LOOKUP ---
+    try {
+        const hostnames = await dns.reverse(targetIp);
+        data.hostname = hostnames && hostnames.length > 0 ? hostnames[0] : 'N/A';
+    } catch (e) {
+        data.hostname = 'N/A';
+    }
+
     // --- SAVE TO CACHE ---
     geoCache.set(targetIp, data);
 
@@ -172,9 +182,16 @@ app.get('/city', (req, res) => res.send(getGeoData(getClientIp(req)).city + '\n'
 app.get('/country', (req, res) => res.send(getGeoData(getClientIp(req)).country + '\n'));
 
 // 4. Human-Readable CLI Dashboard
-app.get('/cli', (req, res) => {
+app.get('/cli', async (req, res) => {
     const ip = getClientIp(req);
     const data = getGeoData(ip);
+    
+    try {
+        const hostnames = await dns.reverse(ip);
+        data.hostname = hostnames && hostnames.length > 0 ? hostnames[0] : 'N/A';
+    } catch (e) {
+        data.hostname = 'N/A';
+    }
 
     const show = (val) => (val && val !== 'N/A' && val !== 'Unknown') ? val : '-';
 
@@ -183,6 +200,7 @@ app.get('/cli', (req, res) => {
   WIREDALTER IP INTELLIGENCE
  ----------------------------------------
   IP           : ${data.ip}
+  Hostname     : ${show(data.hostname)}
   Location     : ${show(data.city)}, ${show(data.region)}, ${show(data.country)}
   Zip Code     : ${show(data.zip)}
   Coordinates  : ${show(data.coordinates)}

@@ -161,6 +161,15 @@ function populateDetails(data) {
 
     document.getElementById('dataOrg').innerText = data.org || 'N/A';
     document.getElementById('dataAsn').innerText = data.asn || 'N/A';
+    
+    if (data.hostname && data.hostname !== 'N/A') {
+        document.getElementById('dataHostname').innerText = data.hostname;
+        document.getElementById('dataHostname').href = `https://dns.wiredalter.com/${data.hostname}`;
+        document.getElementById('hostnameWrapper').classList.remove('hidden');
+    } else {
+        document.getElementById('hostnameWrapper').classList.add('hidden');
+    }
+
     document.getElementById('dataCity').innerText = data.city;
     document.getElementById('mainLocation').innerText = `${data.city}, ${data.country}`;
     document.getElementById('dataRegion').innerText = `${data.region}, ${data.country}`;
