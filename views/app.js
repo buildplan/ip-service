@@ -164,7 +164,6 @@ function populateDetails(data) {
     
     if (data.hostname && data.hostname !== 'N/A') {
         document.getElementById('dataHostname').innerText = data.hostname;
-        document.getElementById('dataHostname').href = `https://dns.wiredalter.com/${data.hostname}`;
         document.getElementById('hostnameWrapper').classList.remove('hidden');
     } else {
         document.getElementById('hostnameWrapper').classList.add('hidden');
@@ -479,8 +478,10 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
         const repModal = document.getElementById('rep-modal');
         const whoisModal = document.getElementById('whois-modal');
+        const dnsLeakModal = document.getElementById('dnsleak-modal');
         if (repModal && !repModal.classList.contains('hidden')) closeReputationModal();
         if (whoisModal && !whoisModal.classList.contains('hidden')) closeWhoisModal();
+        if (dnsLeakModal && !dnsLeakModal.classList.contains('hidden')) closeDnsLeakModal();
     }
 });
 // Close when clicking outside the panel
@@ -497,6 +498,14 @@ if (whoisModal) {
     whoisModal.addEventListener('click', (e) => {
         if (e.target.id === 'whois-modal' || e.target.id === 'whois-modal-backdrop') {
             closeWhoisModal();
+        }
+    });
+}
+const dnsLeakModal = document.getElementById('dnsleak-modal');
+if (dnsLeakModal) {
+    dnsLeakModal.addEventListener('click', (e) => {
+        if (e.target.id === 'dnsleak-modal' || e.target.id === 'dnsleak-modal-backdrop') {
+            closeDnsLeakModal();
         }
     });
 }
@@ -522,3 +531,4 @@ function syntaxHighlight(json) {
         return '<span class="' + cls + '">' + match + '</span>';
     });
 }
+

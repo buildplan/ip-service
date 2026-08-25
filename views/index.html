@@ -118,13 +118,16 @@
             <div class="glass-panel p-5 md:p-6 rounded-xl space-y-1 relative">
                 <div class="flex justify-between items-start">
                     <div class="text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider">Provider (ISP)</div>
-                    <button id="btn-whois" onclick="checkWhois()" class="text-[10px] font-bold text-slate-500 hover:text-blue-500 bg-slate-200/50 dark:bg-slate-800/50 px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 transition-colors">WHOIS</button>
+                    <div class="flex gap-1">
+                        <button id="btn-dnsleak" onclick="runDnsLeakTest()" class="text-[10px] font-bold text-slate-500 hover:text-blue-500 bg-slate-200/50 dark:bg-slate-800/50 px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 transition-colors">DNS LEAK</button>
+                        <button id="btn-whois" onclick="checkWhois()" class="text-[10px] font-bold text-slate-500 hover:text-blue-500 bg-slate-200/50 dark:bg-slate-800/50 px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 transition-colors">WHOIS</button>
+                    </div>
                 </div>
                 <div class="text-lg font-semibold text-slate-800 dark:text-white truncate" id="dataOrg">...</div>
                 <div class="text-sm text-slate-500 font-mono flex justify-between items-center" id="dataAsn">...</div>
                 <div id="hostnameWrapper" class="pt-2 mt-2 border-t border-slate-200 dark:border-slate-700/50 hidden">
                     <div class="text-blue-600 dark:text-blue-400 text-[10px] font-bold uppercase tracking-wider mb-1">Hostname / DNS</div>
-                    <a id="dataHostname" href="#" target="_blank" class="text-xs font-mono text-slate-500 hover:text-blue-500 dark:hover:text-blue-400 truncate block transition-colors"></a>
+                    <div id="dataHostname" class="text-xs font-mono text-slate-500 truncate block"></div>
                 </div>
             </div>
 
@@ -375,7 +378,9 @@
                 </div>
             </div>
         </div>
-    </div> <div id="whois-modal" class="fixed inset-0 z-50 hidden" aria-labelledby="whois-title" role="dialog" aria-modal="true">
+    </div>
+
+    <div id="whois-modal" class="fixed inset-0 z-50 hidden" aria-labelledby="whois-title" role="dialog" aria-modal="true">
         <div class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity opacity-0" id="whois-modal-backdrop" onclick="closeWhoisModal()"></div>
         <div class="fixed inset-0 z-10 overflow-y-auto pointer-events-none">
             <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
@@ -394,9 +399,29 @@
         </div>
     </div>
 
+    <div id="dnsleak-modal" class="fixed inset-0 z-50 hidden" aria-labelledby="dnsleak-title" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity opacity-0" id="dnsleak-modal-backdrop" onclick="closeDnsLeakModal()"></div>
+        <div class="fixed inset-0 z-10 overflow-y-auto pointer-events-none">
+            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+                <div class="relative transform overflow-hidden rounded-2xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-2xl opacity-0 scale-95 pointer-events-auto" id="dnsleak-modal-panel">
+                    <div class="bg-slate-50 dark:bg-slate-800/50 px-4 py-3 sm:px-6 border-b border-slate-200 dark:border-slate-700/50 flex justify-between items-center">
+                        <h3 class="text-base font-semibold leading-6 text-slate-900 dark:text-white" id="dnsleak-title">DNS Leak Test</h3>
+                        <button onclick="closeDnsLeakModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+                    <div class="px-4 py-5 sm:p-6">
+                        <div id="dnsleak-content" class="space-y-4"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <link rel="stylesheet" href="/leaflet/leaflet.css" />
     <script src="/leaflet/leaflet.js"></script>
     <script src="/app.js?v=1.4"></script>
+    <script src="/dnsleak.js?v=1.0"></script>
 
 </body>
 </html>
