@@ -4,7 +4,7 @@ on:
   push:
     branches: [ "main", "dev-*", "dev" ]
     tags: [ 'v*.*.*' ]
-    paths-ignore: [ '**.md', '.gitignore', 'renovate.json', 'LICENSE', 'docs/**', 'nodhi.Dockerfile' ]
+    paths-ignore: [ '**.md', '.gitignore', 'renovate.json', 'LICENSE', 'docs/**', 'nodhi.Dockerfile', 'docker-compose.yml', docker-compose.prod.yml' ]
   workflow_dispatch:
 
 env:

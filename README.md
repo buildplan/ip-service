@@ -47,6 +47,7 @@ curl "ip.wiredalter.com/json?ip=8.8.8.8"
 ```json
 {
   "ip": "8.8.8.8",
+  "hostname": "dns.google",
   "country": "United States",
   "city": "Mountain View",
   "region": "California",
