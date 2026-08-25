@@ -6,6 +6,12 @@ async function runDnsLeakTest() {
   const backdrop = document.getElementById("dnsleak-modal-backdrop");
   const panel = document.getElementById("dnsleak-modal-panel");
 
+  // Disable the trigger button while the test is in-flight
+  if (btn) {
+    btn.disabled = true;
+    btn.innerText = "RUNNING...";
+  }
+
   modal.classList.remove("hidden");
   setTimeout(() => {
     backdrop.classList.remove("opacity-0");
@@ -25,6 +31,9 @@ async function runDnsLeakTest() {
     const idRes = await fetch("https://bash.ws/id");
     const id = await idRes.text();
 
+    // Guard: abort if the user closed the modal while we were waiting
+    if (modal.classList.contains("hidden")) return;
+
     document.getElementById("dnsleak-status").innerText =
       "Querying test servers...";
 
@@ -39,10 +48,16 @@ async function runDnsLeakTest() {
     }
     await Promise.all(promises);
 
+    // Guard: abort if closed during probe phase
+    if (modal.classList.contains("hidden")) return;
+
     document.getElementById("dnsleak-status").innerText =
       "Analyzing results...";
 
     await new Promise((r) => setTimeout(r, 1500));
+
+    // Guard: abort if closed during analysis delay
+    if (modal.classList.contains("hidden")) return;
 
     const res = await fetch(`https://bash.ws/dnsleak/test/${id}?json`);
     const data = await res.json();
@@ -50,13 +65,20 @@ async function runDnsLeakTest() {
     const clientIpObj = data.find((d) => d.type === "ip");
     const dnsServers = data.filter((d) => d.type === "dns");
 
+    // Extract the leading "AS<number>" portion for a reliable, false-positive-free match
+    function normaliseAsn(asnStr) {
+      if (!asnStr) return null;
+      const m = asnStr.match(/^(AS\d+)/i);
+      return m ? m[1].toUpperCase() : null;
+    }
+
     let serversHtml = dnsServers
       .map(
         (s) => `
             <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
-                <td class="p-3 font-mono font-bold text-slate-800 dark:text-white">${s.ip}</td>
+                <td class="p-3 font-mono font-bold text-slate-800 dark:text-white break-all">${s.ip}</td>
                 <td class="p-3 text-slate-600 dark:text-slate-300">${s.asn || "Unknown ASN"}</td>
-                <td class="p-3 text-slate-600 dark:text-slate-300">${s.country_name || s.country || "Unknown"}</td>
+                <td class="p-3 text-slate-600 dark:text-slate-300 hidden sm:table-cell">${s.country_name || s.country || "Unknown"}</td>
             </tr>
         `,
       )
@@ -77,14 +99,12 @@ async function runDnsLeakTest() {
 
     let dynamicConclusion = "";
     if (dnsServers.length > 0) {
-      // Check if all DNS servers match the public IP's ASN
+      const normPublic = normaliseAsn(publicAsn);
+      // Compare normalised ASN prefixes to avoid false positives from string inclusion
       const allMatch = dnsServers.every((s) => {
-        if (!s.asn || !publicAsn) return false;
-        return (
-          s.asn === publicAsn ||
-          s.asn.includes(publicAsn) ||
-          publicAsn.includes(s.asn)
-        );
+        const normDns = normaliseAsn(s.asn);
+        if (!normDns || !normPublic) return false;
+        return normDns === normPublic;
       });
 
       if (allMatch) {
@@ -121,13 +141,13 @@ async function runDnsLeakTest() {
                 
                 ${dynamicConclusion}
 
-                <div class="max-h-[40vh] overflow-y-auto custom-scrollbar pr-1 mb-6 border border-slate-200 dark:border-slate-700/50 rounded-lg">
+                <div class="max-h-[35vh] overflow-y-auto custom-scrollbar pr-1 mb-6 border border-slate-200 dark:border-slate-700/50 rounded-lg">
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="bg-slate-100 dark:bg-slate-800/50 text-xs uppercase tracking-wider text-slate-500">
                                 <th class="p-3 rounded-tl-lg">IP</th>
                                 <th class="p-3">ISP / Provider</th>
-                                <th class="p-3 rounded-tr-lg">Country</th>
+                                <th class="p-3 rounded-tr-lg hidden sm:table-cell">Country</th>
                             </tr>
                         </thead>
                         <tbody class="text-sm divide-y divide-slate-200 dark:divide-slate-700/50">
@@ -146,12 +166,21 @@ async function runDnsLeakTest() {
             </div>
         `;
   } catch (e) {
+    // Guard: don't write to a closed modal
+    if (modal.classList.contains("hidden")) return;
+
     content.innerHTML = `
             <div class="text-center py-8 text-red-500">
                 <svg class="h-10 w-10 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 <p>Failed to run DNS leak test. Please try again.</p>
             </div>
         `;
+  } finally {
+    // Always re-enable the trigger button
+    if (btn) {
+      btn.disabled = false;
+      btn.innerText = "DNS LEAK";
+    }
   }
 }
 

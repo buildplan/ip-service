@@ -77,7 +77,7 @@ function updateMapTheme(theme) {
 }
 
 let marker;
-let currentScanIp = "";
+window.currentScanIp = "";
 let lastReputationResult = null;
 
 function showToast(message) {
@@ -183,7 +183,7 @@ async function fetchSmartIPs() {
 }
 
 function populateDetails(data) {
-  currentScanIp = data.ip;
+  window.currentScanIp = data.ip;
   resetReputationUI();
 
   document.getElementById("dataOrg").innerText = data.org || "N/A";
@@ -254,7 +254,7 @@ async function searchIp() {
   const input = document.getElementById("searchInput").value.trim();
   if (!input) return;
   try {
-    const res = await fetch(`/api/info?ip=${input}`);
+    const res = await fetch(`/api/info?ip=${encodeURIComponent(input)}`);
     const data = await res.json();
     populateDetails(data);
     const type = input.includes(":") ? "IPv6" : "IPv4";
@@ -294,7 +294,7 @@ async function checkReputation() {
   btn.innerHTML = `<svg class="animate-spin h-3 w-3 mr-2" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> SCANNING...`;
 
   try {
-    const res = await fetch(`/api/reputation?ip=${currentScanIp}`);
+    const res = await fetch(`/api/reputation?ip=${window.currentScanIp}`);
     const data = await res.json();
     lastReputationResult = data;
 
@@ -431,7 +431,7 @@ async function checkWhois() {
   btn.innerText = "LOADING...";
 
   try {
-    const res = await fetch(`/api/whois?ip=${currentScanIp}`);
+    const res = await fetch(`/api/whois?ip=${window.currentScanIp}`);
     const data = await res.json();
 
     if (data.error) throw new Error(data.error);
