@@ -28,8 +28,8 @@ async function runDnsLeakTest() {
     `;
 
   try {
-    const idRes = await fetch("https://bash.ws/id");
-    const id = await idRes.text();
+    const idRes = await fetch("https://bash.ws/id", { cache: "no-store" });
+    const id = await idRes.text().then((t) => t.trim());
 
     // Guard: abort if the user closed the modal while we were waiting
     if (modal.classList.contains("hidden")) return;
@@ -59,7 +59,9 @@ async function runDnsLeakTest() {
     // Guard: abort if closed during analysis delay
     if (modal.classList.contains("hidden")) return;
 
-    const res = await fetch(`https://bash.ws/dnsleak/test/${id}?json`);
+    const res = await fetch(`https://bash.ws/dnsleak/test/${id}?json`, {
+      cache: "no-store",
+    });
     const data = await res.json();
 
     const clientIpObj = data.find((d) => d.type === "ip");
