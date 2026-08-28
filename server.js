@@ -132,6 +132,7 @@ app.get("/api/config", (req, res) => {
   res.json({
     v4_url: process.env.V4_API_URL || "https://v4-ip.wiredalter.com/api/info",
     v6_url: process.env.V6_API_URL || "https://v6-ip.wiredalter.com/api/info",
+    carto_api_key: process.env.CARTO_API_KEY || "",
   });
 });
 
