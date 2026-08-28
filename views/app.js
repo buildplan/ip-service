@@ -22,49 +22,55 @@ function toggleTheme() {
 }
 initTheme();
 
-const darkTiles = L.tileLayer(
-  "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-  {
-    attribution:
-      '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+let darkTiles, lightTiles, satelliteTiles, map;
+
+function buildCartoUrl(style, key) {
+  const base = `https://{s}.basemaps.cartocdn.com/${style}/{z}/{x}/{y}{r}.png`;
+  return key ? `${base}?key=${key}` : base;
+}
+
+function initMap(cartoKey) {
+  const cartoAttribution =
+    '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
+
+  darkTiles = L.tileLayer(buildCartoUrl("dark_all", cartoKey), {
+    attribution: cartoAttribution,
     subdomains: "abcd",
     maxZoom: 19,
-  },
-);
+  });
 
-const lightTiles = L.tileLayer(
-  "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-  {
-    attribution: "&copy; OpenStreetMap &copy; CARTO",
+  lightTiles = L.tileLayer(buildCartoUrl("rastertiles/voyager", cartoKey), {
+    attribution: cartoAttribution,
     subdomains: "abcd",
     maxZoom: 19,
-  },
-);
+  });
 
-const satelliteTiles = L.tileLayer(
-  "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-  {
-    attribution: "Tiles &copy; Esri",
-    maxZoom: 19,
-  },
-);
+  satelliteTiles = L.tileLayer(
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    {
+      attribution: "Tiles &copy; Esri",
+      maxZoom: 19,
+    },
+  );
 
-const isDark = document.documentElement.classList.contains("dark");
-const initialLayer = isDark ? darkTiles : lightTiles;
+  const isDark = document.documentElement.classList.contains("dark");
+  const initialLayer = isDark ? darkTiles : lightTiles;
 
-const map = L.map("map", {
-  zoomControl: false,
-  layers: [initialLayer],
-}).setView([51.505, -0.09], 13);
+  map = L.map("map", {
+    zoomControl: false,
+    layers: [initialLayer],
+  }).setView([51.505, -0.09], 13);
 
-const baseMaps = {
-  "Dark Mode": darkTiles,
-  "Light Mode": lightTiles,
-  Satellite: satelliteTiles,
-};
-L.control.layers(baseMaps, null, { position: "topright" }).addTo(map);
+  const baseMaps = {
+    "Dark Mode": darkTiles,
+    "Light Mode": lightTiles,
+    Satellite: satelliteTiles,
+  };
+  L.control.layers(baseMaps, null, { position: "topright" }).addTo(map);
+}
 
 function updateMapTheme(theme) {
+  if (!map) return;
   if (!map.hasLayer(satelliteTiles)) {
     if (theme === "dark") {
       map.addLayer(darkTiles);
@@ -129,8 +135,16 @@ function createIpRow(ip, type, isPrimary = true) {
 async function fetchSmartIPs() {
   const displayArea = document.getElementById("ip-display-area");
   try {
-    const configRes = await fetch("/api/config");
-    const config = await configRes.json();
+    let config = {};
+    let cartoKey = "";
+    try {
+      const configRes = await fetch("/api/config");
+      config = await configRes.json();
+      cartoKey = config.carto_api_key || "";
+    } catch (_) {
+      // Config unavailable — map will load without key (watermark shown)
+    }
+    initMap(cartoKey);
 
     let apiUrl = "/api/info";
     const rawSearch = window.location.search.substring(1).trim();
@@ -475,11 +489,11 @@ ${formattedRawText}
       let emailsHtml =
         data.abuse_contacts.length > 0
           ? data.abuse_contacts
-              .map(
-                (e) =>
-                  `<a href="mailto:${e}" class="text-blue-500 hover:underline">${e}</a>`,
-              )
-              .join(", ")
+            .map(
+              (e) =>
+                `<a href="mailto:${e}" class="text-blue-500 hover:underline">${e}</a>`,
+            )
+            .join(", ")
           : '<span class="text-slate-400">Not provided</span>';
 
       content.innerHTML = `

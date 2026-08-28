@@ -129,6 +129,9 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=4040
+      # Optional: Removes the CARTO "API key required" watermark from the map.
+      # Get a free key (5M tile requests/month) at https://carto.com/basemaps/apikey
+      - CARTO_API_KEY=your_carto_key_here
       # Optional: Add API keys for enhanced threat intelligence
       - ABUSEIPDB_API_KEY=your_key_here
       - CROWDSEC_API_KEY=your_key_here
@@ -170,6 +173,21 @@ Then build and run::
 docker compose up -d --build
 ```
 
+## Environment Variables
+
+| Variable | Required | Description |
+|---|---|---|
+| `PORT` | No | Port to listen on (default: `4040`) |
+| `CARTO_API_KEY` | No | Removes the "API key required" watermark from CARTO basemap tiles. Free key at [carto.com/basemaps/apikey](https://carto.com/basemaps/apikey) |
+| `ABUSEIPDB_API_KEY` | No | Enables AbuseIPDB reputation checks |
+| `CROWDSEC_API_KEY` | No | Enables CrowdSec threat intelligence |
+| `SNIFFCAT_API_KEY` | No | Enables SniffCat VPN/proxy detection |
+| `SPAMVERIFY_API_KEY` | No | Enables SpamVerify reputation checks |
+| `CROWDSEC_URL` | No | CrowdSec local API URL (default: `http://crowdsec:8080`) |
+| `MAX_MEMORY_MB` | No | Memory limit for the `/health` endpoint check |
+
+> **Note on `CARTO_API_KEY`:** The key is public by design — it will be visible in browser network requests (this is CARTO's intended model). Store it in your `.env` file alongside your other API keys. The service degrades gracefully if the key is absent: the map still works but shows the watermark.
+
 ## License & Attributions
 
 This project is licensed under the **[MIT License](LICENSE)**.
@@ -178,3 +196,4 @@ This project is licensed under the **[MIT License](LICENSE)**.
 * This product uses IP2Location LITE data available from [https://lite.ip2location.com](https://lite.ip2location.com).
 * Threat intelligence data aggregated from [CrowdSec](https://www.crowdsec.net/), [AbuseIPDB](https://www.abuseipdb.com/), [GreenSnow](https://greensnow.co/), [FireHOL](https://iplists.firehol.org/), and [SpamCop](https://www.spamcop.net/).
 * Fallback data, in case local database has issues, comes from the API of [https://www.geojs.io](https://www.geojs.io/).
+* Map tiles provided by [CARTO](https://carto.com/attributions) and [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors.
