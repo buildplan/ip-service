@@ -6,7 +6,7 @@
     "axios": "^1.20.0",
     "cors": "^2.8.6",
     "express": "^5.2.1",
-    "express-rate-limit": "^8.6.2",
+    "express-rate-limit": "^8.7.0",
     "ip2location-nodejs": "^9.8.0",
     "ip2proxy-nodejs": "^4.5.0",
     "lru-cache": "^11.5.2",
