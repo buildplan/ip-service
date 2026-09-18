@@ -20,7 +20,7 @@ const app = express();
 
 // --- CONFIGURATION ---
 app.set("json spaces", 2);
-app.set("trust proxy", true);
+app.set("trust proxy", "loopback, linklocal, uniquelocal");
 app.use(cors()); // Enable CORS for v4.ip... and v6.ip
 
 app.use(express.static(path.join(__dirname, "views"), { index: false }));
@@ -37,11 +37,11 @@ function getClientIp(req) {
   let ip =
     req.headers["cf-connecting-ip"] ||
     req.headers["x-real-ip"] ||
-    (req.headers["x-forwarded-for"]
-      ? req.headers["x-forwarded-for"].split(",")[0].trim()
-      : req.socket.remoteAddress);
-  if (ip && ip.startsWith("::ffff:")) ip = ip.substr(7);
-  return ip;
+    req.ip ||
+    req.socket?.remoteAddress;
+  if (Array.isArray(ip)) ip = ip[0];
+  if (typeof ip === "string" && ip.startsWith("::ffff:")) ip = ip.substring(7);
+  return typeof ip === "string" ? ip : "";
 }
 
 function isCli(userAgent) {
@@ -159,9 +159,13 @@ app.get("/", (req, res) => {
 
 // 2. API Endpoint
 app.get(["/api/info", "/json"], async (req, res) => {
-  const targetIp = req.query.ip || getClientIp(req);
+  const requestedIp = req.query.ip;
+  if (requestedIp !== undefined && typeof requestedIp !== "string") {
+    return res.status(400).json({ error: "Invalid IP" });
+  }
+  const targetIp = requestedIp || getClientIp(req);
   const ua = req.headers["user-agent"];
-  if (!maxmind.validate(targetIp))
+  if (typeof targetIp !== "string" || !maxmind.validate(targetIp))
     return res.status(400).json({ error: "Invalid IP" });
 
   // --- CACHE CHECK ---
@@ -246,6 +250,7 @@ app.get("/cli", async (req, res) => {
 
   Organization : ${show(data.org)}
   ASN          : ${show(data.asn)}
+  Network CIDR : ${show(data.network)}
 
   Connection   : ${show(data.usage_type)}
   Risk Status  : ${show(data.proxy_type)}
@@ -258,9 +263,13 @@ app.get("/cli", async (req, res) => {
 
 // IP Reputation logic
 app.get("/api/reputation", async (req, res) => {
-  const ip = req.query.ip || getClientIp(req);
+  const requestedIp = req.query.ip;
+  if (requestedIp !== undefined && typeof requestedIp !== "string") {
+    return res.status(400).json({ error: "Invalid IP address" });
+  }
+  const ip = requestedIp || getClientIp(req);
   const ua = req.headers["user-agent"];
-  if (!maxmind.validate(ip)) {
+  if (typeof ip !== "string" || !maxmind.validate(ip)) {
     return res.status(400).json({ error: "Invalid IP address" });
   }
   const result = await getReputation(ip);
@@ -273,9 +282,13 @@ app.get("/api/reputation", async (req, res) => {
 
 // WHOIS / RDAP logic
 app.get("/api/whois", async (req, res) => {
-  const ip = req.query.ip || getClientIp(req);
+  const requestedIp = req.query.ip;
+  if (requestedIp !== undefined && typeof requestedIp !== "string") {
+    return res.status(400).json({ error: "Invalid IP address" });
+  }
+  const ip = requestedIp || getClientIp(req);
   const ua = req.headers["user-agent"];
-  if (!maxmind.validate(ip)) {
+  if (typeof ip !== "string" || !maxmind.validate(ip)) {
     return res.status(400).json({ error: "Invalid IP address" });
   }
   const result = await getWhois(ip);

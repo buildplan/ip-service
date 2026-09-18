@@ -13,7 +13,7 @@ let ripeExhausted = false;
 let ripeResetTime = 0;
 
 async function getWhois(ip) {
-  if (!net.isIP(ip)) return { error: "Invalid IP" };
+  if (typeof ip !== "string" || !net.isIP(ip)) return { error: "Invalid IP" };
 
   const encodedIp = encodeURIComponent(ip);
   try {

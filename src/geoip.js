@@ -113,6 +113,29 @@ async function initGeoDb() {
 }
 
 function getGeoData(ip) {
+  if (typeof ip !== "string") {
+    return {
+      ip: String(ip || ""),
+      country: "Unknown",
+      country_code: "XX",
+      city: "Unknown",
+      region: "Unknown",
+      timezone: "Unknown",
+      coordinates: "0, 0",
+      latitude: 0,
+      longitude: 0,
+      zip: "N/A",
+      asn: "Unknown",
+      org: "Unknown",
+      network: "N/A",
+      is_proxy: false,
+      proxy_type: "Unknown",
+      usage_type: "Unknown",
+      threat: "None",
+      provider: "N/A",
+    };
+  }
+
   // 1. Reserved / Local / Docker IP Checks
   const isLocal =
     ip === "::1" ||
@@ -146,7 +169,19 @@ function getGeoData(ip) {
   try {
     // --- DATA LOOKUPS ---
     const cityData = cityLookup ? cityLookup.get(ip) : null;
-    const asnData = asnLookup ? asnLookup.get(ip) : null;
+    let asnData = null;
+    let asnPrefix = null;
+    if (asnLookup) {
+      if (typeof asnLookup.getWithPrefixLength === 'function') {
+        const result = asnLookup.getWithPrefixLength(ip);
+        if (result) {
+          asnData = result[0];
+          asnPrefix = result[1];
+        }
+      } else {
+        asnData = asnLookup.get(ip);
+      }
+    }
     const proxyData = proxyLookup ? proxyLookup.getAll(ip) : {};
     const ipinfoData = ipinfoAsnLookup ? ipinfoAsnLookup.get(ip) : null;
 
@@ -161,6 +196,26 @@ function getGeoData(ip) {
       : ipinfoData
         ? ipinfoData.asn
         : "Unknown";
+
+    let networkCidr = "N/A";
+    if (cityData && cityData.traits && cityData.traits.network) networkCidr = cityData.traits.network;
+    else if (asnData && asnData.network) networkCidr = asnData.network;
+    else if (ipinfoData && ipinfoData.route) networkCidr = ipinfoData.route;
+    else if (ipinfoData && ipinfoData.network) networkCidr = ipinfoData.network;
+    else if (asnPrefix !== null) {
+      if (typeof ip === "string" && ip.includes(":")) {
+        networkCidr = `${ip}/${asnPrefix}`; // IPv6 approx
+      } else if (typeof ip === "string") {
+        // basic IPv4 cidr masking
+        const parts = ip.split('.').map(Number);
+        const shift = 32 - asnPrefix;
+        const ipInt = ((parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8) | parts[3]) >>> 0;
+        const mask = (~0 << shift) >>> 0;
+        const baseInt = (ipInt & mask) >>> 0;
+        const baseIp = [(baseInt >>> 24) & 255, (baseInt >>> 16) & 255, (baseInt >>> 8) & 255, baseInt & 255].join('.');
+        networkCidr = `${baseIp}/${asnPrefix}`;
+      }
+    }
 
     // DB11 Fallback
     const db11Data = db11Lookup ? db11Lookup.getAll(ip) : {};
@@ -291,30 +346,55 @@ function getGeoData(ip) {
     }
 
     // --- FINAL MERGE ---
-    let lat = cityData?.location?.latitude || 0;
-    let long = cityData?.location?.longitude || 0;
+    const cityDataCity = cityData?.city?.names?.en;
+    const db11DataCity = db11Data.city;
+    const hasCityDataCity = cityDataCity && cityDataCity !== "Unknown" && cityDataCity !== "";
+    const hasDb11DataCity = db11DataCity && db11DataCity !== "-" && db11DataCity !== "This parameter is unavailable for selected data file." && db11DataCity !== "Unknown" && db11DataCity !== "";
 
-    if (lat === 0 && db11Data.latitude && db11Data.latitude !== "0.000000") {
-      lat = parseFloat(db11Data.latitude);
-      long = parseFloat(db11Data.longitude);
+    let finalCountry, finalCountryCode, finalCity, finalRegion, finalTimezone, lat, long, finalZip;
+
+    if (!hasCityDataCity && hasDb11DataCity) {
+      // Use DB11 entirely for location to avoid mixing different providers' data
+      finalCountry = db11Data.countryLong;
+      finalCountryCode = db11Data.countryShort;
+      finalCity = db11Data.city;
+      finalRegion = db11Data.region;
+      finalTimezone = db11Data.timeZone;
+      lat = parseFloat(db11Data.latitude) || 0;
+      long = parseFloat(db11Data.longitude) || 0;
+      finalZip = db11Data.zipCode && db11Data.zipCode !== "-" && db11Data.zipCode !== "This parameter is unavailable for selected data file." ? db11Data.zipCode : "N/A";
+    } else {
+      // Use CityData (MaxMind) primarily, with DB11 as fallback
+      finalCountry = pick(cityData?.country?.names?.en, db11Data.countryLong);
+      finalCountryCode = pick(cityData?.country?.iso_code, db11Data.countryShort);
+      finalCity = pick(cityData?.city?.names?.en, db11Data.city);
+      finalRegion = pick(cityData?.subdivisions?.[0]?.names?.en, db11Data.region);
+      finalTimezone = pick(cityData?.location?.time_zone, db11Data.timeZone);
+
+      lat = cityData?.location?.latitude || 0;
+      long = cityData?.location?.longitude || 0;
+      if (lat === 0 && db11Data.latitude && db11Data.latitude !== "0.000000") {
+        lat = parseFloat(db11Data.latitude) || 0;
+        long = parseFloat(db11Data.longitude) || 0;
+      }
+
+      finalZip = db11Data.zipCode && db11Data.zipCode !== "-" && db11Data.zipCode !== "This parameter is unavailable for selected data file." ? db11Data.zipCode : "N/A";
     }
 
     return {
       ip,
-      country: pick(cityData?.country?.names?.en, db11Data.country_long),
-      country_code: pick(cityData?.country?.iso_code, db11Data.country_short),
-      city: pick(cityData?.city?.names?.en, db11Data.city),
-      region: pick(cityData?.subdivisions?.[0]?.names?.en, db11Data.region),
-      timezone: pick(cityData?.location?.time_zone, db11Data.time_zone),
+      country: finalCountry,
+      country_code: finalCountryCode,
+      city: finalCity,
+      region: finalRegion,
+      timezone: finalTimezone,
       coordinates: `${lat}, ${long}`,
       latitude: lat,
       longitude: long,
-      zip:
-        db11Data.zip_code && db11Data.zip_code !== "-"
-          ? db11Data.zip_code
-          : "N/A",
+      zip: finalZip,
       asn: asnNumber,
       org: orgName,
+      network: networkCidr,
       is_proxy: isProxy,
       proxy_type: riskLabel,
       usage_type: usageType,

@@ -1,6 +1,7 @@
 # --- Production Docker/env files ---
 .env
 .env.*
+Caddyfile
 
 # --- Dependencies ---
 node_modules/

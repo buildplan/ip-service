@@ -70,14 +70,14 @@ curl "ip.wiredalter.com/json?ip=8.8.8.8"
 
 ### Prerequisites
 
-1. **Clone the repository:**
+1\. **Clone the repository:**
 
 ```bash
 git clone https://github.com/buildplan/ip-service.git
 cd ip-service
 ```
 
-2. **Download Databases:**
+2\. **Download Databases:**
 
 The service requires the following database files to be placed in the `ip_dbs/` directory:
 
@@ -176,8 +176,10 @@ docker compose up -d --build
 ## Environment Variables
 
 | Variable | Required | Description |
-|---|---|---|
+| --- | --- | --- |
 | `PORT` | No | Port to listen on (default: `4040`) |
+| `V4_API_URL` | No | URL for IPv4 endpoint / Default to ipv4.wiredalter.com |
+| `V6_API_URL` | No | URL for IPv6 endpoint / Default to ipv6.wiredalter.com |
 | `CARTO_API_KEY` | No | Removes the "API key required" watermark from CARTO basemap tiles. Free key at [carto.com/basemaps/apikey](https://carto.com/basemaps/apikey) |
 | `ABUSEIPDB_API_KEY` | No | Enables AbuseIPDB reputation checks |
 | `CROWDSEC_API_KEY` | No | Enables CrowdSec threat intelligence |

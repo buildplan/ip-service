@@ -184,7 +184,13 @@ async function fetchSmartIPs() {
         const secRes = await fetch(missingUrl);
         if (secRes.ok) {
           const secData = await secRes.json();
-          displayArea.innerHTML += createIpRow(secData.ip, missingType, false); // false = isSecondary
+          if (secData.ip && secData.ip !== primaryData.ip) {
+            const secIsV6 = secData.ip.includes(":");
+            // Ensure the returned IP actually matches the expected secondary protocol
+            if ((primaryIsV6 && !secIsV6) || (!primaryIsV6 && secIsV6)) {
+              displayArea.innerHTML += createIpRow(secData.ip, missingType, false); // false = isSecondary
+            }
+          }
         }
       } catch (e) {
         console.log("Secondary protocol unavailable.");
@@ -345,6 +351,7 @@ function openReputationModal() {
   const panel = document.getElementById("rep-modal-panel");
 
   modal.classList.remove("hidden");
+  document.body.style.overflow = "hidden";
 
   if (lastReputationResult.is_clean) {
     const copyStr = `IP: ${lastReputationResult.ip} - Status: CLEAN (No threats detected in active feeds)`;
@@ -432,6 +439,7 @@ function closeReputationModal() {
 
   setTimeout(() => {
     modal.classList.add("hidden");
+    document.body.style.overflow = "";
   }, 300);
 }
 
@@ -456,6 +464,7 @@ async function checkWhois() {
     </div>
   `;
   modal.classList.remove("hidden");
+  document.body.style.overflow = "hidden";
   setTimeout(() => {
     backdrop.classList.remove("opacity-0");
     panel.classList.remove("opacity-0", "scale-95");
@@ -558,6 +567,7 @@ function closeWhoisModal() {
 
   setTimeout(() => {
     modal.classList.add("hidden");
+    document.body.style.overflow = "";
   }, 300);
 }
 
