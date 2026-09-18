@@ -20,7 +20,7 @@ const app = express();
 
 // --- CONFIGURATION ---
 app.set("json spaces", 2);
-app.set("trust proxy", true);
+app.set("trust proxy", "loopback, linklocal, uniquelocal");
 app.use(cors()); // Enable CORS for v4.ip... and v6.ip
 
 app.use(express.static(path.join(__dirname, "views"), { index: false }));
@@ -37,10 +37,9 @@ function getClientIp(req) {
   let ip =
     req.headers["cf-connecting-ip"] ||
     req.headers["x-real-ip"] ||
-    (req.headers["x-forwarded-for"]
-      ? req.headers["x-forwarded-for"].split(",")[0].trim()
-      : req.socket.remoteAddress);
-  if (ip && ip.startsWith("::ffff:")) ip = ip.substr(7);
+    req.ip ||
+    req.socket.remoteAddress;
+  if (ip && ip.startsWith("::ffff:")) ip = ip.substring(7);
   return ip;
 }
 
@@ -246,6 +245,7 @@ app.get("/cli", async (req, res) => {
 
   Organization : ${show(data.org)}
   ASN          : ${show(data.asn)}
+  Network CIDR : ${show(data.network)}
 
   Connection   : ${show(data.usage_type)}
   Risk Status  : ${show(data.proxy_type)}

@@ -21,6 +21,8 @@ services:
       - SNIFFCAT_API_KEY=${SNIFFCAT_API_KEY}
       - SPAMVERIFY_API_KEY=${SPAMVERIFY_API_KEY}
       - CARTO_API_KEY=${CARTO_API_KEY}
+      - V4_API_URL=${V4_API_URL}
+      - V6_API_URL=${V6_API_URL}
     networks:
       - wa-net
     volumes:

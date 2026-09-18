@@ -13,6 +13,7 @@ async function runDnsLeakTest() {
   }
 
   modal.classList.remove("hidden");
+  document.body.style.overflow = "hidden";
   setTimeout(() => {
     backdrop.classList.remove("opacity-0");
     panel.classList.remove("opacity-0", "scale-95");
@@ -197,5 +198,6 @@ function closeDnsLeakModal() {
 
   setTimeout(() => {
     modal.classList.add("hidden");
+    document.body.style.overflow = "";
   }, 300);
 }

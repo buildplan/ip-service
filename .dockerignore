@@ -28,6 +28,7 @@ views/app.min.js
 .env.*
 .dockerignore
 renovate.json
+README.md
 
 # --- Docker Configs ---
 docker-compose.yml
