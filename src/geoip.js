@@ -113,6 +113,29 @@ async function initGeoDb() {
 }
 
 function getGeoData(ip) {
+  if (typeof ip !== "string") {
+    return {
+      ip: String(ip || ""),
+      country: "Unknown",
+      country_code: "XX",
+      city: "Unknown",
+      region: "Unknown",
+      timezone: "Unknown",
+      coordinates: "0, 0",
+      latitude: 0,
+      longitude: 0,
+      zip: "N/A",
+      asn: "Unknown",
+      org: "Unknown",
+      network: "N/A",
+      is_proxy: false,
+      proxy_type: "Unknown",
+      usage_type: "Unknown",
+      threat: "None",
+      provider: "N/A",
+    };
+  }
+
   // 1. Reserved / Local / Docker IP Checks
   const isLocal =
     ip === "::1" ||
@@ -180,16 +203,16 @@ function getGeoData(ip) {
     else if (ipinfoData && ipinfoData.route) networkCidr = ipinfoData.route;
     else if (ipinfoData && ipinfoData.network) networkCidr = ipinfoData.network;
     else if (asnPrefix !== null) {
-      if (ip.includes(":")) {
+      if (typeof ip === "string" && ip.includes(":")) {
         networkCidr = `${ip}/${asnPrefix}`; // IPv6 approx
-      } else {
+      } else if (typeof ip === "string") {
         // basic IPv4 cidr masking
         const parts = ip.split('.').map(Number);
         const shift = 32 - asnPrefix;
         const ipInt = ((parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8) | parts[3]) >>> 0;
         const mask = (~0 << shift) >>> 0;
         const baseInt = (ipInt & mask) >>> 0;
-        const baseIp = [ (baseInt >>> 24) & 255, (baseInt >>> 16) & 255, (baseInt >>> 8) & 255, baseInt & 255 ].join('.');
+        const baseIp = [(baseInt >>> 24) & 255, (baseInt >>> 16) & 255, (baseInt >>> 8) & 255, baseInt & 255].join('.');
         networkCidr = `${baseIp}/${asnPrefix}`;
       }
     }

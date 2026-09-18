@@ -321,7 +321,7 @@ async function checkAbuseIPDB(ip) {
 
 // --- MAIN EXPORT ---
 module.exports = async function getReputation(ip) {
-  if (!net.isIP(ip)) return { ip, error: "Invalid IP" };
+  if (typeof ip !== "string" || !net.isIP(ip)) return { ip: typeof ip === "string" ? ip : "", error: "Invalid IP" };
 
   // 1. Check Cache First (Saves API Credits)
   if (reputationCache.has(ip)) {
