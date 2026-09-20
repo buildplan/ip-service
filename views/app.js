@@ -124,7 +124,7 @@ function setupLazyMap(cartoKey) {
           observer.disconnect();
         }
       },
-      { rootMargin: "300px" }
+      { rootMargin: "50px" }
     );
     observer.observe(mapContainer);
   } else {
@@ -197,17 +197,6 @@ function createIpRow(ip, type, isPrimary = true) {
 async function fetchSmartIPs() {
   const displayArea = document.getElementById("ip-display-area");
   try {
-    let config = {};
-    let cartoKey = "";
-    try {
-      const configRes = await fetch("/api/config");
-      config = await configRes.json();
-      cartoKey = config.carto_api_key || "";
-    } catch (_) {
-      // Config unavailable — map will load without key (watermark shown)
-    }
-    setupLazyMap(cartoKey);
-
     let apiUrl = "/api/info";
     const rawSearch = window.location.search.substring(1).trim();
     let targetIp = null;
@@ -222,13 +211,28 @@ async function fetchSmartIPs() {
     }
 
     if (targetIp) {
-      apiUrl = `/api/info?ip=${targetIp}`;
+      apiUrl = `/api/info?ip=${encodeURIComponent(targetIp)}`;
       const searchInput = document.getElementById("searchInput");
       if (searchInput) searchInput.value = targetIp;
     }
 
-    const res = await fetch(apiUrl);
-    const primaryData = await res.json();
+    // Concurrently fetch config and IP data to eliminate sequential network latency
+    const [configRes, infoRes] = await Promise.all([
+      fetch("/api/config").catch(() => null),
+      fetch(apiUrl),
+    ]);
+
+    let config = {};
+    let cartoKey = "";
+    if (configRes && configRes.ok) {
+      try {
+        config = await configRes.json();
+        cartoKey = config.carto_api_key || "";
+      } catch (_) {}
+    }
+    setupLazyMap(cartoKey);
+
+    const primaryData = await infoRes.json();
     if (primaryData.error) throw new Error(primaryData.error);
 
     const primaryIsV6 = primaryData.ip.includes(":");
@@ -271,11 +275,12 @@ function populateDetails(data) {
   document.getElementById("dataOrg").innerText = data.org || "N/A";
   document.getElementById("dataAsn").innerText = data.asn || "N/A";
 
-  if (data.hostname && data.hostname !== "N/A") {
-    document.getElementById("dataHostname").innerText = data.hostname;
-    document.getElementById("hostnameWrapper").classList.remove("hidden");
-  } else {
-    document.getElementById("hostnameWrapper").classList.add("hidden");
+  const hostEl = document.getElementById("dataHostname");
+  if (hostEl) {
+    hostEl.innerText =
+      data.hostname && data.hostname !== "N/A"
+        ? data.hostname
+        : "None detected";
   }
 
   document.getElementById("dataCity").innerText = data.city;

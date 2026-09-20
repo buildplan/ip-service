@@ -38,8 +38,17 @@
   <link rel="icon" type="image/png" sizes="512x512" href="/favicon/android-chrome-512x512.png" />
   <link rel="manifest" href="/favicon/site.webmanifest" />
 
+  <link rel="preconnect" href="https://a.basemaps.cartocdn.com" crossorigin />
+  <link rel="preconnect" href="https://c.basemaps.cartocdn.com" crossorigin />
+
+  <link rel="preload" href="/fonts/inter-v20-latin-regular.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/inter-v20-latin-700.woff2" as="font" type="font/woff2" crossorigin />
+
   <link rel="stylesheet" href="/style.min.css?v=1.1" />
-  <link rel="stylesheet" href="/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="/leaflet/leaflet.css" media="print" onload="this.media='all'" />
+  <noscript>
+    <link rel="stylesheet" href="/leaflet/leaflet.css" />
+  </noscript>
 
   <script src="/leaflet/leaflet.js" defer></script>
   <script src="/app.js?v=1.4" defer></script>
@@ -126,8 +135,11 @@
           Your Connection
         </h2>
 
-        <div id="ip-display-area" class="space-y-3 flex flex-col items-center justify-center relative z-10">
-          <div class="animate-pulse h-12 w-64 bg-slate-200 dark:bg-slate-800 rounded-xl"></div>
+        <div id="ip-display-area"
+          class="space-y-3 flex flex-col items-center justify-center relative z-10 min-h-[94px] sm:min-h-[72px]">
+          <div
+            class="animate-pulse h-[94px] sm:h-[72px] w-full max-w-[320px] sm:max-w-[420px] bg-slate-200/80 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-800/50">
+          </div>
         </div>
 
         <p id="mainLocation"
@@ -176,11 +188,12 @@
         <div class="text-xs text-slate-400 font-mono mt-0.5" id="dataAsn">
           ...
         </div>
-        <div id="hostnameWrapper" class="pt-2 mt-2 border-t border-slate-200 dark:border-slate-700/50 hidden">
+        <div id="hostnameWrapper" class="pt-2 mt-2 border-t border-slate-200 dark:border-slate-700/50">
           <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
             Reverse DNS
           </div>
           <div id="dataHostname" class="text-xs font-mono text-slate-500 dark:text-slate-400 break-all leading-relaxed">
+            ...
           </div>
         </div>
       </div>
@@ -486,7 +499,7 @@ Loading...</pre>
           <div class="pt-3">
             <a href="https://www.abuseipdb.com/user/259750" rel="nofollow" target="_blank" title="AbuseIPDB Contributor"
               class="group inline-flex items-center justify-center rounded-xl bg-slate-200/40 dark:bg-slate-800/40 p-3 border border-slate-300/50 dark:border-slate-700/50 shadow-md shadow-black/30 backdrop-blur-sm hover:bg-slate-300/60 dark:hover:bg-slate-700/60 hover:border-slate-400/50 dark:hover:border-slate-500/50 transition-all duration-300">
-              <img src="/abuseip-badge.svg" alt="AbuseIPDB Contributor Badge"
+              <img src="/abuseip-badge.svg" alt="AbuseIPDB Contributor Badge" width="180" height="45"
                 class="w-[180px] h-auto opacity-85 group-hover:opacity-100 transition-opacity" />
             </a>
           </div>
