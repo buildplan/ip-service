@@ -22,14 +22,16 @@ function toggleTheme() {
 }
 initTheme();
 
-let darkTiles, lightTiles, satelliteTiles, map;
+let darkTiles, lightTiles, satelliteTiles, map, marker;
+let pendingMapLocation = null;
+let cachedCartoKey = "";
 
 function buildCartoUrl(style, key) {
   const base = `https://{s}.basemaps.cartocdn.com/${style}/{z}/{x}/{y}{r}.png`;
   return key ? `${base}?key=${key}` : base;
 }
 
-function initMap(cartoKey) {
+function initMap(cartoKey, centerCoords) {
   const cartoAttribution =
     '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
@@ -56,10 +58,11 @@ function initMap(cartoKey) {
   const isDark = document.documentElement.classList.contains("dark");
   const initialLayer = isDark ? darkTiles : lightTiles;
 
+  const center = centerCoords || [51.505, -0.09];
   map = L.map("map", {
     zoomControl: false,
     layers: [initialLayer],
-  }).setView([51.505, -0.09], 13);
+  }).setView(center, 13);
 
   const baseMaps = {
     "Dark Mode": darkTiles,
@@ -67,6 +70,66 @@ function initMap(cartoKey) {
     Satellite: satelliteTiles,
   };
   L.control.layers(baseMaps, null, { position: "topright" }).addTo(map);
+}
+
+function setOrQueueMapLocation(lat, lon, city) {
+  if (!map) {
+    pendingMapLocation = { lat, lon, city };
+    return;
+  }
+  map.setView([lat, lon], 13);
+  if (marker) map.removeLayer(marker);
+  marker = L.circleMarker([lat, lon], {
+    radius: 8,
+    fillColor: "#3b82f6",
+    color: "#fff",
+    weight: 2,
+    opacity: 1,
+    fillOpacity: 0.8,
+  })
+    .addTo(map)
+    .bindPopup(`<b>${city}</b>`)
+    .openPopup();
+}
+
+function setupLazyMap(cartoKey) {
+  cachedCartoKey = cartoKey;
+  const mapContainer = document.getElementById("map");
+  if (!mapContainer) return;
+
+  const triggerInit = () => {
+    if (map) return;
+    const initialCenter = pendingMapLocation
+      ? [pendingMapLocation.lat, pendingMapLocation.lon]
+      : [51.505, -0.09];
+    initMap(cachedCartoKey, initialCenter);
+    if (pendingMapLocation) {
+      setOrQueueMapLocation(
+        pendingMapLocation.lat,
+        pendingMapLocation.lon,
+        pendingMapLocation.city
+      );
+      pendingMapLocation = null;
+    }
+    setTimeout(() => {
+      if (map) map.invalidateSize();
+    }, 100);
+  };
+
+  if ("IntersectionObserver" in window) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          triggerInit();
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "300px" }
+    );
+    observer.observe(mapContainer);
+  } else {
+    triggerInit();
+  }
 }
 
 function updateMapTheme(theme) {
@@ -82,7 +145,6 @@ function updateMapTheme(theme) {
   }
 }
 
-let marker;
 window.currentScanIp = "";
 let lastReputationResult = null;
 
@@ -144,7 +206,7 @@ async function fetchSmartIPs() {
     } catch (_) {
       // Config unavailable — map will load without key (watermark shown)
     }
-    initMap(cartoKey);
+    setupLazyMap(cartoKey);
 
     let apiUrl = "/api/info";
     const rawSearch = window.location.search.substring(1).trim();
@@ -252,21 +314,11 @@ function populateDetails(data) {
   }
 
   if (data.latitude && data.longitude) {
-    const lat = parseFloat(data.latitude);
-    const lon = parseFloat(data.longitude);
-    map.setView([lat, lon], 13);
-    if (marker) map.removeLayer(marker);
-    marker = L.circleMarker([lat, lon], {
-      radius: 8,
-      fillColor: "#3b82f6",
-      color: "#fff",
-      weight: 2,
-      opacity: 1,
-      fillOpacity: 0.8,
-    })
-      .addTo(map)
-      .bindPopup(`<b>${data.city}</b>`)
-      .openPopup();
+    setOrQueueMapLocation(
+      parseFloat(data.latitude),
+      parseFloat(data.longitude),
+      data.city,
+    );
   }
 }
 
