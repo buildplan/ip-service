@@ -172,8 +172,8 @@ function copyWithFeedback(ip, elId, type) {
 function createIpRow(ip, type, isPrimary = true) {
   const isV6 = type === "IPv6";
   const badgeColor = isV6
-    ? "bg-purple-900/40 text-purple-600 dark:text-purple-400 border-purple-800"
-    : "bg-blue-900/40 text-blue-600 dark:text-blue-400 border-blue-800";
+    ? "bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-300 border-purple-300 dark:border-purple-800"
+    : "bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-800";
 
   const textSize = isPrimary
     ? "text-3xl md:text-5xl"
@@ -228,7 +228,7 @@ async function fetchSmartIPs() {
       try {
         config = await configRes.json();
         cartoKey = config.carto_api_key || "";
-      } catch (_) {}
+      } catch (_) { }
     }
     setupLazyMap(cartoKey);
 
