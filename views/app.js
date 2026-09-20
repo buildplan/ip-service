@@ -22,14 +22,16 @@ function toggleTheme() {
 }
 initTheme();
 
-let darkTiles, lightTiles, satelliteTiles, map;
+let darkTiles, lightTiles, satelliteTiles, map, marker;
+let pendingMapLocation = null;
+let cachedCartoKey = "";
 
 function buildCartoUrl(style, key) {
   const base = `https://{s}.basemaps.cartocdn.com/${style}/{z}/{x}/{y}{r}.png`;
   return key ? `${base}?key=${key}` : base;
 }
 
-function initMap(cartoKey) {
+function initMap(cartoKey, centerCoords) {
   const cartoAttribution =
     '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
@@ -56,10 +58,11 @@ function initMap(cartoKey) {
   const isDark = document.documentElement.classList.contains("dark");
   const initialLayer = isDark ? darkTiles : lightTiles;
 
+  const center = centerCoords || [51.505, -0.09];
   map = L.map("map", {
     zoomControl: false,
     layers: [initialLayer],
-  }).setView([51.505, -0.09], 13);
+  }).setView(center, 13);
 
   const baseMaps = {
     "Dark Mode": darkTiles,
@@ -67,6 +70,66 @@ function initMap(cartoKey) {
     Satellite: satelliteTiles,
   };
   L.control.layers(baseMaps, null, { position: "topright" }).addTo(map);
+}
+
+function setOrQueueMapLocation(lat, lon, city) {
+  if (!map) {
+    pendingMapLocation = { lat, lon, city };
+    return;
+  }
+  map.setView([lat, lon], 13);
+  if (marker) map.removeLayer(marker);
+  marker = L.circleMarker([lat, lon], {
+    radius: 8,
+    fillColor: "#3b82f6",
+    color: "#fff",
+    weight: 2,
+    opacity: 1,
+    fillOpacity: 0.8,
+  })
+    .addTo(map)
+    .bindPopup(`<b>${city}</b>`)
+    .openPopup();
+}
+
+function setupLazyMap(cartoKey) {
+  cachedCartoKey = cartoKey;
+  const mapContainer = document.getElementById("map");
+  if (!mapContainer) return;
+
+  const triggerInit = () => {
+    if (map) return;
+    const initialCenter = pendingMapLocation
+      ? [pendingMapLocation.lat, pendingMapLocation.lon]
+      : [51.505, -0.09];
+    initMap(cachedCartoKey, initialCenter);
+    if (pendingMapLocation) {
+      setOrQueueMapLocation(
+        pendingMapLocation.lat,
+        pendingMapLocation.lon,
+        pendingMapLocation.city
+      );
+      pendingMapLocation = null;
+    }
+    setTimeout(() => {
+      if (map) map.invalidateSize();
+    }, 100);
+  };
+
+  if ("IntersectionObserver" in window) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          triggerInit();
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "50px" }
+    );
+    observer.observe(mapContainer);
+  } else {
+    triggerInit();
+  }
 }
 
 function updateMapTheme(theme) {
@@ -82,7 +145,6 @@ function updateMapTheme(theme) {
   }
 }
 
-let marker;
 window.currentScanIp = "";
 let lastReputationResult = null;
 
@@ -110,8 +172,8 @@ function copyWithFeedback(ip, elId, type) {
 function createIpRow(ip, type, isPrimary = true) {
   const isV6 = type === "IPv6";
   const badgeColor = isV6
-    ? "bg-purple-900/40 text-purple-600 dark:text-purple-400 border-purple-800"
-    : "bg-blue-900/40 text-blue-600 dark:text-blue-400 border-blue-800";
+    ? "bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-300 border-purple-300 dark:border-purple-800"
+    : "bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-800";
 
   const textSize = isPrimary
     ? "text-3xl md:text-5xl"
@@ -135,17 +197,6 @@ function createIpRow(ip, type, isPrimary = true) {
 async function fetchSmartIPs() {
   const displayArea = document.getElementById("ip-display-area");
   try {
-    let config = {};
-    let cartoKey = "";
-    try {
-      const configRes = await fetch("/api/config");
-      config = await configRes.json();
-      cartoKey = config.carto_api_key || "";
-    } catch (_) {
-      // Config unavailable — map will load without key (watermark shown)
-    }
-    initMap(cartoKey);
-
     let apiUrl = "/api/info";
     const rawSearch = window.location.search.substring(1).trim();
     let targetIp = null;
@@ -160,13 +211,28 @@ async function fetchSmartIPs() {
     }
 
     if (targetIp) {
-      apiUrl = `/api/info?ip=${targetIp}`;
+      apiUrl = `/api/info?ip=${encodeURIComponent(targetIp)}`;
       const searchInput = document.getElementById("searchInput");
       if (searchInput) searchInput.value = targetIp;
     }
 
-    const res = await fetch(apiUrl);
-    const primaryData = await res.json();
+    // Concurrently fetch config and IP data to eliminate sequential network latency
+    const [configRes, infoRes] = await Promise.all([
+      fetch("/api/config").catch(() => null),
+      fetch(apiUrl),
+    ]);
+
+    let config = {};
+    let cartoKey = "";
+    if (configRes && configRes.ok) {
+      try {
+        config = await configRes.json();
+        cartoKey = config.carto_api_key || "";
+      } catch (_) { }
+    }
+    setupLazyMap(cartoKey);
+
+    const primaryData = await infoRes.json();
     if (primaryData.error) throw new Error(primaryData.error);
 
     const primaryIsV6 = primaryData.ip.includes(":");
@@ -209,11 +275,12 @@ function populateDetails(data) {
   document.getElementById("dataOrg").innerText = data.org || "N/A";
   document.getElementById("dataAsn").innerText = data.asn || "N/A";
 
-  if (data.hostname && data.hostname !== "N/A") {
-    document.getElementById("dataHostname").innerText = data.hostname;
-    document.getElementById("hostnameWrapper").classList.remove("hidden");
-  } else {
-    document.getElementById("hostnameWrapper").classList.add("hidden");
+  const hostEl = document.getElementById("dataHostname");
+  if (hostEl) {
+    hostEl.innerText =
+      data.hostname && data.hostname !== "N/A"
+        ? data.hostname
+        : "None detected";
   }
 
   document.getElementById("dataCity").innerText = data.city;
@@ -252,21 +319,11 @@ function populateDetails(data) {
   }
 
   if (data.latitude && data.longitude) {
-    const lat = parseFloat(data.latitude);
-    const lon = parseFloat(data.longitude);
-    map.setView([lat, lon], 13);
-    if (marker) map.removeLayer(marker);
-    marker = L.circleMarker([lat, lon], {
-      radius: 8,
-      fillColor: "#3b82f6",
-      color: "#fff",
-      weight: 2,
-      opacity: 1,
-      fillOpacity: 0.8,
-    })
-      .addTo(map)
-      .bindPopup(`<b>${data.city}</b>`)
-      .openPopup();
+    setOrQueueMapLocation(
+      parseFloat(data.latitude),
+      parseFloat(data.longitude),
+      data.city,
+    );
   }
 }
 
