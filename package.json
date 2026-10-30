@@ -3,10 +3,10 @@
   "version": "1.2.0",
   "main": "server.js",
   "dependencies": {
-    "axios": "^1.20.0",
+    "axios": "^1.21.0",
     "cors": "^2.8.6",
     "express": "^5.3.0",
-    "express-rate-limit": "^8.7.1",
+    "express-rate-limit": "^8.7.2",
     "ip2location-nodejs": "^9.8.0",
     "ip2proxy-nodejs": "^4.5.0",
     "lru-cache": "^11.5.3",
