@@ -1,5 +1,5 @@
 # === Build stage: Install dependencies and dumb-init ===
-FROM dhi.io/node:26.13.0-alpine3.24-dev@sha256:4f971dcdc1fdf59f9d3e84dbd529690c2d15f75ae898fb310acad9c12d7bbdf9 AS builder
+FROM dhi.io/node:26.13.0-alpine3.24-dev@sha256:d2c9453c702b59b3080b1990d41675b3e00effabc599c27a79c207428864af95 AS builder
 
 WORKDIR /usr/src/app
 
@@ -17,7 +17,7 @@ RUN mv views/app.min.js views/app.js && rm views/input.css
 RUN npm prune --production && npm cache clean --force
 
 # === Final stage: Create minimal runtime image ===
-FROM dhi.io/node:26.13.0-alpine3.24@sha256:016ab5fb31bc219dc1e73a0dcab4ace4e400ce1cbaf5d36fb93cca9e9fb8c26b
+FROM dhi.io/node:26.13.0-alpine3.24@sha256:732b7f53f1a10df0c4e8ded0af55fadb6c0c778c987d2c855755b72a1cc85a86
 
 ENV NODE_ENV=production
 ENV PATH=/app/node_modules/.bin:$PATH
