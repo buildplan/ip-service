@@ -13,8 +13,8 @@
     "maxmind": "^5.0.8"
   },
   "devDependencies": {
-    "@tailwindcss/cli": "^4.3.4",
-    "tailwindcss": "^4.3.4",
+    "@tailwindcss/cli": "^4.3.5",
+    "tailwindcss": "^4.3.5",
     "terser": "^5.51.2"
   },
   "scripts": {
