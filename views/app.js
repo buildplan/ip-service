@@ -150,9 +150,6 @@ function updateStyleSwitcherState() {
     (button) => {
       const isActive = button.dataset.styleId === currentStyle;
       button.setAttribute("aria-pressed", isActive ? "true" : "false");
-      button.className = isActive
-        ? "bg-blue-600 text-white font-bold text-[10px] sm:text-[11px] uppercase tracking-wide px-2.5 sm:px-3 transition-colors"
-        : "bg-transparent text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium text-[10px] sm:text-[11px] uppercase tracking-wide px-2.5 sm:px-3 transition-colors";
     },
   );
 }
@@ -178,11 +175,11 @@ class StyleSwitcherControl {
       btn.textContent = s.label;
       btn.title = s.title;
       btn.setAttribute("aria-label", s.title);
+      btn.setAttribute("aria-pressed", s.id === currentStyle ? "true" : "false");
       btn.addEventListener("click", () => switchMapStyle(s.id));
       this._container.appendChild(btn);
     });
 
-    updateStyleSwitcherState();
     return this._container;
   }
 
@@ -225,6 +222,7 @@ function switchMapStyle(styleId) {
   if (!map || styleId === currentStyle) return;
   currentStyle = styleId;
   updateStyleSwitcherState();
+  setMapOverlay(null);
 
   const token = ++styleSwapToken;
   const center = map.getCenter();
@@ -318,6 +316,9 @@ async function initMap(initialCenter) {
     currentStyle = isDark ? "dark" : "light";
 
     let hasLoadedInitialStyle = false;
+    let tileErrorCount = 0;
+    let loadedTileCount = 0;
+
     map = new mod.Map({
       container: "map",
       style: MAP_STYLES[currentStyle],
@@ -344,17 +345,27 @@ async function initMap(initialCenter) {
     map.addControl(new CenterMapControl(), "top-right");
     map.addControl(new mod.AttributionControl({ compact: true }), "bottom-right");
 
+    map.on("sourcedata", (e) => {
+      if (e.tile && e.tile.state === "loaded") {
+        loadedTileCount++;
+        setMapOverlay(null);
+      }
+    });
+
     map.once("load", () => {
       hasLoadedInitialStyle = true;
-      setMapOverlay(null);
+      if (loadedTileCount > 0 || tileErrorCount === 0) {
+        setMapOverlay(null);
+      }
       map.resize();
     });
 
     map.on("error", (e) => {
       console.warn("MapLibre tile/style warning:", e?.error?.message || e);
-      if (!hasLoadedInitialStyle && !map?.isStyleLoaded()) {
+      tileErrorCount++;
+      if ((!hasLoadedInitialStyle && !map?.isStyleLoaded()) || (loadedTileCount === 0 && tileErrorCount >= 3)) {
         setMapOverlay(
-          "Map tiles could not be loaded right now. IP lookup data above remains available.",
+          "Map tiles could not be loaded (check network or CSP settings). IP lookup data above remains available.",
           true,
         );
       }

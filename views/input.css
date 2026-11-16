@@ -97,10 +97,29 @@ html:not(.dark) .search-input:focus { background: #ffffff; border-color: #3b82f6
 html:not(.dark) #map .maplibregl-ctrl-group { background: rgba(255, 255, 255, 0.92); border: 1px solid rgba(203, 213, 225, 0.9); box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12); }
 html.dark #map .maplibregl-ctrl-group { background: rgba(15, 23, 42, 0.88); border: 1px solid rgba(51, 65, 85, 0.95); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45); }
 #map .maplibregl-ctrl-group > button { width: var(--target-size); height: var(--target-size); min-width: var(--target-size); min-height: var(--target-size); display: flex; align-items: center; justify-content: center; transition: background-color 0.2s, color 0.2s; }
-#map #map-style-switcher { display: flex; flex-direction: row; }
-#map #map-style-switcher > button { width: auto; min-width: var(--target-size); min-height: var(--target-size); height: var(--target-size); border-top: 0; }
+#map #map-style-switcher { display: flex; flex-direction: row; align-items: stretch; }
+#map #map-style-switcher > button {
+  width: auto;
+  min-width: 44px;
+  height: var(--target-size);
+  min-height: var(--target-size);
+  padding: 0 12px;
+  border-top: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
 html:not(.dark) #map #map-style-switcher > button + button { border-left: 1px solid rgba(203, 213, 225, 0.9); }
 html.dark #map #map-style-switcher > button + button { border-left: 1px solid rgba(51, 65, 85, 0.95); }
+html:not(.dark) #map #map-style-switcher > button[aria-pressed="true"] { background-color: #2563eb; color: #ffffff; font-weight: 700; }
+html:not(.dark) #map #map-style-switcher > button[aria-pressed="true"]:hover { background-color: #1d4ed8; color: #ffffff; }
+html.dark #map #map-style-switcher > button[aria-pressed="true"] { background-color: #334155; color: #f8fafc; font-weight: 700; }
+html.dark #map #map-style-switcher > button[aria-pressed="true"]:hover { background-color: #475569; color: #ffffff; }
+@media (max-width: 380px) {
+  #map #map-style-switcher > button { padding: 0 9px; font-size: 10px; min-width: 38px; }
+}
 html:not(.dark) #map .maplibregl-ctrl-group > button { color: #334155; }
 html:not(.dark) #map .maplibregl-ctrl-group > button:hover { background-color: rgba(241, 245, 249, 0.9); color: #0f172a; }
 html.dark #map .maplibregl-ctrl-group > button { color: #cbd5e1; }
