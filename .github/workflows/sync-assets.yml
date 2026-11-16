@@ -1,0 +1,62 @@
+name: Sync Built Frontend Assets
+
+on:
+  pull_request:
+    branches: [ "main", "dev", "dev-*" ]
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'scripts/build-map.mjs'
+      - 'views/app.js'
+      - 'views/input.css'
+      - 'views/index.html'
+  push:
+    branches: [ "main", "dev", "dev-*" ]
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'scripts/build-map.mjs'
+      - 'views/app.js'
+      - 'views/input.css'
+      - 'views/index.html'
+
+jobs:
+  sync-assets:
+    if: >-
+      (github.event_name == 'push' && !startsWith(github.event.head_commit.message, 'chore(assets):')) ||
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.head.repo.full_name == github.repository &&
+       github.actor != 'dependabot[bot]')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
+          token: ${{ secrets.PAT_TOKEN }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies and build assets
+        run: |
+          npm ci
+          npm run build
+
+      - name: Commit synced assets if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/maplibre views/app.js views/app.min.js public/style.min.css
+          if git diff --cached --quiet; then
+            echo "Built frontend assets are already up to date."
+          else
+            git commit -m "chore(assets): sync built maplibre and frontend assets [skip tag]"
+            git push
+          fi
