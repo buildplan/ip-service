@@ -22,126 +22,416 @@ function toggleTheme() {
 }
 initTheme();
 
-let darkTiles, lightTiles, satelliteTiles, map, marker;
-let pendingMapLocation = null;
-let cachedCartoKey = "";
+const MAPLIBRE_CSS_URL = "/maplibre/maplibre-gl.css?v=6.18.0";
+const MAPLIBRE_JS_URL = "/maplibre/maplibre-gl.mjs?v=6.18.0";
+const MAPLIBRE_WORKER_URL = "/maplibre/maplibre-gl-worker.mjs?v=6.18.0";
 
-function buildCartoUrl(style, key) {
-  const base = `https://{s}.basemaps.cartocdn.com/${style}/{z}/{x}/{y}{r}.png`;
-  return key ? `${base}?key=${key}` : base;
+const MAP_STYLES = {
+  dark: "https://tiles.openfreemap.org/styles/fiord",
+  light: "https://tiles.openfreemap.org/styles/positron",
+  satellite: {
+    version: 8,
+    sources: {
+      esri: {
+        type: "raster",
+        tiles: [
+          "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        ],
+        tileSize: 256,
+        attribution:
+          'Tiles &copy; <a href="https://www.esri.com/" rel="nofollow noopener noreferrer" target="_blank">Esri</a>',
+        maxzoom: 19,
+      },
+    },
+    layers: [{ id: "esri-tiles", type: "raster", source: "esri" }],
+  },
+};
+
+let maplibreglMod = null;
+let maplibreLoadPromise = null;
+let map = null;
+let isInitializingMap = false;
+let marker = null;
+let pendingMapLocation = null;
+let currentCoords = null;
+let currentStyle = document.documentElement.classList.contains("dark")
+  ? "dark"
+  : "light";
+let mapResizeObserver = null;
+let styleSwapToken = 0;
+
+function prefersReducedMotion() {
+  return (
+    window.matchMedia &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
 }
 
-function initMap(cartoKey, centerCoords) {
-  const cartoAttribution =
-    '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
+function setMapOverlay(message, isError = false) {
+  const overlay = document.getElementById("mapOverlayStatus");
+  if (!overlay) return;
+  if (!message) {
+    overlay.classList.add("hidden");
+    return;
+  }
+  overlay.classList.remove("hidden");
+  const span = document.createElement("span");
+  span.className = isError
+    ? "text-amber-700 dark:text-amber-300 font-medium max-w-xs"
+    : "text-slate-600 dark:text-slate-300";
+  span.textContent = message;
+  overlay.replaceChildren(span);
+}
 
-  darkTiles = L.tileLayer(buildCartoUrl("dark_all", cartoKey), {
-    attribution: cartoAttribution,
-    subdomains: "abcd",
-    maxZoom: 19,
+function loadStylesheet(href) {
+  const existing = document.querySelector('link[data-maplibre-css="1"]');
+  if (existing) {
+    if (existing.dataset.loaded === "1") return Promise.resolve();
+    return new Promise((resolve, reject) => {
+      existing.addEventListener("load", () => resolve(), { once: true });
+      existing.addEventListener(
+        "error",
+        () => reject(new Error("Failed to load map stylesheet")),
+        { once: true },
+      );
+    });
+  }
+  return new Promise((resolve, reject) => {
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = href;
+    link.dataset.maplibreCss = "1";
+    link.addEventListener(
+      "load",
+      () => {
+        link.dataset.loaded = "1";
+        resolve();
+      },
+      { once: true },
+    );
+    link.addEventListener(
+      "error",
+      () => {
+        link.remove();
+        reject(new Error("Failed to load map stylesheet"));
+      },
+      { once: true },
+    );
+    document.head.appendChild(link);
+  });
+}
+
+async function loadMapLibre() {
+  if (maplibreglMod) return maplibreglMod;
+  if (maplibreLoadPromise) return maplibreLoadPromise;
+
+  maplibreLoadPromise = (async () => {
+    const [, mod] = await Promise.all([
+      loadStylesheet(MAPLIBRE_CSS_URL),
+      import(MAPLIBRE_JS_URL),
+    ]);
+    if (typeof mod.setWorkerUrl === "function") {
+      mod.setWorkerUrl(MAPLIBRE_WORKER_URL);
+    }
+    maplibreglMod = mod;
+    return mod;
+  })().catch((err) => {
+    maplibreLoadPromise = null;
+    throw err;
   });
 
-  lightTiles = L.tileLayer(buildCartoUrl("rastertiles/voyager", cartoKey), {
-    attribution: cartoAttribution,
-    subdomains: "abcd",
-    maxZoom: 19,
-  });
+  return maplibreLoadPromise;
+}
 
-  satelliteTiles = L.tileLayer(
-    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-    {
-      attribution: "Tiles &copy; Esri",
-      maxZoom: 19,
+function updateStyleSwitcherState() {
+  const container = document.getElementById("map-style-switcher");
+  if (!container) return;
+  Array.from(container.querySelectorAll("button[data-style-id]")).forEach(
+    (button) => {
+      const isActive = button.dataset.styleId === currentStyle;
+      button.setAttribute("aria-pressed", isActive ? "true" : "false");
+      button.className = isActive
+        ? "bg-blue-600 text-white font-bold text-[10px] sm:text-[11px] uppercase tracking-wide px-2.5 sm:px-3 transition-colors"
+        : "bg-transparent text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium text-[10px] sm:text-[11px] uppercase tracking-wide px-2.5 sm:px-3 transition-colors";
     },
   );
+}
 
-  const isDark = document.documentElement.classList.contains("dark");
-  const initialLayer = isDark ? darkTiles : lightTiles;
+class StyleSwitcherControl {
+  onAdd() {
+    this._container = document.createElement("div");
+    this._container.id = "map-style-switcher";
+    this._container.className = "maplibregl-ctrl maplibregl-ctrl-group";
+    this._container.setAttribute("role", "group");
+    this._container.setAttribute("aria-label", "Map style");
 
-  const center = centerCoords || [51.505, -0.09];
-  map = L.map("map", {
-    zoomControl: false,
-    layers: [initialLayer],
-  }).setView(center, 13);
+    const styles = [
+      { id: "dark", label: "Dark", title: "Dark map style" },
+      { id: "light", label: "Light", title: "Light map style" },
+      { id: "satellite", label: "Sat", title: "Satellite imagery" },
+    ];
 
-  const baseMaps = {
-    "Dark Mode": darkTiles,
-    "Light Mode": lightTiles,
-    Satellite: satelliteTiles,
-  };
-  L.control.layers(baseMaps, null, { position: "topright" }).addTo(map);
+    styles.forEach((s) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.dataset.styleId = s.id;
+      btn.textContent = s.label;
+      btn.title = s.title;
+      btn.setAttribute("aria-label", s.title);
+      btn.addEventListener("click", () => switchMapStyle(s.id));
+      this._container.appendChild(btn);
+    });
+
+    updateStyleSwitcherState();
+    return this._container;
+  }
+
+  onRemove() {
+    this._container.remove();
+  }
+}
+
+class CenterMapControl {
+  onAdd(mapInstance) {
+    this._map = mapInstance;
+    this._container = document.createElement("div");
+    this._container.className = "maplibregl-ctrl maplibregl-ctrl-group";
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.title = "Center on IP";
+    btn.setAttribute("aria-label", "Center map on IP location");
+    btn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" stroke-width="2"></circle><path stroke-linecap="round" stroke-width="2" d="M12 2v3m0 14v3m10-10h-3M5 12H2"></path></svg>`;
+    btn.addEventListener("click", () => {
+      if (!currentCoords) return;
+      this._map.flyTo({
+        center: currentCoords,
+        zoom: 13,
+        duration: prefersReducedMotion() ? 0 : 900,
+      });
+    });
+
+    this._container.appendChild(btn);
+    return this._container;
+  }
+
+  onRemove() {
+    this._container.remove();
+    this._map = undefined;
+  }
+}
+
+function switchMapStyle(styleId) {
+  if (!map || styleId === currentStyle) return;
+  currentStyle = styleId;
+  updateStyleSwitcherState();
+
+  const token = ++styleSwapToken;
+  const center = map.getCenter();
+  const zoom = map.getZoom();
+
+  map.setStyle(MAP_STYLES[styleId]);
+  map.once("style.load", () => {
+    if (token !== styleSwapToken || !map) return;
+    map.setCenter(center);
+    map.setZoom(zoom);
+    if (marker) {
+      marker.addTo(map);
+    }
+  });
+}
+
+function createMarkerElement(city) {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "ip-map-marker";
+  btn.setAttribute(
+    "aria-label",
+    city ? `IP location marker: ${city}` : "IP location marker",
+  );
+  btn.innerHTML = `
+    <span class="relative flex h-8 w-8 items-center justify-center pointer-events-none">
+      <span class="ip-map-pulse absolute inset-0 rounded-full bg-blue-500/30"></span>
+      <span class="absolute inset-1 rounded-full border border-blue-500/50"></span>
+      <span class="absolute h-full w-px bg-blue-500/40"></span>
+      <span class="absolute h-px w-full bg-blue-500/40"></span>
+      <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500 ring-2 ring-white dark:ring-slate-900 shadow-sm"></span>
+    </span>
+  `;
+  return btn;
+}
+
+function createPopupContent(city) {
+  const wrapper = document.createElement("div");
+  const title = document.createElement("b");
+  title.className = "text-slate-900 dark:text-slate-100";
+  title.textContent = city || "Unknown Location";
+  wrapper.appendChild(title);
+  return wrapper;
 }
 
 function setOrQueueMapLocation(lat, lon, city) {
-  if (!map) {
+  if (!map || !maplibreglMod) {
     pendingMapLocation = { lat, lon, city };
     return;
   }
-  map.setView([lat, lon], 13);
-  if (marker) map.removeLayer(marker);
-  marker = L.circleMarker([lat, lon], {
-    radius: 8,
-    fillColor: "#3b82f6",
-    color: "#fff",
-    weight: 2,
-    opacity: 1,
-    fillOpacity: 0.8,
+
+  currentCoords = [lon, lat];
+  map.flyTo({
+    center: currentCoords,
+    zoom: 13,
+    duration: prefersReducedMotion() ? 0 : 1000,
+  });
+
+  if (marker) marker.remove();
+
+  const popup = new maplibreglMod.Popup({
+    offset: 16,
+    maxWidth: "min(240px, calc(100vw - 64px))",
+    focusAfterOpen: false,
+  }).setDOMContent(createPopupContent(city));
+
+  marker = new maplibreglMod.Marker({
+    element: createMarkerElement(city),
+    anchor: "center",
   })
-    .addTo(map)
-    .bindPopup(`<b>${city}</b>`)
-    .openPopup();
+    .setLngLat(currentCoords)
+    .setPopup(popup)
+    .addTo(map);
+
+  marker.togglePopup();
 }
 
-function setupLazyMap(cartoKey) {
-  cachedCartoKey = cartoKey;
+async function initMap(initialCenter) {
+  if (map || isInitializingMap) return;
+  const container = document.getElementById("map");
+  if (!container || !container.clientWidth || !container.clientHeight) return;
+
+  isInitializingMap = true;
+  setMapOverlay("Loading interactive map...");
+
+  try {
+    const mod = await loadMapLibre();
+    if (map || !container.clientWidth || !container.clientHeight) return;
+
+    const isDark = document.documentElement.classList.contains("dark");
+    currentStyle = isDark ? "dark" : "light";
+
+    let hasLoadedInitialStyle = false;
+    map = new mod.Map({
+      container: "map",
+      style: MAP_STYLES[currentStyle],
+      center: initialCenter || [-0.09, 51.505],
+      zoom: 13,
+      maxPitch: 0,
+      dragRotate: false,
+      touchPitch: false,
+      pitchWithRotate: false,
+      renderWorldCopies: false,
+      cooperativeGestures: true,
+      attributionControl: false,
+    });
+
+    if (map.touchZoomRotate) {
+      map.touchZoomRotate.disableRotation();
+    }
+
+    map.addControl(new StyleSwitcherControl(), "top-left");
+    map.addControl(
+      new mod.NavigationControl({ showCompass: false, visualizePitch: false }),
+      "top-right",
+    );
+    map.addControl(new CenterMapControl(), "top-right");
+    map.addControl(new mod.AttributionControl({ compact: true }), "bottom-right");
+
+    map.once("load", () => {
+      hasLoadedInitialStyle = true;
+      setMapOverlay(null);
+      map.resize();
+    });
+
+    map.on("error", (e) => {
+      console.warn("MapLibre tile/style warning:", e?.error?.message || e);
+      if (!hasLoadedInitialStyle && !map?.isStyleLoaded()) {
+        setMapOverlay(
+          "Map tiles could not be loaded right now. IP lookup data above remains available.",
+          true,
+        );
+      }
+    });
+
+    if (window.ResizeObserver && !mapResizeObserver) {
+      mapResizeObserver = new ResizeObserver(() => {
+        if (!map || !container.clientWidth || !container.clientHeight) return;
+        map.resize();
+      });
+      mapResizeObserver.observe(container);
+    }
+
+    if (pendingMapLocation) {
+      const { lat, lon, city } = pendingMapLocation;
+      pendingMapLocation = null;
+      setOrQueueMapLocation(lat, lon, city);
+    }
+  } catch (err) {
+    console.error("Map initialization failed:", err);
+    setMapOverlay(
+      "Interactive map unavailable in this browser. IP lookup data above remains available.",
+      true,
+    );
+  } finally {
+    isInitializingMap = false;
+  }
+}
+
+function setupLazyMap() {
   const mapContainer = document.getElementById("map");
   if (!mapContainer) return;
 
   const triggerInit = () => {
-    if (map) return;
+    if (map || isInitializingMap) return;
     const initialCenter = pendingMapLocation
-      ? [pendingMapLocation.lat, pendingMapLocation.lon]
-      : [51.505, -0.09];
-    initMap(cachedCartoKey, initialCenter);
-    if (pendingMapLocation) {
-      setOrQueueMapLocation(
-        pendingMapLocation.lat,
-        pendingMapLocation.lon,
-        pendingMapLocation.city
-      );
-      pendingMapLocation = null;
-    }
-    setTimeout(() => {
-      if (map) map.invalidateSize();
-    }, 100);
+      ? [pendingMapLocation.lon, pendingMapLocation.lat]
+      : [-0.09, 51.505];
+    initMap(initialCenter);
   };
 
-  if ("IntersectionObserver" in window) {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          triggerInit();
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "50px" }
-    );
-    observer.observe(mapContainer);
+  const attachObserver = () => {
+    if ("IntersectionObserver" in window) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting) {
+            observer.disconnect();
+            triggerInit();
+          }
+        },
+        { rootMargin: "50px", threshold: 0.01 },
+      );
+      observer.observe(mapContainer);
+    } else {
+      triggerInit();
+    }
+  };
+
+  const scheduleObserver = () => {
+    if ("requestIdleCallback" in window) {
+      window.requestIdleCallback(attachObserver, { timeout: 500 });
+    } else {
+      setTimeout(attachObserver, 400);
+    }
+  };
+
+  if (document.readyState === "complete") {
+    scheduleObserver();
   } else {
-    triggerInit();
+    window.addEventListener("load", scheduleObserver, { once: true });
   }
 }
 
 function updateMapTheme(theme) {
   if (!map) return;
-  if (!map.hasLayer(satelliteTiles)) {
-    if (theme === "dark") {
-      map.addLayer(darkTiles);
-      map.removeLayer(lightTiles);
-    } else {
-      map.addLayer(lightTiles);
-      map.removeLayer(darkTiles);
-    }
+  if (currentStyle !== "satellite") {
+    switchMapStyle(theme === "dark" ? "dark" : "light");
   }
 }
 
@@ -223,14 +513,12 @@ async function fetchSmartIPs() {
     ]);
 
     let config = {};
-    let cartoKey = "";
     if (configRes && configRes.ok) {
       try {
         config = await configRes.json();
-        cartoKey = config.carto_api_key || "";
-      } catch (_) { }
+      } catch (_) {}
     }
-    setupLazyMap(cartoKey);
+    setupLazyMap();
 
     const primaryData = await infoRes.json();
     if (primaryData.error) throw new Error(primaryData.error);
@@ -318,12 +606,10 @@ function populateDetails(data) {
       "px-2 py-0.5 rounded text-xs font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20";
   }
 
-  if (data.latitude && data.longitude) {
-    setOrQueueMapLocation(
-      parseFloat(data.latitude),
-      parseFloat(data.longitude),
-      data.city,
-    );
+  const lat = Number(data.latitude);
+  const lon = Number(data.longitude);
+  if (Number.isFinite(lat) && Number.isFinite(lon) && (lat !== 0 || lon !== 0)) {
+    setOrQueueMapLocation(lat, lon, data.city);
   }
 }
 

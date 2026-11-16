@@ -43,14 +43,9 @@
   <link rel="preload" href="/fonts/inter-v20-latin-regular.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="/fonts/inter-v20-latin-700.woff2" as="font" type="font/woff2" crossorigin />
 
-  <link rel="stylesheet" href="/style.min.css?v=1.1" />
-  <link rel="stylesheet" href="/leaflet/leaflet.css" media="print" onload="this.media='all'" />
-  <noscript>
-    <link rel="stylesheet" href="/leaflet/leaflet.css" />
-  </noscript>
+  <link rel="stylesheet" href="/style.min.css?v=1.2" />
 
-  <script src="/leaflet/leaflet.js" defer></script>
-  <script src="/app.js?v=1.4" defer></script>
+  <script src="/app.js?v=1.5" defer></script>
   <script src="/dnsleak.js?v=1.0" defer></script>
 
   <script type="application/ld+json">
@@ -257,7 +252,14 @@
     </div>
 
     <div class="glass-panel p-1 rounded-xl shadow-2xl shadow-blue-900/10">
-      <div id="map"></div>
+      <div id="mapWrapper"
+        class="relative w-full h-[260px] sm:h-[320px] md:h-[360px] lg:h-[380px] rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-900/70">
+        <div id="map" class="w-full h-full"></div>
+        <div id="mapOverlayStatus" role="status" aria-live="polite"
+          class="hidden absolute inset-0 z-10 flex items-center justify-center p-4 text-center text-xs sm:text-sm text-slate-600 dark:text-slate-300 bg-slate-100/85 dark:bg-slate-900/80 backdrop-blur-xs pointer-events-none">
+          <span>Loading interactive map...</span>
+        </div>
+      </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -511,11 +513,17 @@ Loading...</pre>
           </p>
           <p>
             Map data &copy;
-            <a href="https://www.openstreetmap.org/copyright" rel="nofollow" target="_blank"
+            <a href="https://www.openstreetmap.org/copyright" rel="nofollow noopener noreferrer" target="_blank"
               class="text-slate-700 dark:text-slate-300 underline decoration-slate-400 dark:decoration-slate-700 hover:text-blue-600 dark:hover:text-white">OpenStreetMap</a>
-            contributors. Rendered via
-            <a href="https://leafletjs.com" rel="nofollow" target="_blank"
-              class="text-slate-700 dark:text-slate-300 underline decoration-slate-400 dark:decoration-slate-700 hover:text-blue-600 dark:hover:text-white">Leaflet</a>.
+            contributors. Satellite imagery &copy;
+            <a href="https://www.esri.com/" rel="nofollow noopener noreferrer" target="_blank"
+              class="text-slate-700 dark:text-slate-300 underline decoration-slate-400 dark:decoration-slate-700 hover:text-blue-600 dark:hover:text-white">Esri</a>.
+            Rendered via
+            <a href="https://maplibre.org/" rel="nofollow noopener noreferrer" target="_blank"
+              class="text-slate-700 dark:text-slate-300 underline decoration-slate-400 dark:decoration-slate-700 hover:text-blue-600 dark:hover:text-white">MapLibre</a>
+            &amp;
+            <a href="https://openfreemap.org/" rel="nofollow noopener noreferrer" target="_blank"
+              class="text-slate-700 dark:text-slate-300 underline decoration-slate-400 dark:decoration-slate-700 hover:text-blue-600 dark:hover:text-white">OpenFreeMap</a>.
           </p>
           <p>Powered by Node.js & WiredAlter Cloud.</p>
         </div>

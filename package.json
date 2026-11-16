@@ -14,13 +14,16 @@
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.3.5",
+    "maplibre-gl": "^6.18.0",
     "tailwindcss": "^4.3.5",
     "terser": "^5.51.2"
   },
   "scripts": {
     "start": "node server.js",
+    "prestart": "node scripts/build-map.mjs --if-available",
     "build:js": "terser views/app.js -c -m -o views/app.min.js",
     "build:css": "npx @tailwindcss/cli -i ./views/input.css -o ./public/style.min.css --minify",
-    "build": "npm run build:js && npm run build:css"
+    "build:map": "node scripts/build-map.mjs",
+    "build": "npm run build:js && npm run build:css && npm run build:map"
   }
 }

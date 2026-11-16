@@ -36,18 +36,6 @@
   ],
   "customManagers": [
     {
-      "description": "Update Leaflet version in index.html",
-      "customType": "regex",
-      "managerFilePatterns": [
-        "/^index\\.html$/"
-      ],
-      "matchStrings": [
-        "renovate: leaflet-version=(?<currentValue>[^\\s]+)"
-      ],
-      "depNameTemplate": "leaflet",
-      "datasourceTemplate": "npm"
-    },
-    {
       "description": "Update Inter font version in input.css",
       "customType": "regex",
       "managerFilePatterns": [

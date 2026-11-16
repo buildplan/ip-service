@@ -24,7 +24,7 @@ app.set("trust proxy", "loopback, linklocal, uniquelocal");
 app.use(cors()); // Enable CORS for v4.ip... and v6.ip
 
 app.use(express.static(path.join(__dirname, "views"), { index: false }));
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "public"), { maxAge: "7d" }));
 
 // --- CACHE SETUP ---
 const geoCache = new LRUCache({
@@ -132,7 +132,6 @@ app.get("/api/config", (req, res) => {
   res.json({
     v4_url: process.env.V4_API_URL || "https://v4-ip.wiredalter.com/api/info",
     v6_url: process.env.V6_API_URL || "https://v6-ip.wiredalter.com/api/info",
-    carto_api_key: process.env.CARTO_API_KEY || "",
   });
 });
 
