@@ -7,6 +7,10 @@ on:
     paths-ignore: [ '**.md', '.gitignore', 'renovate.json', 'LICENSE', 'docs/**', 'nodhi.Dockerfile', 'docker-compose.yml', docker-compose.prod.yml' ]
   workflow_dispatch:
 
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref_type != 'tag' }}
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}

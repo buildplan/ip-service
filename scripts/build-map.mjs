@@ -18,6 +18,21 @@ function resolveMapLibrePkg() {
     }
 }
 
+function syncAppCacheBuster(version) {
+    const appJsPath = path.join(rootDir, 'views', 'app.js');
+    if (!fs.existsSync(appJsPath)) return false;
+
+    const current = fs.readFileSync(appJsPath, 'utf8');
+    const updated = current.replace(
+        /(\/maplibre\/maplibre-gl(?:-worker)?\.(?:css|mjs))\?v=[^"'\s]+/g,
+        `$1?v=${version}`,
+    );
+
+    if (updated === current) return false;
+    fs.writeFileSync(appJsPath, updated);
+    return true;
+}
+
 function main() {
     const maplibrePkgPath = resolveMapLibrePkg();
     if (!maplibrePkgPath) {
@@ -28,6 +43,7 @@ function main() {
         throw new Error('Could not resolve maplibre-gl/package.json. Run "npm install" first.');
     }
 
+    const { version } = JSON.parse(fs.readFileSync(maplibrePkgPath, 'utf8'));
     const distDir = path.join(path.dirname(maplibrePkgPath), 'dist');
     const outDir = path.join(rootDir, 'public', 'maplibre');
     fs.mkdirSync(outDir, { recursive: true });
@@ -45,7 +61,9 @@ function main() {
         }
     }
 
-    console.log(`Synced MapLibre GL assets (${files.join(', ')}) to public/maplibre/.`);
+    const updatedVersion = syncAppCacheBuster(version);
+    const versionNote = updatedVersion ? ` and updated views/app.js cache-buster to v=${version}` : '';
+    console.log(`Synced MapLibre GL v${version} assets (${files.join(', ')}) to public/maplibre/${versionNote}.`);
 }
 
 main();
