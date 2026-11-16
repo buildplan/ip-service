@@ -22,9 +22,9 @@ function toggleTheme() {
 }
 initTheme();
 
-const MAPLIBRE_CSS_URL = "/maplibre/maplibre-gl.css?v=6.18.0";
-const MAPLIBRE_JS_URL = "/maplibre/maplibre-gl.mjs?v=6.18.0";
-const MAPLIBRE_WORKER_URL = "/maplibre/maplibre-gl-worker.mjs?v=6.18.0";
+const MAPLIBRE_CSS_URL = "/maplibre/maplibre-gl.css?v=6.18.0-2";
+const MAPLIBRE_JS_URL = "/maplibre/maplibre-gl.mjs?v=6.18.0-2";
+const MAPLIBRE_WORKER_URL = "/maplibre/maplibre-gl-worker.mjs?v=6.18.0-2";
 
 const MAP_STYLES = {
   dark: "https://tiles.openfreemap.org/styles/fiord",
@@ -346,7 +346,7 @@ async function initMap(initialCenter) {
     map.addControl(new mod.AttributionControl({ compact: true }), "bottom-right");
 
     map.on("sourcedata", (e) => {
-      if (e.tile && e.tile.state === "loaded") {
+      if (e.isSourceLoaded || e.tile?.state === "loaded") {
         loadedTileCount++;
         setMapOverlay(null);
       }

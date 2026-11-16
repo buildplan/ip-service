@@ -18,19 +18,22 @@ function resolveMapLibrePkg() {
     }
 }
 
+const ASSET_REV = 2;
+
 function syncAppCacheBuster(version) {
     const appJsPath = path.join(rootDir, 'views', 'app.js');
     if (!fs.existsSync(appJsPath)) return false;
 
+    const tag = `${version}-${ASSET_REV}`;
     const current = fs.readFileSync(appJsPath, 'utf8');
     const updated = current.replace(
         /(\/maplibre\/maplibre-gl(?:-worker)?\.(?:css|mjs))\?v=[^"'\s]+/g,
-        `$1?v=${version}`,
+        `$1?v=${tag}`,
     );
 
     if (updated === current) return false;
     fs.writeFileSync(appJsPath, updated);
-    return true;
+    return tag;
 }
 
 function main() {
@@ -61,8 +64,8 @@ function main() {
         }
     }
 
-    const updatedVersion = syncAppCacheBuster(version);
-    const versionNote = updatedVersion ? ` and updated views/app.js cache-buster to v=${version}` : '';
+    const updatedTag = syncAppCacheBuster(version);
+    const versionNote = updatedTag ? ` and updated views/app.js cache-buster to v=${updatedTag}` : '';
     console.log(`Synced MapLibre GL v${version} assets (${files.join(', ')}) to public/maplibre/${versionNote}.`);
 }
 
