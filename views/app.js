@@ -701,11 +701,6 @@ function openReputationModal() {
   if (!lastReputationResult) return;
   const modal = document.getElementById("rep-modal");
   const content = document.getElementById("modal-content");
-  const backdrop = document.getElementById("rep-modal-backdrop");
-  const panel = document.getElementById("rep-modal-panel");
-
-  modal.classList.remove("hidden");
-  document.body.style.overflow = "hidden";
 
   if (lastReputationResult.is_clean) {
     const copyStr = `IP: ${lastReputationResult.ip} - Status: CLEAN (No threats detected in active feeds)`;
@@ -775,26 +770,11 @@ function openReputationModal() {
         `;
   }
 
-  setTimeout(() => {
-    backdrop.classList.remove("opacity-0");
-    panel.classList.remove("opacity-0", "scale-95");
-    panel.classList.add("opacity-100", "scale-100");
-  }, 10);
+  openAppDialog(modal);
 }
 
 function closeReputationModal() {
-  const modal = document.getElementById("rep-modal");
-  const backdrop = document.getElementById("rep-modal-backdrop");
-  const panel = document.getElementById("rep-modal-panel");
-
-  backdrop.classList.add("opacity-0");
-  panel.classList.add("opacity-0", "scale-95");
-  panel.classList.remove("opacity-100", "scale-100");
-
-  setTimeout(() => {
-    modal.classList.add("hidden");
-    document.body.style.overflow = "";
-  }, 300);
+  closeAppDialog(document.getElementById("rep-modal"));
 }
 
 fetchSmartIPs();
@@ -806,24 +786,14 @@ async function checkWhois() {
   btn.disabled = true;
   btn.innerText = "LOADING...";
 
-  // Open modal immediately with a spinner — gives instant feedback
   const modal = document.getElementById("whois-modal");
-  const backdrop = document.getElementById("whois-modal-backdrop");
-  const panel = document.getElementById("whois-modal-panel");
-
   content.innerHTML = `
     <div class="text-center py-10">
       <svg class="animate-spin h-8 w-8 mx-auto text-blue-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
       <p class="text-sm text-slate-500">Looking up registry data...</p>
     </div>
   `;
-  modal.classList.remove("hidden");
-  document.body.style.overflow = "hidden";
-  setTimeout(() => {
-    backdrop.classList.remove("opacity-0");
-    panel.classList.remove("opacity-0", "scale-95");
-    panel.classList.add("opacity-100", "scale-100");
-  }, 10);
+  openAppDialog(modal);
 
   try {
     const res = await fetch(`/api/whois?ip=${window.currentScanIp}`);
@@ -911,66 +881,93 @@ ${formattedRawText}
 }
 
 function closeWhoisModal() {
-  const modal = document.getElementById("whois-modal");
-  const backdrop = document.getElementById("whois-modal-backdrop");
-  const panel = document.getElementById("whois-modal-panel");
-
-  backdrop.classList.add("opacity-0");
-  panel.classList.add("opacity-0", "scale-95");
-  panel.classList.remove("opacity-100", "scale-100");
-
-  setTimeout(() => {
-    modal.classList.add("hidden");
-    document.body.style.overflow = "";
-  }, 300);
+  closeAppDialog(document.getElementById("whois-modal"));
 }
 
-// --- MODAL UX ---
-// Close on 'Escape'
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") {
-    const repModal = document.getElementById("rep-modal");
-    const whoisModal = document.getElementById("whois-modal");
-    const dnsLeakModal = document.getElementById("dnsleak-modal");
-    if (repModal && !repModal.classList.contains("hidden"))
-      closeReputationModal();
-    if (whoisModal && !whoisModal.classList.contains("hidden"))
-      closeWhoisModal();
-    if (dnsLeakModal && !dnsLeakModal.classList.contains("hidden"))
-      closeDnsLeakModal();
+// --- NATIVE DIALOG HELPERS & TOP-LAYER ANIMATION FALLBACK ---
+let supportsDisplayTransition;
+function canTransitionDisplay() {
+  if (supportsDisplayTransition !== undefined) return supportsDisplayTransition;
+  if (
+    !window.CSS?.supports?.("transition-behavior", "allow-discrete") ||
+    !document.body
+  ) {
+    return false;
   }
-});
-// Close when clicking outside the panel
-const repModal = document.getElementById("rep-modal");
-if (repModal) {
-  repModal.addEventListener("click", (e) => {
-    if (e.target.id === "rep-modal" || e.target.id === "rep-modal-backdrop") {
-      closeReputationModal();
+  const probe = document.createElement("div");
+  probe.style.cssText =
+    "transition: display 1s allow-discrete !important; display: block;";
+  document.body.appendChild(probe);
+  getComputedStyle(probe).display;
+  probe.style.display = "none";
+  supportsDisplayTransition = getComputedStyle(probe).display === "block";
+  probe.remove();
+  return supportsDisplayTransition;
+}
+
+function supportsTopLayerExit() {
+  return Boolean(window.CSS?.supports?.("overlay", "auto") && canTransitionDisplay());
+}
+
+function openAppDialog(dialog) {
+  if (!dialog) return;
+  dialog.removeAttribute("data-closing");
+  if (!dialog.open) {
+    dialog.showModal();
+  }
+}
+
+async function closeAppDialog(dialog) {
+  if (!dialog || !dialog.open) return;
+  if (!supportsTopLayerExit()) {
+    if (dialog.hasAttribute("data-closing")) return;
+    dialog.setAttribute("data-closing", "");
+    const animations = dialog.getAnimations({ subtree: true });
+    if (animations.length > 0) {
+      await Promise.race([
+        Promise.allSettled(animations.map((a) => a.finished)),
+        new Promise((r) => setTimeout(r, 400)),
+      ]);
+    }
+    if (!dialog.hasAttribute("data-closing")) return;
+    dialog.removeAttribute("data-closing");
+  }
+  if (dialog.open) dialog.close();
+}
+
+(function setupAppDialogs() {
+  const supportsClosedBy = "closedBy" in HTMLDialogElement.prototype;
+  const isOutside = (e, dialog) => {
+    const r = dialog.getBoundingClientRect();
+    return (
+      e.clientX < r.left ||
+      e.clientX > r.right ||
+      e.clientY < r.top ||
+      e.clientY > r.bottom
+    );
+  };
+
+  document.querySelectorAll("dialog.app-dialog").forEach((dialog) => {
+    dialog.addEventListener("cancel", (event) => {
+      event.preventDefault();
+      closeAppDialog(dialog);
+    });
+
+    if (!supportsClosedBy) {
+      let pressedOutside = false;
+      dialog.addEventListener("pointerdown", (e) => {
+        pressedOutside = isOutside(e, dialog);
+      });
+      dialog.addEventListener("pointerup", (e) => {
+        if (pressedOutside && isOutside(e, dialog)) closeAppDialog(dialog);
+        pressedOutside = false;
+      });
     }
   });
-}
-const whoisModal = document.getElementById("whois-modal");
-if (whoisModal) {
-  whoisModal.addEventListener("click", (e) => {
-    if (
-      e.target.id === "whois-modal" ||
-      e.target.id === "whois-modal-backdrop"
-    ) {
-      closeWhoisModal();
-    }
-  });
-}
-const dnsLeakModal = document.getElementById("dnsleak-modal");
-if (dnsLeakModal) {
-  dnsLeakModal.addEventListener("click", (e) => {
-    if (
-      e.target.id === "dnsleak-modal" ||
-      e.target.id === "dnsleak-modal-backdrop"
-    ) {
-      closeDnsLeakModal();
-    }
-  });
-}
+})();
+
+window.openAppDialog = openAppDialog;
+window.closeAppDialog = closeAppDialog;
 
 function syntaxHighlight(json) {
   if (typeof json != "string") {

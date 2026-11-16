@@ -159,6 +159,70 @@ html.dark #map .maplibregl-popup-anchor-right .maplibregl-popup-tip { border-lef
 .ip-map-pulse { animation: ip-marker-pulse 2s cubic-bezier(0, 0, 0.2, 1) infinite; }
 @keyframes ip-marker-pulse { 0% { transform: scale(0.95); opacity: 0.75; } 70%, 100% { transform: scale(1.6); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .ip-map-pulse { animation: none; } }
+
+/* --- NATIVE MODAL DIALOGS --- */
+dialog.app-dialog {
+  margin: auto;
+  opacity: 0;
+  transition-property: opacity, transform, display, overlay;
+  transition-duration: 0.22s;
+  transition-timing-function: ease-out;
+  transition-behavior: allow-discrete;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  dialog.app-dialog {
+    transform: scale(0.95);
+  }
+}
+
+dialog.app-dialog:modal {
+  overscroll-behavior: contain;
+}
+
+dialog.app-dialog::backdrop {
+  overflow: hidden;
+  overscroll-behavior: contain;
+  background-color: rgba(15, 23, 42, 0);
+  backdrop-filter: blur(4px);
+  transition-property: background-color, display, overlay;
+  transition-duration: 0.22s;
+  transition-timing-function: ease-out;
+  transition-behavior: allow-discrete;
+}
+
+dialog.app-dialog[open]:not([data-closing]) {
+  display: flex;
+  flex-direction: column;
+  opacity: 1;
+
+  @starting-style {
+    opacity: 0;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    transform: scale(1);
+
+    @starting-style {
+      transform: scale(0.95);
+    }
+  }
+
+  &::backdrop {
+    background-color: rgba(15, 23, 42, 0.78);
+
+    @starting-style {
+      background-color: rgba(15, 23, 42, 0);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  dialog.app-dialog,
+  dialog.app-dialog::backdrop {
+    transition-duration: 0.08s;
+  }
+}
 .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
 html.dark .custom-scrollbar::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); }
 html.dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
