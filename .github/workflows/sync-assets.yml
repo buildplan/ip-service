@@ -57,6 +57,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "Built frontend assets are already up to date."
           else
-            git commit -m "chore(assets): sync built maplibre and frontend assets [skip tag]"
+            git commit -m "chore(assets): sync built maplibre and frontend assets"
             git push
           fi
