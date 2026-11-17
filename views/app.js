@@ -22,9 +22,9 @@ function toggleTheme() {
 }
 initTheme();
 
-const MAPLIBRE_CSS_URL = "/maplibre/maplibre-gl.css?v=6.18.0-2";
-const MAPLIBRE_JS_URL = "/maplibre/maplibre-gl.mjs?v=6.18.0-2";
-const MAPLIBRE_WORKER_URL = "/maplibre/maplibre-gl-worker.mjs?v=6.18.0-2";
+const MAPLIBRE_CSS_URL = "/maplibre/maplibre-gl.css?v=6.19.0-2";
+const MAPLIBRE_JS_URL = "/maplibre/maplibre-gl.mjs?v=6.19.0-2";
+const MAPLIBRE_WORKER_URL = "/maplibre/maplibre-gl-worker.mjs?v=6.19.0-2";
 
 const MAP_STYLES = {
   dark: "https://tiles.openfreemap.org/styles/fiord",
