@@ -1,5 +1,5 @@
 # === Build stage: Install dependencies and dumb-init ===
-FROM dhi.io/node:26.13.1-alpine3.24-dev@sha256:a1cc76e0d8ddd12fbf76a45a573cbf4fe20c261830ae602a1c5d0ab334a39263 AS builder
+FROM dhi.io/node:26.13.1-alpine3.24-dev@sha256:21db1eece24d4b82dedebfd988e9fd862d891b86d7d6d443969d2f32af576f2d AS builder
 
 WORKDIR /usr/src/app
 
