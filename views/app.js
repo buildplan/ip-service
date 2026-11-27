@@ -585,8 +585,10 @@ function populateDetails(data) {
   document.getElementById("dataCity").innerText = data.city;
   document.getElementById("mainLocation").innerText =
     `${data.city}, ${data.country}`;
-  document.getElementById("dataRegion").innerText =
-    `${data.region}, ${data.country}`;
+  const hasRegion = data.region && data.region !== "Unknown";
+  document.getElementById("dataRegion").innerText = hasRegion
+    ? `${data.region}, ${data.country}`
+    : data.country;
 
   if (data.zip && data.zip !== "N/A" && data.zip !== "-") {
     document.getElementById("dataZip").innerText = data.zip;

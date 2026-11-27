@@ -189,9 +189,14 @@ app.get(["/api/info", "/json"], async (req, res) => {
   ) {
     const fallback = await getGeoJS(targetIp);
     if (fallback) {
-      data = { ...data, ...fallback };
-      data.is_fallback = true;
-      data.coordinates = `${data.latitude}, ${data.longitude}`;
+      data = {
+        ...data,
+        ...fallback,
+        region: fallback.region || "Unknown",
+        zip: "N/A",
+        is_fallback: true,
+        coordinates: `${fallback.latitude}, ${fallback.longitude}`,
+      };
     }
   }
 
