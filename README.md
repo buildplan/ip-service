@@ -83,8 +83,12 @@ The service requires the following database files to be placed in the `ip_dbs/` 
 
 * `GeoLite2-City.mmdb` (MaxMind)
 * `GeoLite2-ASN.mmdb` (MaxMind)
+* `ipinfo-asn.mmdb` (IPinfo)
 * `IP2LOCATION-LITE-DB11.IPV6.BIN` (IP2Location)
-* `IP2PROXY-LITE-PX11.IPV6.BIN` (IP2Location)
+* `IP2PROXY-LITE-PX11.BIN` (IP2Location)
+* `rdap-ipv4.json` & `rdap-ipv6.json` (Optional IANA RDAP bootstrap files; auto-fetched from IANA if absent, or updated via `db_scripts/iana-rdap-update.sh`)
+
+These can be fetched and updated automatically using the maintenance scripts in `db_scripts/`.
 
 ### Deployment
 

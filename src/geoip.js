@@ -6,21 +6,282 @@ const fs = require("fs");
 const { vpnHostingProviders, vpnASNs } = require("./providers.js");
 
 // --- DATABASE PATHS ---
+function getDbPath(envVar, defaultFilename, fallbackCandidate) {
+  if (envVar) return envVar;
+  const basePath = path.join(__dirname, "..", "db");
+  const defaultPath = path.join(basePath, defaultFilename);
+  if (fs.existsSync(defaultPath)) return defaultPath;
+  if (fallbackCandidate) {
+    const candidatePath = path.join(basePath, fallbackCandidate);
+    if (fs.existsSync(candidatePath)) return candidatePath;
+  }
+  return defaultPath;
+}
+
 const cityDbPath =
   process.env.CITY_DB_PATH ||
   path.join(__dirname, "..", "db", "GeoLite2-City.mmdb");
 const asnDbPath =
   process.env.ASN_DB_PATH ||
   path.join(__dirname, "..", "db", "GeoLite2-ASN.mmdb");
-const proxyDbPath =
-  process.env.PROXY_DB_PATH ||
-  path.join(__dirname, "..", "db", "IP2PROXY-LITE-PX11.BIN");
-const db11Path =
-  process.env.DB11_PATH ||
-  path.join(__dirname, "..", "db", "IP2LOCATION-LITE-DB11.IPV6.BIN");
+const proxyDbPath = getDbPath(
+  process.env.PROXY_DB_PATH,
+  "IP2PROXY-LITE-PX11.BIN",
+  "IP2PROXY-LITE-PX11.IPV6.BIN",
+);
+const db11Path = getDbPath(
+  process.env.DB11_PATH,
+  "IP2LOCATION-LITE-DB11.IPV6.BIN",
+  "IP2LOCATION-LITE-DB11.BIN",
+);
 const ipinfoAsnDbPath =
   process.env.IPINFO_ASN_DB_PATH ||
   path.join(__dirname, "..", "db", "ipinfo-asn.mmdb");
+
+function cleanValue(val) {
+  if (!val || typeof val !== "string") return null;
+  const trimmed = val.trim();
+  if (
+    !trimmed ||
+    trimmed === "-" ||
+    trimmed === "?" ||
+    trimmed === "N/A" ||
+    trimmed === "RP" ||
+    trimmed === "Unknown"
+  ) {
+    return null;
+  }
+  const upper = trimmed.toUpperCase();
+  if (
+    upper.includes("INVALID IP") ||
+    upper.includes("INVALID_IP") ||
+    upper.includes("MISSING") ||
+    upper.includes("NOT SUPPORTED") ||
+    upper.includes("NOT APPLICABLE") ||
+    upper.includes("IPV6_NOT_SUPPORTED") ||
+    upper.includes("IPV6 ADDRESS MISSING") ||
+    upper.includes("UNAVAILABLE") ||
+    upper.includes("INCORRECT IP2PROXY") ||
+    upper.includes("INCORRECT IP2LOCATION")
+  ) {
+    return null;
+  }
+  return trimmed;
+}
+
+function normalizeLocationName(val) {
+  if (typeof val !== "string") return "";
+  return val
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
+function extractCoordinates(rawLat, rawLong) {
+  const lat = typeof rawLat === "number" ? rawLat : parseFloat(rawLat);
+  const long = typeof rawLong === "number" ? rawLong : parseFloat(rawLong);
+  if (
+    Number.isFinite(lat) &&
+    Number.isFinite(long) &&
+    (lat !== 0 || long !== 0)
+  ) {
+    return { lat, long };
+  }
+  return { lat: null, long: null };
+}
+
+function parseOffsetMinutes(str) {
+  if (typeof str !== "string") return null;
+  const trimmed = str.trim();
+  if (!trimmed) return null;
+
+  const hhmm = trimmed.match(/^([+-])(\d{1,2}):(\d{2})$/);
+  if (hhmm) {
+    const sign = hhmm[1] === "-" ? -1 : 1;
+    const hours = Number(hhmm[2]);
+    const mins = Number(hhmm[3]);
+    if (hours > 14 || mins >= 60) return null;
+    return sign * (hours * 60 + mins);
+  }
+
+  const gmt = trimmed.match(/^GMT(?:([+-])(\d{1,2})(?::(\d{2}))?)?$/);
+  if (gmt) {
+    if (!gmt[1]) return 0;
+    const sign = gmt[1] === "-" ? -1 : 1;
+    const hours = Number(gmt[2]);
+    const mins = gmt[3] ? Number(gmt[3]) : 0;
+    if (hours > 14 || mins >= 60) return null;
+    return sign * (hours * 60 + mins);
+  }
+
+  return null;
+}
+
+const ianaOffsetCache = new Map();
+const JAN_SAMPLE_DATE = new Date("2026-01-15T00:00:00Z");
+const JUL_SAMPLE_DATE = new Date("2026-07-15T00:00:00Z");
+
+function getIanaZoneOffsets(ianaZone) {
+  if (typeof ianaZone !== "string" || !ianaZone.trim()) return null;
+  const zone = ianaZone.trim();
+  if (ianaOffsetCache.has(zone)) return ianaOffsetCache.get(zone);
+
+  try {
+    const fmt = new Intl.DateTimeFormat("en-US", {
+      timeZone: zone,
+      timeZoneName: "shortOffset",
+    });
+    const offsets = new Set();
+    for (const sampleDate of [JAN_SAMPLE_DATE, JUL_SAMPLE_DATE]) {
+      const part = fmt
+        .formatToParts(sampleDate)
+        .find((p) => p.type === "timeZoneName");
+      const mins = part ? parseOffsetMinutes(part.value) : null;
+      if (mins !== null) offsets.add(mins);
+    }
+    const result = offsets.size > 0 ? offsets : null;
+    ianaOffsetCache.set(zone, result);
+    return result;
+  } catch (_) {
+    ianaOffsetCache.set(zone, null);
+    return null;
+  }
+}
+
+function isIanaTimezoneCompatible(ianaZone, db11Offset) {
+  const offsets = getIanaZoneOffsets(ianaZone);
+  if (!offsets) return false;
+  const db11Minutes = parseOffsetMinutes(db11Offset);
+  if (db11Minutes === null) return true;
+  return offsets.has(db11Minutes);
+}
+
+function extractMaxMindLocation(cityData) {
+  const coords = extractCoordinates(
+    cityData?.location?.latitude,
+    cityData?.location?.longitude,
+  );
+  return {
+    country: cleanValue(cityData?.country?.names?.en),
+    countryCode: cleanValue(cityData?.country?.iso_code),
+    city: cleanValue(cityData?.city?.names?.en),
+    region: cleanValue(cityData?.subdivisions?.[0]?.names?.en),
+    timezone: cleanValue(cityData?.location?.time_zone),
+    zip: cleanValue(cityData?.postal?.code),
+    lat: coords.lat,
+    long: coords.long,
+  };
+}
+
+function extractDb11Location(db11Data) {
+  const coords = extractCoordinates(db11Data?.latitude, db11Data?.longitude);
+  return {
+    country: cleanValue(db11Data?.countryLong),
+    countryCode: cleanValue(db11Data?.countryShort),
+    city: cleanValue(db11Data?.city),
+    region: cleanValue(db11Data?.region),
+    timezone: cleanValue(db11Data?.timeZone),
+    zip: cleanValue(db11Data?.zipCode),
+    lat: coords.lat,
+    long: coords.long,
+  };
+}
+
+/**
+ * Merge location records from GeoLite2-City (primary) and IP2Location DB11 (fallback)
+ * without mixing incompatible fields across different cities or countries.
+ */
+function mergeLocationData(cityData, db11Data) {
+  const mm = extractMaxMindLocation(cityData);
+  const db11 = extractDb11Location(db11Data);
+
+  const sameCountry =
+    mm.countryCode && db11.countryCode
+      ? mm.countryCode.toUpperCase() === db11.countryCode.toUpperCase()
+      : Boolean(
+          mm.country &&
+          db11.country &&
+          normalizeLocationName(mm.country) ===
+            normalizeLocationName(db11.country),
+        );
+
+  const sameCity =
+    sameCountry &&
+    Boolean(mm.city && db11.city) &&
+    normalizeLocationName(mm.city) === normalizeLocationName(db11.city);
+
+  const sameRegion =
+    sameCountry &&
+    Boolean(mm.region && db11.region) &&
+    normalizeLocationName(mm.region) === normalizeLocationName(db11.region);
+
+  if (mm.city) {
+    const hasMmCoords = mm.lat !== null && mm.long !== null;
+    const hasDbCoords = sameCity && db11.lat !== null && db11.long !== null;
+    return {
+      country: mm.country || (sameCountry ? db11.country : null) || "Unknown",
+      country_code:
+        mm.countryCode || (sameCountry ? db11.countryCode : null) || "XX",
+      city: mm.city,
+      region: mm.region || (sameCity ? db11.region : null) || "Unknown",
+      timezone: mm.timezone || (sameCity ? db11.timezone : null) || "Unknown",
+      latitude: hasMmCoords ? mm.lat : hasDbCoords ? db11.lat : 0,
+      longitude: hasMmCoords ? mm.long : hasDbCoords ? db11.long : 0,
+      zip: mm.zip || (sameCity ? db11.zip : null) || "N/A",
+    };
+  }
+
+  if (db11.city) {
+    const hasDbCoords = db11.lat !== null && db11.long !== null;
+    const preferMmTimezone =
+      sameCountry && isIanaTimezoneCompatible(mm.timezone, db11.timezone);
+    return {
+      country: (sameCountry && mm.country) || db11.country || "Unknown",
+      country_code: db11.countryCode || "XX",
+      city: db11.city,
+      region: db11.region || (sameCountry ? mm.region : null) || "Unknown",
+      timezone:
+        (preferMmTimezone ? mm.timezone : null) ||
+        db11.timezone ||
+        (sameCountry ? mm.timezone : null) ||
+        "Unknown",
+      latitude: hasDbCoords ? db11.lat : 0,
+      longitude: hasDbCoords ? db11.long : 0,
+      zip: db11.zip || "N/A",
+    };
+  }
+
+  if (mm.country || mm.countryCode) {
+    const hasMmCoords = mm.lat !== null && mm.long !== null;
+    const hasDbCoords =
+      sameCountry && db11.lat !== null && db11.long !== null;
+    return {
+      country: mm.country || (sameCountry ? db11.country : null) || "Unknown",
+      country_code:
+        mm.countryCode || (sameCountry ? db11.countryCode : null) || "XX",
+      city: "Unknown",
+      region: mm.region || (sameCountry ? db11.region : null) || "Unknown",
+      timezone:
+        mm.timezone || (sameCountry ? db11.timezone : null) || "Unknown",
+      latitude: hasMmCoords ? mm.lat : hasDbCoords ? db11.lat : 0,
+      longitude: hasMmCoords ? mm.long : hasDbCoords ? db11.long : 0,
+      zip: mm.zip || (sameRegion ? db11.zip : null) || "N/A",
+    };
+  }
+
+  const hasDbCoords = db11.lat !== null && db11.long !== null;
+  return {
+    country: db11.country || "Unknown",
+    country_code: db11.countryCode || "XX",
+    city: "Unknown",
+    region: db11.region || "Unknown",
+    timezone: db11.timezone || "Unknown",
+    latitude: hasDbCoords ? db11.lat : 0,
+    longitude: hasDbCoords ? db11.long : 0,
+    zip: db11.zip || "N/A",
+  };
+}
 
 let cityLookup, asnLookup, proxyLookup, db11Lookup, ipinfoAsnLookup;
 
@@ -52,36 +313,52 @@ function watchDatabase(filePath, reloadCallback, dbName) {
 
 async function initGeoDb() {
   try {
-    const loadCity = async () => {
-      cityLookup = await maxmind.open(cityDbPath);
-    };
-    await loadCity();
-    console.log(`✅ City DB loaded`);
-    watchDatabase(cityDbPath, loadCity, "GeoLite2-City");
+    if (fs.existsSync(cityDbPath)) {
+      const loadCity = async () => {
+        cityLookup = await maxmind.open(cityDbPath);
+      };
+      await loadCity();
+      console.log(`✅ City DB loaded`);
+      watchDatabase(cityDbPath, loadCity, "GeoLite2-City");
+    } else {
+      console.warn(`⚠️ City DB missing at ${cityDbPath}`);
+    }
+  } catch (e) {
+    console.warn(`⚠️ City DB error:`, e.message);
+  }
 
-    try {
+  try {
+    if (fs.existsSync(asnDbPath)) {
       const loadAsn = async () => {
         asnLookup = await maxmind.open(asnDbPath);
       };
       await loadAsn();
       console.log(`✅ ASN DB loaded`);
       watchDatabase(asnDbPath, loadAsn, "GeoLite2-ASN");
-    } catch (e) {
-      console.warn(`⚠️ ASN DB missing`);
+    } else {
+      console.warn(`⚠️ ASN DB missing at ${asnDbPath}`);
     }
+  } catch (e) {
+    console.warn(`⚠️ ASN DB error:`, e.message);
+  }
 
-    try {
+  try {
+    if (fs.existsSync(ipinfoAsnDbPath)) {
       const loadIpInfo = async () => {
         ipinfoAsnLookup = await maxmind.open(ipinfoAsnDbPath);
       };
       await loadIpInfo();
       console.log(`✅ IPinfo ASN DB loaded`);
       watchDatabase(ipinfoAsnDbPath, loadIpInfo, "IPinfo-ASN");
-    } catch (e) {
-      console.warn(`⚠️ IPinfo ASN DB missing`);
+    } else {
+      console.warn(`⚠️ IPinfo ASN DB missing at ${ipinfoAsnDbPath}`);
     }
+  } catch (e) {
+    console.warn(`⚠️ IPinfo ASN DB error:`, e.message);
+  }
 
-    try {
+  try {
+    if (fs.existsSync(db11Path)) {
       const loadDb11 = () => {
         const newDb11 = new IP2Location();
         newDb11.open(db11Path);
@@ -90,11 +367,15 @@ async function initGeoDb() {
       loadDb11();
       console.log(`✅ DB11 (Fallback) loaded`);
       watchDatabase(db11Path, loadDb11, "IP2Location-DB11");
-    } catch (e) {
-      console.warn(`⚠️ DB11 Error`);
+    } else {
+      console.warn(`⚠️ DB11 DB missing at ${db11Path}`);
     }
+  } catch (e) {
+    console.warn(`⚠️ DB11 error:`, e.message);
+  }
 
-    try {
+  try {
+    if (fs.existsSync(proxyDbPath)) {
       const loadProxy = () => {
         const newProxy = new IP2Proxy();
         if (newProxy.open(proxyDbPath) === 0) {
@@ -102,13 +383,17 @@ async function initGeoDb() {
         }
       };
       loadProxy();
-      console.log(`✅ Proxy DB loaded`);
-      watchDatabase(proxyDbPath, loadProxy, "IP2Proxy");
-    } catch (e) {
-      console.warn(`⚠️ Proxy DB error`);
+      if (proxyLookup) {
+        console.log(`✅ Proxy DB loaded`);
+        watchDatabase(proxyDbPath, loadProxy, "IP2Proxy");
+      } else {
+        console.warn(`⚠️ Proxy DB failed to open at ${proxyDbPath}`);
+      }
+    } else {
+      console.warn(`⚠️ Proxy DB missing at ${proxyDbPath}`);
     }
-  } catch (err) {
-    console.error("❌ DB Error:", err);
+  } catch (e) {
+    console.warn(`⚠️ Proxy DB error:`, e.message);
   }
 }
 
@@ -129,8 +414,8 @@ function getGeoData(ip) {
       org: "Unknown",
       network: "N/A",
       is_proxy: false,
-      proxy_type: "Unknown",
-      usage_type: "Unknown",
+      proxy_type: "No",
+      usage_type: "Standard ISP",
       threat: "None",
       provider: "N/A",
     };
@@ -156,8 +441,15 @@ function getGeoData(ip) {
       country: "Reserved",
       country_code: "XX",
       city: "Local Network",
+      region: "Local Network",
+      timezone: "Local",
+      coordinates: "0, 0",
+      latitude: 0,
+      longitude: 0,
+      zip: "N/A",
       asn: "N/A",
       org: "Localhost",
+      network: "N/A",
       is_proxy: false,
       proxy_type: "Local",
       usage_type: "RES",
@@ -168,75 +460,116 @@ function getGeoData(ip) {
 
   try {
     // --- DATA LOOKUPS ---
-    const cityData = cityLookup ? cityLookup.get(ip) : null;
+    let cityData = null;
+    if (cityLookup) {
+      try {
+        cityData = cityLookup.get(ip);
+      } catch (e) {
+        cityData = null;
+      }
+    }
+
     let asnData = null;
     let asnPrefix = null;
     if (asnLookup) {
-      if (typeof asnLookup.getWithPrefixLength === 'function') {
-        const result = asnLookup.getWithPrefixLength(ip);
-        if (result) {
-          asnData = result[0];
-          asnPrefix = result[1];
+      try {
+        if (typeof asnLookup.getWithPrefixLength === "function") {
+          const result = asnLookup.getWithPrefixLength(ip);
+          if (result) {
+            asnData = result[0];
+            asnPrefix = result[1];
+          }
+        } else {
+          asnData = asnLookup.get(ip);
         }
-      } else {
-        asnData = asnLookup.get(ip);
+      } catch (e) {
+        asnData = null;
       }
     }
-    const proxyData = proxyLookup ? proxyLookup.getAll(ip) : {};
-    const ipinfoData = ipinfoAsnLookup ? ipinfoAsnLookup.get(ip) : null;
 
-    let orgName = asnData
-      ? asnData.autonomous_system_organization
-      : "Unknown ISP";
-    if (orgName === "Unknown ISP" && ipinfoData && ipinfoData.name) {
-      orgName = ipinfoData.name;
+    let proxyData = {};
+    if (proxyLookup) {
+      try {
+        proxyData = proxyLookup.getAll(ip) || {};
+      } catch (e) {
+        proxyData = {};
+      }
     }
-    const asnNumber = asnData
-      ? `AS${asnData.autonomous_system_number}`
-      : ipinfoData
-        ? ipinfoData.asn
-        : "Unknown";
 
-    let networkCidr = "N/A";
-    if (cityData && cityData.traits && cityData.traits.network) networkCidr = cityData.traits.network;
-    else if (asnData && asnData.network) networkCidr = asnData.network;
-    else if (ipinfoData && ipinfoData.route) networkCidr = ipinfoData.route;
-    else if (ipinfoData && ipinfoData.network) networkCidr = ipinfoData.network;
-    else if (asnPrefix !== null) {
-      if (typeof ip === "string" && ip.includes(":")) {
-        networkCidr = `${ip}/${asnPrefix}`; // IPv6 approx
-      } else if (typeof ip === "string") {
-        // basic IPv4 cidr masking
-        const parts = ip.split('.').map(Number);
-        const shift = 32 - asnPrefix;
-        const ipInt = ((parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8) | parts[3]) >>> 0;
-        const mask = (~0 << shift) >>> 0;
-        const baseInt = (ipInt & mask) >>> 0;
-        const baseIp = [(baseInt >>> 24) & 255, (baseInt >>> 16) & 255, (baseInt >>> 8) & 255, baseInt & 255].join('.');
-        networkCidr = `${baseIp}/${asnPrefix}`;
+    let ipinfoData = null;
+    if (ipinfoAsnLookup) {
+      try {
+        ipinfoData = ipinfoAsnLookup.get(ip);
+      } catch (e) {
+        ipinfoData = null;
       }
     }
 
     // DB11 Fallback
-    const db11Data = db11Lookup ? db11Lookup.getAll(ip) : {};
+    let db11Data = {};
+    if (db11Lookup) {
+      try {
+        db11Data = db11Lookup.getAll(ip) || {};
+      } catch (e) {
+        db11Data = {};
+      }
+    }
 
-    // Helper: Prioritize MaxMind -> DB11 -> Unknown
-    const pick = (primary, secondary) => {
-      if (primary && primary !== "Unknown" && primary !== "") return primary;
-      if (
-        secondary &&
-        secondary !== "-" &&
-        secondary !== "This parameter is unavailable for selected data file."
-      )
-        return secondary;
-      return "Unknown";
-    };
+    const orgName =
+      cleanValue(asnData?.autonomous_system_organization) ||
+      cleanValue(ipinfoData?.name) ||
+      cleanValue(db11Data.isp) ||
+      cleanValue(proxyData.isp) ||
+      "Unknown ISP";
+
+    let asnNumber = "Unknown";
+    if (asnData && asnData.autonomous_system_number) {
+      asnNumber = `AS${asnData.autonomous_system_number}`;
+    } else if (cleanValue(ipinfoData?.asn)) {
+      asnNumber = cleanValue(ipinfoData.asn);
+    } else if (cleanValue(db11Data.asn)) {
+      asnNumber = cleanValue(db11Data.asn);
+    }
+
+    let networkCidr = "N/A";
+    if (cityData?.traits?.network) networkCidr = cityData.traits.network;
+    else if (asnData?.network) networkCidr = asnData.network;
+    else if (cleanValue(ipinfoData?.route)) networkCidr = cleanValue(ipinfoData.route);
+    else if (cleanValue(ipinfoData?.network)) networkCidr = cleanValue(ipinfoData.network);
+    else if (asnPrefix !== null && asnPrefix !== undefined) {
+      if (ip.includes(":")) {
+        networkCidr = `${ip}/${asnPrefix}`; // IPv6 approx
+      } else {
+        // basic IPv4 cidr masking
+        const parts = ip.split(".").map(Number);
+        const shift = 32 - asnPrefix;
+        if (shift >= 32) {
+          networkCidr = `0.0.0.0/${asnPrefix}`;
+        } else {
+          const ipInt =
+            ((parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8) | parts[3]) >>>
+            0;
+          const mask = (~0 << shift) >>> 0;
+          const baseInt = (ipInt & mask) >>> 0;
+          const baseIp = [
+            (baseInt >>> 24) & 255,
+            (baseInt >>> 16) & 255,
+            (baseInt >>> 8) & 255,
+            baseInt & 255,
+          ].join(".");
+          networkCidr = `${baseIp}/${asnPrefix}`;
+        }
+      }
+    }
+
+    // --- SANITIZE IP2PROXY DATA ---
+    const rawProxyType = cleanValue(proxyData.proxyType);
+    const rawUsage = cleanValue(proxyData.usageType);
+    const rawThreat = cleanValue(proxyData.threat);
+    const rawProvider = cleanValue(proxyData.provider);
+    const rawIsProxy = proxyData.isProxy === 1 || proxyData.isProxy === 2;
 
     // --- USAGE TYPE DETECTION ---
-    let rawUsage = proxyData.usageType;
-    if (!rawUsage || rawUsage === "-" || rawUsage === "RP") {
-      rawUsage = "Standard";
-    }
     const usageMap = {
       ISP: "Residential",
       MOB: "Mobile Data",
@@ -247,9 +580,32 @@ function getGeoData(ip) {
       DCH: "Datacenter",
       CDN: "CDN",
       SES: "Search Engine Spider",
-      Standard: "Standard ISP",
     };
-    let usageType = usageMap[rawUsage] || rawUsage;
+
+    let usageType = null;
+    if (rawUsage && usageMap[rawUsage]) {
+      usageType = usageMap[rawUsage];
+    } else if (rawUsage && rawUsage !== "Standard" && rawUsage !== "Standard ISP") {
+      usageType = rawUsage;
+    }
+
+    // Fallback: Check IPinfo ASN classification if usageType is still unknown
+    if (!usageType && ipinfoData && ipinfoData.type) {
+      const ipinfoTypeMap = {
+        isp: "Residential",
+        hosting: "Datacenter",
+        business: "Commercial",
+        education: "University",
+      };
+      if (ipinfoTypeMap[ipinfoData.type]) {
+        usageType = ipinfoTypeMap[ipinfoData.type];
+      }
+    }
+
+    // Default if still unknown
+    if (!usageType) {
+      usageType = "Standard ISP";
+    }
 
     // If it's a "Standard ISP" (unknown) but matches a Cloud Provider, rename it.
     if (usageType === "Standard ISP") {
@@ -267,26 +623,33 @@ function getGeoData(ip) {
     let riskLabel = "No";
 
     // A) Check Database First (IP2Proxy LITE)
-    if (proxyData && proxyData.isProxy === 1) {
-      isProxy = true;
+    if (rawIsProxy && rawProxyType) {
       const typeMap = {
         VPN: "VPN Service",
         DCH: "Datacenter",
         TOR: "Tor Node",
         PUB: "Public Proxy",
+        WEB: "Web Proxy",
         SES: "Search Engine Spider",
+        RES: "Residential Proxy",
+        CPX: "Consumer Privacy Network",
+        EPX: "Enterprise Proxy",
       };
-      riskLabel = typeMap[proxyData.proxyType] || proxyData.proxyType;
+      // WAP (Wireless Access Point) is not considered a proxy risk
+      if (rawProxyType !== "WAP") {
+        isProxy = true;
+        riskLabel = typeMap[rawProxyType] || rawProxyType;
+      }
     }
 
-    // B) Check IPinfo ASN Database
+    // B) Check IPinfo ASN Database (Hosting / Cloud)
     if (!isProxy && ipinfoData && ipinfoData.type === "hosting") {
       isProxy = true;
       riskLabel = "Cloud/VPS Provider";
       usageType = "Datacenter";
     }
 
-    // C) Fallback: Check Provider Lists
+    // C) Fallback: Check Provider Lists against orgName
     if (!isProxy && orgName !== "Unknown ISP") {
       if (
         vpnHostingProviders.high.some((p) =>
@@ -325,73 +688,42 @@ function getGeoData(ip) {
     }
 
     // --- THREAT & PROVIDER SANITIZATION ---
-    let threat = proxyData.threat || "-";
-    let provider = proxyData.provider || "-";
-
-    if (threat === "-") threat = "None";
-    if (provider === "-") provider = "N/A";
+    let threat = "None";
+    let provider = "N/A";
 
     if (isProxy && riskLabel !== "No") {
-      if (usageType === "Standard ISP" || usageType === "Standard")
+      if (usageType === "Standard ISP" || usageType === "Standard") {
         usageType = "Datacenter";
-      if (provider === "N/A") provider = orgName;
+      }
+      provider = rawProvider || orgName;
 
-      if (threat === "None") {
-        if (riskLabel.includes("High") || riskLabel === "VPN ASN Match")
+      if (rawThreat && rawThreat !== "None") {
+        threat = rawThreat;
+      } else {
+        if (riskLabel.includes("High") || riskLabel === "VPN ASN Match") {
           threat = "High (VPN Hosting)";
-        else if (riskLabel.includes("Medium"))
+        } else if (riskLabel.includes("Medium")) {
           threat = "Medium (Hosting Provider)";
-        else threat = "Low (Cloud Provider)";
+        } else {
+          threat = "Low (Cloud Provider)";
+        }
       }
     }
 
     // --- FINAL MERGE ---
-    const cityDataCity = cityData?.city?.names?.en;
-    const db11DataCity = db11Data.city;
-    const hasCityDataCity = cityDataCity && cityDataCity !== "Unknown" && cityDataCity !== "";
-    const hasDb11DataCity = db11DataCity && db11DataCity !== "-" && db11DataCity !== "This parameter is unavailable for selected data file." && db11DataCity !== "Unknown" && db11DataCity !== "";
-
-    let finalCountry, finalCountryCode, finalCity, finalRegion, finalTimezone, lat, long, finalZip;
-
-    if (!hasCityDataCity && hasDb11DataCity) {
-      // Use DB11 entirely for location to avoid mixing different providers' data
-      finalCountry = db11Data.countryLong;
-      finalCountryCode = db11Data.countryShort;
-      finalCity = db11Data.city;
-      finalRegion = db11Data.region;
-      finalTimezone = db11Data.timeZone;
-      lat = parseFloat(db11Data.latitude) || 0;
-      long = parseFloat(db11Data.longitude) || 0;
-      finalZip = db11Data.zipCode && db11Data.zipCode !== "-" && db11Data.zipCode !== "This parameter is unavailable for selected data file." ? db11Data.zipCode : "N/A";
-    } else {
-      // Use CityData (MaxMind) primarily, with DB11 as fallback
-      finalCountry = pick(cityData?.country?.names?.en, db11Data.countryLong);
-      finalCountryCode = pick(cityData?.country?.iso_code, db11Data.countryShort);
-      finalCity = pick(cityData?.city?.names?.en, db11Data.city);
-      finalRegion = pick(cityData?.subdivisions?.[0]?.names?.en, db11Data.region);
-      finalTimezone = pick(cityData?.location?.time_zone, db11Data.timeZone);
-
-      lat = cityData?.location?.latitude || 0;
-      long = cityData?.location?.longitude || 0;
-      if (lat === 0 && db11Data.latitude && db11Data.latitude !== "0.000000") {
-        lat = parseFloat(db11Data.latitude) || 0;
-        long = parseFloat(db11Data.longitude) || 0;
-      }
-
-      finalZip = db11Data.zipCode && db11Data.zipCode !== "-" && db11Data.zipCode !== "This parameter is unavailable for selected data file." ? db11Data.zipCode : "N/A";
-    }
+    const location = mergeLocationData(cityData, db11Data);
 
     return {
       ip,
-      country: finalCountry,
-      country_code: finalCountryCode,
-      city: finalCity,
-      region: finalRegion,
-      timezone: finalTimezone,
-      coordinates: `${lat}, ${long}`,
-      latitude: lat,
-      longitude: long,
-      zip: finalZip,
+      country: location.country,
+      country_code: location.country_code,
+      city: location.city,
+      region: location.region,
+      timezone: location.timezone,
+      coordinates: `${location.latitude}, ${location.longitude}`,
+      latitude: location.latitude,
+      longitude: location.longitude,
+      zip: location.zip,
       asn: asnNumber,
       org: orgName,
       network: networkCidr,
@@ -407,4 +739,20 @@ function getGeoData(ip) {
   }
 }
 
-module.exports = { initGeoDb, getGeoData };
+module.exports = {
+  initGeoDb,
+  getGeoData,
+  mergeLocationData,
+  _internals: {
+    cleanValue,
+    isIanaTimezoneCompatible,
+    mergeLocationData,
+    setLookupsForTests: (mocks = {}) => {
+      cityLookup = mocks.cityLookup ?? null;
+      asnLookup = mocks.asnLookup ?? null;
+      proxyLookup = mocks.proxyLookup ?? null;
+      db11Lookup = mocks.db11Lookup ?? null;
+      ipinfoAsnLookup = mocks.ipinfoAsnLookup ?? null;
+    },
+  },
+};

@@ -38,7 +38,9 @@ function getClientIp(req) {
     req.headers["cf-connecting-ip"] ||
     req.headers["x-real-ip"] ||
     req.ip ||
-    req.socket?.remoteAddress;
+    (req.headers["x-forwarded-for"]
+      ? req.headers["x-forwarded-for"].split(",")[0].trim()
+      : req.socket?.remoteAddress);
   if (Array.isArray(ip)) ip = ip[0];
   if (typeof ip === "string" && ip.startsWith("::ffff:")) ip = ip.substring(7);
   return typeof ip === "string" ? ip : "";
@@ -83,6 +85,7 @@ async function getGeoJS(ip) {
       latitude: parseFloat(data.latitude) || 0,
       longitude: parseFloat(data.longitude) || 0,
       isp: data.organization_name || "Unknown",
+      org: data.organization_name || "Unknown",
       timezone: data.timezone || "UTC",
     };
   } catch (err) {
@@ -189,9 +192,18 @@ app.get(["/api/info", "/json"], async (req, res) => {
   ) {
     const fallback = await getGeoJS(targetIp);
     if (fallback) {
-      data = { ...data, ...fallback };
-      data.is_fallback = true;
-      data.coordinates = `${data.latitude}, ${data.longitude}`;
+      const prevOrg = data.org;
+      data = {
+        ...data,
+        ...fallback,
+        region: fallback.region || "Unknown",
+        zip: "N/A",
+        is_fallback: true,
+        coordinates: `${fallback.latitude}, ${fallback.longitude}`,
+      };
+      if (prevOrg && prevOrg !== "Unknown ISP" && prevOrg !== "Unknown") {
+        data.org = prevOrg;
+      }
     }
   }
 
@@ -285,9 +297,9 @@ app.get("/api/whois", async (req, res) => {
   if (requestedIp !== undefined && typeof requestedIp !== "string") {
     return res.status(400).json({ error: "Invalid IP address" });
   }
-  const ip = requestedIp || getClientIp(req);
+  const ip = (requestedIp || getClientIp(req)).trim();
   const ua = req.headers["user-agent"];
-  if (typeof ip !== "string" || !maxmind.validate(ip)) {
+  if (!maxmind.validate(ip)) {
     return res.status(400).json({ error: "Invalid IP address" });
   }
   const result = await getWhois(ip);
@@ -348,12 +360,17 @@ app.get("/health", (req, res) => {
 
 const PORT = process.env.PORT || 4040;
 
-initGeoDb()
-  .then(() => {
-    app.listen(PORT, () =>
-      console.log(`🚀 IP-Echo Service running on ${PORT}`),
-    );
-  })
-  .catch((err) => {
-    console.error("Failed to initialize databases:", err);
-  });
+if (require.main === module) {
+  initGeoDb()
+    .then(() => {
+      getWhois.initWhoisBootstrap();
+      app.listen(PORT, () =>
+        console.log(`🚀 IP-Echo Service running on ${PORT}`),
+      );
+    })
+    .catch((err) => {
+      console.error("Failed to initialize databases:", err);
+    });
+}
+
+module.exports = { app, getClientIp, isCli };

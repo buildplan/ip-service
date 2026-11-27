@@ -14,7 +14,7 @@
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.3.5",
-    "maplibre-gl": "^6.19.0",
+    "maplibre-gl": "^6.20.0",
     "tailwindcss": "^4.3.5",
     "terser": "^5.51.4"
   },
@@ -24,6 +24,7 @@
     "build:js": "terser views/app.js -c -m -o views/app.min.js",
     "build:css": "npx @tailwindcss/cli -i ./views/input.css -o ./public/style.min.css --minify",
     "build:map": "node scripts/build-map.mjs",
-    "build": "npm run build:map && npm run build:js && npm run build:css"
+    "build": "npm run build:map && npm run build:js && npm run build:css",
+    "test": "node --test test/*.test.js"
   }
 }
