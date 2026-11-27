@@ -14,7 +14,7 @@
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.3.5",
-    "maplibre-gl": "^6.19.0",
+    "maplibre-gl": "^6.20.0",
     "tailwindcss": "^4.3.5",
     "terser": "^5.51.4"
   },
