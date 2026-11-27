@@ -9,6 +9,8 @@ concurrency:
   group: ghcr-cleanup
   cancel-in-progress: false
 
+permissions: {}
+
 jobs:
   cleanup:
     runs-on: ubuntu-latest

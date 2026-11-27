@@ -98,6 +98,46 @@ function ipv6ToBigInt(ip) {
   return val;
 }
 
+function formatIpv4FromBigInt(val) {
+  const n = Number(val & 0xffffffffn);
+  return `${(n >>> 24) & 255}.${(n >>> 16) & 255}.${(n >>> 8) & 255}.${n & 255}`;
+}
+
+function formatIpv6FromBigInt(val) {
+  const groups = new Array(8);
+  for (let i = 7; i >= 0; i--) {
+    groups[i] = Number((val >> BigInt((7 - i) * 16)) & 0xffffn).toString(16);
+  }
+
+  // RFC 5952: compress the longest run of >= 2 consecutive "0" groups (leftmost on tie)
+  let bestStart = -1;
+  let bestLen = 0;
+  let curStart = -1;
+  let curLen = 0;
+
+  for (let i = 0; i < 8; i++) {
+    if (groups[i] === "0") {
+      if (curStart === -1) curStart = i;
+      curLen++;
+      if (curLen > bestLen) {
+        bestStart = curStart;
+        bestLen = curLen;
+      }
+    } else {
+      curStart = -1;
+      curLen = 0;
+    }
+  }
+
+  if (bestLen < 2) {
+    return groups.join(":");
+  }
+
+  const left = groups.slice(0, bestStart).join(":");
+  const right = groups.slice(bestStart + bestLen).join(":");
+  return `${left}::${right}`;
+}
+
 function normalizeQueryIp(rawIp) {
   if (typeof rawIp !== "string") return null;
   let ip = rawIp.trim();
@@ -107,19 +147,24 @@ function normalizeQueryIp(rawIp) {
   const ipVersion = net.isIP(ip);
   if (!ipVersion) return null;
 
-  // Unwrap IPv4-mapped IPv6 addresses (::ffff:a.b.c.d or ::ffff:xxxx:xxxx)
-  if (ipVersion === 6) {
-    const v6Val = ipv6ToBigInt(ip);
-    if (v6Val !== null && v6Val >> 32n === 0xffffn) {
-      const v4 = Number(v6Val & 0xffffffffn);
-      return {
-        ip: `${(v4 >>> 24) & 255}.${(v4 >>> 16) & 255}.${(v4 >>> 8) & 255}.${v4 & 255}`,
-        version: 4,
-      };
-    }
+  if (ipVersion === 4) {
+    const v4Val = ipv4ToBigInt(ip);
+    if (v4Val === null) return null;
+    return { ip: formatIpv4FromBigInt(v4Val), version: 4 };
   }
 
-  return { ip, version: ipVersion };
+  const v6Val = ipv6ToBigInt(ip);
+  if (v6Val === null) return null;
+
+  // Unwrap IPv4-mapped IPv6 addresses (::ffff:a.b.c.d or ::ffff:xxxx:xxxx)
+  if (v6Val >> 32n === 0xffffn) {
+    return {
+      ip: formatIpv4FromBigInt(v6Val & 0xffffffffn),
+      version: 4,
+    };
+  }
+
+  return { ip: formatIpv6FromBigInt(v6Val), version: 6 };
 }
 
 function parseCidr(cidr, isV6) {
@@ -341,6 +386,8 @@ module.exports = {
   getBootstrapPath,
   ipv4ToBigInt,
   ipv6ToBigInt,
+  formatIpv4FromBigInt,
+  formatIpv6FromBigInt,
   normalizeQueryIp,
   parseCidr,
   normalizeRdapBaseUrl,

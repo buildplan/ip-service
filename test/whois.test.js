@@ -13,6 +13,8 @@ const {
   matchBootstrapUrls,
   parseRdapResponse,
   isBrokenRdapResult,
+  toSafeHttpsUrl,
+  buildRdapIpUrl,
   hostCircuitBreakers,
   resetForTests,
 } = getWhois._internals;
@@ -172,4 +174,28 @@ test("getWhois sends unencoded IPv6 RDAP URLs, caches hits, isolates 429 breaker
     resetForTests();
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }
+});
+
+test("canonicalizes IPv6 per RFC 5952 and enforces HTTPS RDAP host allowlist", () => {
+  assert.deepEqual(normalizeQueryIp("2001:4860:4860:0000:0000:0000:0000:8888"), {
+    ip: "2001:4860:4860::8888",
+    version: 6,
+  });
+  assert.deepEqual(normalizeQueryIp("2001:0db8:0000:0001:0000:0000:0000:0001"), {
+    ip: "2001:db8:0:1::1",
+    version: 6,
+  });
+  assert.deepEqual(normalizeQueryIp("::1"), { ip: "::1", version: 6 });
+  assert.deepEqual(normalizeQueryIp("::"), { ip: "::", version: 6 });
+
+  assert.equal(toSafeHttpsUrl("https://evil.example.com/"), null);
+  assert.equal(toSafeHttpsUrl("http://rdap.arin.net/registry/"), null);
+  assert.equal(toSafeHttpsUrl("https://user:pass@rdap.arin.net/registry/"), null);
+
+  assert.equal(
+    buildRdapIpUrl("https://rdap.arin.net/registry/", "2001:4860:4860::8888"),
+    "https://rdap.arin.net/registry/ip/2001:4860:4860::8888",
+  );
+  assert.equal(buildRdapIpUrl("https://evil.example.com/", "8.8.8.8"), null);
+  assert.equal(buildRdapIpUrl("https://rdap.arin.net/registry/", "8.8.8.8?evil=1"), null);
 });

@@ -10,6 +10,44 @@ const customUserAgent = `Threat-Intel-API/1.0 (${appUrl}; ${adminEmail})`;
 
 const CIRCUIT_BREAKER_MS = 60 * 60 * 1000; // 1 hour per-host pause on 429
 
+const ALLOWED_RDAP_HOSTS = new Set([
+  "rdap.arin.net",
+  "rdap.db.ripe.net",
+  "rdap.apnic.net",
+  "rdap.lacnic.net",
+  "rdap.afrinic.net",
+  "rdap.registro.br",
+  "rdap.org",
+]);
+
+function toSafeHttpsUrl(url) {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "https:") return null;
+    if (parsed.username || parsed.password) return null;
+    const host = parsed.hostname.toLowerCase();
+    if (!ALLOWED_RDAP_HOSTS.has(host)) return null;
+    return parsed;
+  } catch (_) {
+    return null;
+  }
+}
+
+function buildRdapIpUrl(baseUrl, queryIp) {
+  const parsedBase = toSafeHttpsUrl(baseUrl);
+  if (!parsedBase) return null;
+  if (
+    typeof queryIp !== "string" ||
+    (!/^[0-9.]+$/.test(queryIp) && !/^[0-9a-f:]+$/.test(queryIp))
+  ) {
+    return null;
+  }
+  parsedBase.pathname = `${parsedBase.pathname.replace(/\/?$/, "/")}ip/${queryIp}`;
+  parsedBase.search = "";
+  parsedBase.hash = "";
+  return parsedBase.toString();
+}
+
 // Bounded LRU cache to keep memory low on small servers (~<1MB max)
 const whoisCache = new LRUCache({
   max: 500,
@@ -44,13 +82,18 @@ function tripHostBreaker(host) {
 }
 
 async function queryRdapUrl(url, displayIp) {
-  const host = getUrlHost(url);
+  const safeUrl = toSafeHttpsUrl(url);
+  if (!safeUrl) {
+    return { status: "error" };
+  }
+  const safeUrlString = safeUrl.toString();
+  const host = getUrlHost(safeUrlString);
   if (isHostBlocked(host)) {
     return { status: "rate_limited" };
   }
 
   try {
-    const res = await axios.get(url, {
+    const res = await axios.get(safeUrlString, {
       timeout: 10000,
       headers: {
         Accept: "application/rdap+json, application/json",
@@ -154,10 +197,13 @@ async function getWhois(rawIp) {
 
   const rdapCandidates = [];
   for (const baseUrl of bootstrapBaseUrls) {
-    rdapCandidates.push(`${baseUrl}ip/${queryIp}`);
+    const candidate = buildRdapIpUrl(baseUrl, queryIp);
+    if (candidate && !rdapCandidates.includes(candidate)) {
+      rdapCandidates.push(candidate);
+    }
   }
-  const rdapOrgUrl = `https://rdap.org/ip/${queryIp}`;
-  if (!rdapCandidates.includes(rdapOrgUrl)) {
+  const rdapOrgUrl = buildRdapIpUrl("https://rdap.org/", queryIp);
+  if (rdapOrgUrl && !rdapCandidates.includes(rdapOrgUrl)) {
     rdapCandidates.push(rdapOrgUrl);
   }
 
@@ -196,6 +242,9 @@ getWhois.initWhoisBootstrap = bootstrap.initWhoisBootstrap;
 getWhois._internals = {
   ...bootstrap,
   ...parser,
+  ALLOWED_RDAP_HOSTS,
+  toSafeHttpsUrl,
+  buildRdapIpUrl,
   whoisCache,
   hostCircuitBreakers,
   isHostBlocked,

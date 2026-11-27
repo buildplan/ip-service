@@ -88,11 +88,12 @@ test("getReputation aggregates external threat APIs, caches results, and trips 4
   let crowdsecCalls = 0;
 
   axios.get = async (url) => {
-    if (url.includes("/v1/decisions")) {
+    const parsedUrl = new URL(url);
+    if (parsedUrl.pathname === "/v1/decisions") {
       crowdsecCalls++;
       return { data: [{ scenario: "crowdsecurity/http-probing" }] };
     }
-    if (url.includes("api.abuseipdb.com")) {
+    if (parsedUrl.hostname === "api.abuseipdb.com") {
       abuseCalls++;
       if (abuseCalls === 1) {
         return { data: { data: { abuseConfidenceScore: 85, totalReports: 12 } } };
