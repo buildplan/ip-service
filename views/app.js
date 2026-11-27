@@ -449,6 +449,24 @@ function updateMapTheme(theme) {
 window.currentScanIp = "";
 let lastReputationResult = null;
 
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function showToast(message) {
   const x = document.getElementById("toast");
   x.innerText = message;
@@ -632,8 +650,12 @@ async function searchIp() {
   try {
     const res = await fetch(`/api/info?ip=${encodeURIComponent(input)}`);
     const data = await res.json();
+    if (data.error) {
+      showToast(data.error);
+      return;
+    }
     populateDetails(data);
-    const type = input.includes(":") ? "IPv6" : "IPv4";
+    const type = data.ip.includes(":") ? "IPv6" : "IPv4";
     document.getElementById("ip-display-area").innerHTML = createIpRow(
       data.ip,
       type,
@@ -670,7 +692,9 @@ async function checkReputation() {
   btn.innerHTML = `<svg class="animate-spin h-3 w-3 mr-2" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> SCANNING...`;
 
   try {
-    const res = await fetch(`/api/reputation?ip=${window.currentScanIp}`);
+    const res = await fetch(
+      `/api/reputation?ip=${encodeURIComponent(window.currentScanIp)}`,
+    );
     const data = await res.json();
     lastReputationResult = data;
 
@@ -798,20 +822,19 @@ async function checkWhois() {
   openAppDialog(modal);
 
   try {
-    const res = await fetch(`/api/whois?ip=${window.currentScanIp}`);
+    const res = await fetch(
+      `/api/whois?ip=${encodeURIComponent(window.currentScanIp)}`,
+    );
     const data = await res.json();
 
     if (data.error) throw new Error(data.error);
 
     if (data.is_raw) {
       const emailRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/gi;
-      let formattedRawText = data.raw_whois
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;") // Sanitize HTML first
-        .replace(
-          emailRegex,
-          '<a href="mailto:$1" class="text-blue-400 hover:text-blue-300 hover:underline">$1</a>',
-        );
+      let formattedRawText = escapeHtml(data.raw_whois).replace(
+        emailRegex,
+        '<a href="mailto:$1" class="text-blue-400 hover:text-blue-300 hover:underline">$1</a>',
+      );
       // --- RENDER FALLBACK TERMINAL UI ---
       content.innerHTML = `
                 <div class="bg-[#0b1120] border border-slate-700 p-4 rounded-xl font-mono text-[11px] md:text-xs text-green-400 overflow-y-auto max-h-[50vh] custom-scrollbar whitespace-pre-wrap shadow-inner">
@@ -821,13 +844,16 @@ ${formattedRawText}
             `;
     } else {
       // --- RENDER GRID UI ---
+      const abuseList = Array.isArray(data.abuse_contacts)
+        ? data.abuse_contacts
+        : [];
       let emailsHtml =
-        data.abuse_contacts.length > 0
-          ? data.abuse_contacts
-            .map(
-              (e) =>
-                `<a href="mailto:${e}" class="text-blue-500 hover:underline">${e}</a>`,
-            )
+        abuseList.length > 0
+          ? abuseList
+            .map((e) => {
+              const safeEmail = escapeHtml(e);
+              return `<a href="mailto:${safeEmail}" class="text-blue-500 hover:underline">${safeEmail}</a>`;
+            })
             .join(", ")
           : '<span class="text-slate-400">Not provided</span>';
 
@@ -835,31 +861,31 @@ ${formattedRawText}
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                     <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50">
                         <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Network Name</span>
-                        <span class="font-mono text-slate-800 dark:text-slate-200 break-all">${data.network_name}</span>
+                        <span class="font-mono text-slate-800 dark:text-slate-200 break-all">${escapeHtml(data.network_name)}</span>
                     </div>
                     <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50">
                         <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">IP Range</span>
-                        <span class="font-mono text-slate-800 dark:text-slate-200 break-all">${data.network_range}</span>
+                        <span class="font-mono text-slate-800 dark:text-slate-200 break-all">${escapeHtml(data.network_range)}</span>
                     </div>
                     <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50 sm:col-span-2">
                         <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Organization</span>
-                        <span class="text-slate-800 dark:text-slate-200">${data.organization}</span>
+                        <span class="text-slate-800 dark:text-slate-200">${escapeHtml(data.organization)}</span>
                     </div>
                     <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50">
                         <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Allocation Type</span>
-                        <span class="text-slate-800 dark:text-slate-200">${data.type}</span>
+                        <span class="text-slate-800 dark:text-slate-200">${escapeHtml(data.type)}</span>
                     </div>
                     <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50">
                         <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Registry Handle</span>
-                        <span class="font-mono text-slate-800 dark:text-slate-200 break-all">${data.handle} (${data.country})</span>
+                        <span class="font-mono text-slate-800 dark:text-slate-200 break-all">${escapeHtml(data.handle)} (${escapeHtml(data.country)})</span>
                     </div>
                     <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50">
                         <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Registered</span>
-                        <span class="text-slate-800 dark:text-slate-200">${data.registration_date}</span>
+                        <span class="text-slate-800 dark:text-slate-200">${escapeHtml(data.registration_date)}</span>
                     </div>
                     <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50">
                         <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Last Updated</span>
-                        <span class="text-slate-800 dark:text-slate-200">${data.updated_date}</span>
+                        <span class="text-slate-800 dark:text-slate-200">${escapeHtml(data.updated_date)}</span>
                     </div>
                 </div>
                 <div class="mt-3 p-4 rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-500/20">

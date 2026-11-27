@@ -91,9 +91,12 @@ function checkApiStatus() {
 }
 
 // Initial load & Schedule (Every 3 hours)
-checkApiStatus();
-updateBlocklists();
-setInterval(updateBlocklists, 3 * 60 * 60 * 1000);
+if (process.env.NODE_ENV !== "test") {
+  checkApiStatus();
+  updateBlocklists();
+  const blocklistTimer = setInterval(updateBlocklists, 3 * 60 * 60 * 1000);
+  if (typeof blocklistTimer.unref === "function") blocklistTimer.unref();
+}
 
 // --- 2. CHECKERS ---
 
@@ -320,7 +323,7 @@ async function checkAbuseIPDB(ip) {
 }
 
 // --- MAIN EXPORT ---
-module.exports = async function getReputation(ip) {
+async function getReputation(ip) {
   if (typeof ip !== "string" || !net.isIP(ip)) return { ip: typeof ip === "string" ? ip : "", error: "Invalid IP" };
 
   // 1. Check Cache First (Saves API Credits)
@@ -364,4 +367,26 @@ module.exports = async function getReputation(ip) {
   reputationCache.set(ip, result);
 
   return result;
+}
+
+getReputation._internals = {
+  reputationCache,
+  updateBlocklists,
+  checkPublicBlocklists,
+  setBlockListForTests: (blockList) => {
+    globalBlockList = blockList || new BlockList();
+  },
+  resetForTests: () => {
+    reputationCache.clear();
+    globalBlockList = new BlockList();
+    blocklistCount = 0;
+    abuseIpdbExhausted = false;
+    abuseIpdbResetTime = 0;
+    sniffCatExhausted = false;
+    sniffCatResetTime = 0;
+    spamVerifyExhausted = false;
+    spamVerifyResetTime = 0;
+  },
 };
+
+module.exports = getReputation;

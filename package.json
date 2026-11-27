@@ -25,6 +25,6 @@
     "build:css": "npx @tailwindcss/cli -i ./views/input.css -o ./public/style.min.css --minify",
     "build:map": "node scripts/build-map.mjs",
     "build": "npm run build:map && npm run build:js && npm run build:css",
-    "test": "node --test"
+    "test": "node --test test/*.test.js"
   }
 }
