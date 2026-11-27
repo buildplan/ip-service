@@ -1,0 +1,24 @@
+name: Clean Up Old GHCR Images
+
+on:
+  schedule:
+    - cron: '0 4 * * 0' # Weekly on Sundays at 04:00 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: ghcr-cleanup
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clean up old GHCR images
+        uses: buildplan/ghcr-cleaner@v1
+        with:
+          owner-type: user
+          token: ${{ secrets.PAT_TOKEN }}
+          repository-owner: ${{ github.repository_owner }}
+          repository-name: ip-service
+          delete-untagged: true
+          keep-at-most: 5

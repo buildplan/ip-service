@@ -4,7 +4,7 @@ on:
   push:
     branches: [ "main", "dev-*", "dev" ]
     tags: [ 'v*.*.*' ]
-    paths-ignore: [ '**.md', '.gitignore', 'renovate.json', 'LICENSE', 'docs/**', 'nodhi.Dockerfile', 'docker-compose.yml', docker-compose.prod.yml' ]
+    paths-ignore: [ '**.md', '.gitignore', 'renovate.json', 'LICENSE', 'docs/**', 'nodhi.Dockerfile', 'docker-compose.yml', 'docker-compose-prod.yml', 'test/**', '.github/workflows/auto-tag.yml', '.github/workflows/ghcr-cleanup.yml' ]
   workflow_dispatch:
 
 concurrency:
@@ -27,14 +27,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      # 1. Prepare for Multi-Arch Build
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-
-      # 2. Login to GHCR
+      # 1. Login to GHCR and Docker Hub
       - name: Log in to the Container registry
         uses: docker/login-action@v4
         with:
@@ -42,24 +35,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 3. Login to DHI Hub and Docker Hub
       - name: Log in to Docker Hub
         uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Log in to DHI Registry
-        uses: docker/login-action@v4
-        with:
-          registry: dhi.io
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      # 4. Extract Metadata (Tags & Labels)
+      # 2. Extract Metadata (Tags, Labels & Index Annotations)
       - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v6
+        env:
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
         with:
           images: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
@@ -70,8 +57,76 @@ jobs:
             type=semver,pattern={{version}}
             type=ref,event=branch
 
-      # 5. Build & Push
+      # 3. Promote existing :latest multi-arch index for tag builds on the same commit
+      - name: Promote existing :latest image for matching tag commit
+        id: promote
+        if: github.ref_type == 'tag'
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+          EXPECTED_SHA: ${{ github.sha }}
+          GHCR_IMAGE: ${{ env.REGISTRY }}/${{ github.repository }}
+          DOCKER_HUB_REPO: ${{ env.DOCKER_HUB_REPO }}
+        run: |
+          ghcr_image=$(printf '%s' "$GHCR_IMAGE" | tr '[:upper:]' '[:lower:]')
+          check_index() {
+            local ref="$1"
+            local raw
+            raw=$(docker buildx imagetools inspect --raw "$ref" 2>/dev/null) || return 1
+            printf '%s' "$raw" | jq -e --arg sha "$EXPECTED_SHA" '
+              (.annotations["org.opencontainers.image.revision"] == $sha) and
+              ([.manifests[]?.platform.architecture] | index("amd64") != null and index("arm64") != null)
+            ' >/dev/null
+          }
+
+          if check_index "${ghcr_image}:latest" && check_index "${DOCKER_HUB_REPO}:latest"; then
+            promote_ok=true
+            promoted_any=false
+            while IFS= read -r tag; do
+              [ -z "$tag" ] && continue
+              case "$tag" in
+                "${ghcr_image}:"*)
+                  echo "Promoting ${ghcr_image}:latest -> $tag (exact multi-arch digest preserved)"
+                  docker buildx imagetools create --tag "$tag" "${ghcr_image}:latest" || { promote_ok=false; break; }
+                  promoted_any=true
+                  ;;
+                "${DOCKER_HUB_REPO}:"*)
+                  echo "Promoting ${DOCKER_HUB_REPO}:latest -> $tag (exact multi-arch digest preserved)"
+                  docker buildx imagetools create --tag "$tag" "${DOCKER_HUB_REPO}:latest" || { promote_ok=false; break; }
+                  promoted_any=true
+                  ;;
+              esac
+            done <<< "$TAGS"
+
+            if [ "$promote_ok" = "true" ] && [ "$promoted_any" = "true" ]; then
+              echo "promoted=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+
+          echo "No matching multi-arch :latest image found for $EXPECTED_SHA; running full cached build."
+          echo "promoted=false" >> "$GITHUB_OUTPUT"
+
+      # 4. Prepare for Multi-Arch Build (skipped when promoted)
+      - name: Set up QEMU
+        if: steps.promote.outputs.promoted != 'true'
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        if: steps.promote.outputs.promoted != 'true'
+        uses: docker/setup-buildx-action@v4
+
+      # 5. Login to DHI Registry (only needed when building)
+      - name: Log in to DHI Registry
+        if: steps.promote.outputs.promoted != 'true'
+        uses: docker/login-action@v4
+        with:
+          registry: dhi.io
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # 6. Build & Push with GitHub Actions layer caching
       - name: Build and push Docker image
+        if: steps.promote.outputs.promoted != 'true'
         uses: docker/build-push-action@v7
         with:
           context: .
@@ -79,16 +134,10 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-
-      # 6. Cleanup Old Images
-      - name: Clean up old GHCR images
-        if: github.ref_type == 'branch'
-        uses: buildplan/ghcr-cleaner@v1
-        continue-on-error: true
-        with:
-          owner-type: user
-          token: ${{ secrets.PAT_TOKEN }}
-          repository-owner: ${{ github.repository_owner }}
-          repository-name: ip-service
-          delete-untagged: true
-          keep-at-most: 5
+          annotations: ${{ steps.meta.outputs.annotations }}
+          provenance: false
+          sbom: false
+          cache-from: |
+            type=gha,scope=${{ github.ref_type == 'branch' && github.ref_name || 'main' }}
+            type=gha,scope=main
+          cache-to: ${{ github.ref_type == 'branch' && format('type=gha,mode=max,scope={0}', github.ref_name) || '' }}
